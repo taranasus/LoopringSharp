@@ -36,6 +36,12 @@ As for which endpoint requires what, I'll atempt to make a table bellow with all
 |StorageId|Y|N|N|Fetches the next order id for a given sold token
 |OffchainFee|Y|N|N|Get how much fee you need to pay right now to carry out a transaction of a specified type
 
+## LoopringAPI.TestConsole
+
+There is a test console in the project that shows off how to use some of the parts within the API. I was also using it for testing. The console is in .net 6 so be prepared for that (VS 2022 and C# 10)
+
+The most important thing about the test console is that you need to run it for the first time and fill in the file as instructed in the error that gets thrown. LoopringApi needs those Api Keys in order to run.
+
 
 ## Secure client
 
