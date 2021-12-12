@@ -43,3 +43,6 @@ var tickers = await client.Ticker("LRC-USDT", "LRC-ETH");
 The secure client does not accept the apiKey, l2Pk, l1Pk as properties, but rather requires them as parameters on every method that needs them. This means that the keys are not stored in memory within the API class and it is up to the developer to decide how they want to secure this very sensitive infomation.
 
 The regular client also makes use of the SecureClient internally, just that it stores the three keys within itself so they are not provided every single time a method is called in the API, easing development a little.
+
+## Credits to
+fudgey.eth - Creator of PoseidonSharp, without which it would be impossible to actually do transfers within this api. https://github.com/fudgebucket27/PoseidonSharp
