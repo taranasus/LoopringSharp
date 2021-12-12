@@ -7,13 +7,17 @@
 
 A C# NuGet Package wrapper around the Loopring API endpoints to greatly simplify communication. It should theoretically be as simple as importing the package, creating a singleton client, and off to the races. 
 
+## The what api?
+
+The Loopring API https://docs.loopring.io/
+
 ## How be do?
 
 Basically it's just
 
 ```csharp
-LoopringAPI.Client client = new LoopringAPI.Client(apiKey, l2Pk, l1Pk);
-var tickers = await client.Ticker("LRC-USDT", "LRC-ETH");
+LoopringAPI.Client client = new LoopringAPI.Client("<YOUR API KEY HERE>", "<YOUR LOOPRING PRIVATE KEY HERE>", "<YOUR ETHEREUM PRIVATE KEY HERE>");
+var storageId = await client.StorageId("33794", 1);
 ```
 
 Nothing too fancy. but let me explain apiKey, l2Pk and l1Pk
@@ -28,7 +32,10 @@ As for which endpoint requires what, I'll atempt to make a table bellow with all
 
 |API Call|ApiKey|l1Pk|l2Pk|Description
 |-|-|-|-|-|
-|Ticker|N|N|N|Gets the price information for any crypto pair available to trade on Loopring
+|Ticker|N|N|N|Gets the price information for any crypto pair available to trade on Loopring|
+|StorageId|Y|N|N|Fetches the next order id for a given sold token
+|OffchainFee|Y|N|N|Get how much fee you need to pay right now to carry out a transaction of a specified type
+
 
 ## Secure client
 
@@ -38,7 +45,7 @@ However, if creating a client application that will run on users's hardware or o
 
 ```csharp
 LoopringAPI.SecureClient client = new LoopringAPI.SecureClient();
-var tickers = await client.Ticker("LRC-USDT", "LRC-ETH");
+var storageId = await client.StorageId("<YOUR API KEY HERE>","33794", 1);
 ```
 The secure client does not accept the apiKey, l2Pk, l1Pk as properties, but rather requires them as parameters on every method that needs them. This means that the keys are not stored in memory within the API class and it is up to the developer to decide how they want to secure this very sensitive infomation.
 

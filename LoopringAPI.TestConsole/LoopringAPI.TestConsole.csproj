@@ -5,10 +5,17 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\LoopringAPI\LoopringAPI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="apiKeys.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
