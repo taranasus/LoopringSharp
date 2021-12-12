@@ -45,9 +45,9 @@ The most important thing about the test console is that you need to run it for t
 
 ## Secure client
 
-The regular client has a security flaw in it, in that it stores the apiKey, l2Pk and L1Pk in memory within itself, in order to facilitate easier API calls. This is great for server-side aplications where you have full control of the machine the code is running on so there's no risk of someone trying to extrat those keys from the hardware's memory.
+The regular client has a security flaw in it, in that it stores the apiKey, l2Pk and L1Pk in memory within itself, in order to facilitate easier API calls. This is great for server-side aplications where you have full control of the machine on which the code is running, so there's no risk of someone trying to extract those keys from RAM with a RAM editor.
 
-However, if creating a client application that will run on users's hardware or on the web, it is recommended to use the secure client
+However, if creating a client application which runs on the users's hardware or on the web, it is recommended to use the secure client
 
 ```csharp
 LoopringAPI.SecureClient client = new LoopringAPI.SecureClient();
