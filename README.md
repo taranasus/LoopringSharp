@@ -16,7 +16,7 @@ The Loopring API https://docs.loopring.io/
 Basically it's just
 
 ```csharp
-LoopringAPI.Client client = new LoopringAPI.Client("<YOUR API KEY HERE>", "<YOUR LOOPRING PRIVATE KEY HERE>", "<YOUR ETHEREUM PRIVATE KEY HERE>");
+LoopringAPI.Client client = new LoopringAPI.Client("<apiKey: YOUR API KEY HERE>", "< l2Pk: YOUR LOOPRING PRIVATE KEY HERE>", "< l1Pk: YOUR ETHEREUM PRIVATE KEY HERE>");
 var storageId = await client.StorageId("33794", 1);
 ```
 
