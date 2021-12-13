@@ -23,9 +23,7 @@
         public string clientId { get; set; }
 
         // FOR FUTURE USE PROBABLY
-        public CounterFactualInfo counterFactualInfo { get; set; }
-
-        
+        public CounterFactualInfo counterFactualInfo { get; set; }        
 
         public class CounterFactualInfo
         {

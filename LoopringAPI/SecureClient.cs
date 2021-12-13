@@ -1,13 +1,10 @@
 ﻿using Newtonsoft.Json;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Signers;
-using Org.BouncyCastle.Security;
+using PoseidonSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using static LoopringAPI.ApiTransferRequest;
@@ -163,12 +160,39 @@ namespace LoopringAPI
             if (string.IsNullOrWhiteSpace(l1Pk))
                 throw new System.Exception("Transfer REQUIRES a valid Eth Wallet Layer 1 Private key");
 
-            string poseidon = ""; //Need to generate
-            string ecdsa = ""; //Need to generate
-            string eddsa = ""; //Need to generate
             string apiSig = ""; //Need to generate            
 
-            var apiRequest = request.GetApiTransferRequest(poseidon,ecdsa, eddsa, memo, clientId, counterFactualInfo);
+            int MAX_INPUT = 13;
+            var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
+            BigInteger[] inputs = {
+                BigInteger.Parse(request.exchange, System.Globalization.NumberStyles.HexNumber),
+                (BigInteger)request.payerId,
+                (BigInteger)request.payeeId,
+                (BigInteger)request.token.tokenId,
+                BigInteger.Parse(request.token.volume),
+                (BigInteger)request.maxFee.tokenId,
+                BigInteger.Parse(request.maxFee.volume),
+                BigInteger.Parse(request.payeeAddress, System.Globalization.NumberStyles.HexNumber),
+                0,
+                0,
+                (BigInteger)request.validUnitl,
+                (BigInteger)request.storageId
+            };
+
+            var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
+
+            var signer = new Eddsa(poseidonHasher.CalculatePoseidonHash(inputs), l2Pk);
+            var signedMessage = signer.Sign(apiRequest);
+            apiRequest.eddsaSignature = signedMessage;
+
+            // TODO : Compare Eddsa with python result
+
+            // TODO : Implement ECDSA
+
+
+
+
+            
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
@@ -198,4 +222,6 @@ namespace LoopringAPI
             }
         }
     }
+
+  
 }

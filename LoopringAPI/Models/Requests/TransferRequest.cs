@@ -16,7 +16,7 @@ namespace LoopringAPI
         public long validUnitl { get; set; }
 
 
-        public ApiTransferRequest GetApiTransferRequest(string poseidon, string ecdsa, string eddsa, string memo, string clientId, CounterFactualInfo counterFactualInfo)
+        public ApiTransferRequest GetApiTransferRequest(string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
             return new ApiTransferRequest()
             {
@@ -31,10 +31,6 @@ namespace LoopringAPI
                 validUnitl = validUnitl,
                 clientId = clientId,
                 memo = memo,
-
-                hashApproved = poseidon,
-                ecdsaSignature = ecdsa,
-                eddsaSignature = eddsa,
 
                 counterFactualInfo = counterFactualInfo
             };
