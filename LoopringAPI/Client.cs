@@ -17,12 +17,12 @@ namespace LoopringAPI
         /// <param name="apiKey">Your wallet API Key, needed for almost all api calls</param>
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
-        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey)
+        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey, bool useTestNet)
         {
             _apiKey = apiKey;
             _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
-            _client = new SecureClient();
+            _client = new SecureClient(useTestNet);
         }
 
         /// <summary>

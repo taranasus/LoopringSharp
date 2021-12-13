@@ -2,9 +2,9 @@
 {
     public static class Constants
     {
-        public static string ApiUrl = "https://api3.loopring.io/api/v3/";
-        public static string TickerUrl = "ticker";
-        public static string StorageIdUrl = "storageId";
-        public static string OffchainFeeUrl = "user/offchainFee";
+        public static string OffchainFeeUrl = "api/v3/user/offchainFee";
+        public static string StorageIdUrl = "api/v3/storageId";
+        public static string TickerUrl = "api/v3/ticker";
+        public static string TransferUrl = "/api/v3/transfer";
     }
 }
