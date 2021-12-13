@@ -14,7 +14,6 @@
         public long validUnitl { get; set; }
 
         // ESSENTIAL AUTHENTICATION AND VALIDATION INFO
-        public string hashApproved { get; set; }
         public string ecdsaSignature { get; set; }
         public string eddsaSignature { get; set; }
 
