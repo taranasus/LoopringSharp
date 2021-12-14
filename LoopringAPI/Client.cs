@@ -29,6 +29,21 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// The Object you need in order to communicate with the Loopring API. Recommended to use as a signleton. Automatically gets the API Key using your Loopring Private Key
+        /// </summary>        
+        /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
+        /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
+        /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
+        public Client(string loopringPrivateKey, string ethPrivateKey, string accountId, bool useTestNet)
+        {
+            _loopringPrivateKey = loopringPrivateKey;
+            _ethPrivateKey = ethPrivateKey;
+            _client = new SecureClient(useTestNet);
+            _accountId = accountId;
+            _apiKey = ApiKey().Result;
+        }
+
+        /// <summary>
         /// Returns the relayer's current time in millisecond
         /// </summary>
         /// <returns>Current time in milliseconds</returns>        
@@ -55,6 +70,19 @@ namespace LoopringAPI
         public Task<string> ApiKey()
         {
             return _client.ApiKey(_loopringPrivateKey, _accountId);
+        }
+
+        /// <summary>
+        /// Requests a new API key from Loopring and starts using it, also returns it for storage.
+        /// </summary>
+        /// <param name="l2Pk"></param>
+        /// <param name="apiKey"></param>
+        /// <param name="accountId"></param>
+        /// <returns>The new API Key</returns>
+        public async Task<string> UpdateApiKey()
+        {
+            _apiKey = await _client.UpdateApiKey(_loopringPrivateKey, _apiKey, _accountId);
+            return _apiKey;
         }
 
         /// <summary>

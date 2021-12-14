@@ -6,12 +6,11 @@ Console.WriteLine("Hello, Loops!");
 ApiKeys apiKeys = ReadConfigFile();
 
 // If this is confusing, check the read.me file
-string apiKey = apiKeys.apiKey;         // Loopring API Key
 string l2Pk = apiKeys.l2Pk;             // Loopring Private Key (Layer 2 Private Key)
 string l1Pk = apiKeys.l1Pk;             // Ethereum Private Key (Layer 1 Private Key)
 string accountId = apiKeys.accountId;   // The user's accountId
 
-LoopringAPI.Client client = new LoopringAPI.Client(apiKey, l2Pk, l1Pk, accountId, apiKeys.useTestNet);
+LoopringAPI.Client client = new LoopringAPI.Client(l2Pk, l1Pk, accountId, apiKeys.useTestNet);
 
 #region Ticker
 Console.WriteLine("Testing TICKER: ");
@@ -39,11 +38,31 @@ storageId = await client.StorageId(1, 1);
 Console.WriteLine("MaxNext: " + JsonConvert.SerializeObject(storageId));
 #endregion
 
-#region StorageId
-Console.WriteLine("Testing APIKEYGET");
+#region GetApiKey
+Console.WriteLine("Testing APIKEY GET");
 
 var apikey = await client.ApiKey();
 Console.WriteLine("Key: " + apikey);
+
+Console.WriteLine();
+#endregion
+
+#region UpdateApiKey
+Console.WriteLine("Testing APIKEY UPDATE");
+Console.WriteLine("WARNING! WARNING WARNING WARNING! THIS WILL GENERATE A NEW API KEY ON YOUR WALLET! YOU WILL NEED TO USE THAT KEY GOING FORWARD.");
+Console.Write("Are you sure you want to continue with this test? [Y]es / [S]kip: ");
+var choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    apikey = await client.UpdateApiKey();
+    Console.WriteLine("New Key: " + apikey);
+    Console.WriteLine("Please make a note of the key above before continuing, as you will need it going forward. Press enter to continue...");
+    Console.ReadLine();
+}
+else
+{
+    Console.WriteLine("Skipping API Key Re-generation");
+}
 
 Console.WriteLine();
 #endregion
@@ -67,7 +86,6 @@ static ApiKeys ReadConfigFile()
     {
         result = new ApiKeys()
         {
-            apiKey = "",
             l1Pk = "",
             l2Pk = "",
             useTestNet = false,
@@ -76,7 +94,7 @@ static ApiKeys ReadConfigFile()
     }
     result = JsonConvert.DeserializeObject<ApiKeys>(File.ReadAllText("apiKeys.json")) ?? new ApiKeys();
 
-    if (string.IsNullOrWhiteSpace(result.apiKey))
+    if (string.IsNullOrWhiteSpace(result.l2Pk))
     {        
         Console.WriteLine("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: "+ Directory.GetCurrentDirectory()+"\\apiKeys.json");
         throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\apiKeys.json");        

@@ -106,7 +106,7 @@ namespace LoopringAPI
 
         #endregion
 
-        #region eddsa
+        #region L2
 
         /// <summary>
         /// Get the ApiKey associated with the user's account.
@@ -149,9 +149,58 @@ namespace LoopringAPI
             }
         }
 
-        
+        #endregion
+        #region apiKeyL2
+
+        /// <summary>
+        /// Change the ApiKey associated with the user's account
+        /// </summary>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="accountId">Wallet Account Id</param>
+        /// <returns>The new apiKey as string</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public async Task<string> UpdateApiKey(string l2Pk, string apiKey, string accountId)
+        {
+            string requestBody = "{\"accountId\":"+accountId+"}";
+
+            var signatureBase = "";
+            signatureBase += "POST&" + UrlEncodeUpperCase(_apiUrl + Constants.ApiKeyUrl) + "&";
+            var parameterString = requestBody;
+            signatureBase += UrlEncodeUpperCase(parameterString);
+            var message = SHA256Helper.CalculateSHA256HashNumber(signatureBase);
+
+            var signer = new Eddsa(message, l2Pk);
+            var signedMessage = signer.Sign();
+
+            var url = $"{_apiUrl}{Constants.ApiKeyUrl}";
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
+            {
+                httpRequest.Headers.Add("X-API-SIG", signedMessage);
+                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
+
+                var httpResult = await _client.SendAsync(httpRequest);
+
+                if (httpResult.IsSuccessStatusCode)
+                {
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();
+                    var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(resultBody);
+                    return apiresult.apiKey;
+                }
+                else
+                {
+                    if (httpResult.Content != null)
+                    {
+                        throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString() + " | " + (await httpResult.Content.ReadAsStringAsync()));
+                    }
+                    throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString());
+                }
+            }
+        }
 
         #endregion
+
 
         #region apiKey
 
@@ -234,6 +283,7 @@ namespace LoopringAPI
             }
         }
         #endregion
+
         #region apiKeyL1L2
         public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
