@@ -171,6 +171,7 @@ namespace LoopringAPI
         {
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+
             var url = $"{_apiUrl}{Constants.StorageIdUrl}?accountId={accountId}&sellTokenId={sellTokenId}&maxNext={maxNext}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
@@ -211,6 +212,7 @@ namespace LoopringAPI
         {
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+
             var url = $"{_apiUrl}{Constants.OffchainFeeUrl}?accountId={accountId}&requestType={(int)requestType}&tokenSymbol={tokenSymbol}&amount={amount}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
