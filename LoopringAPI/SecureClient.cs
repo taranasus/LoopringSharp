@@ -21,7 +21,7 @@ namespace LoopringAPI
         public SecureClient(bool useTestNet)
         {
             _client = new HttpClient();
-            if(useTestNet)
+            if (useTestNet)
             {
                 _apiUrl = "https://uat2.loopring.io/";
             }
@@ -43,36 +43,26 @@ namespace LoopringAPI
             string url = $"{_apiUrl}{Constants.TickerUrl}?market={string.Join(",", pairs)}";
             using (var httpResult = await _client.GetAsync(url))
             {
-                if (httpResult.IsSuccessStatusCode)
-                {
-                    var resultBody = await httpResult.Content.ReadAsStringAsync();
-                    var apiTickersResult = JsonConvert.DeserializeObject<ApiTickersResult>(resultBody);
+                _ = await ThrowIfHttpFail(httpResult);
+                var resultBody = await httpResult.Content.ReadAsStringAsync();
+                var apiTickersResult = JsonConvert.DeserializeObject<ApiTickersResult>(resultBody);
 
-                    return apiTickersResult.tickers.Select(s => new Ticker()
-                    {
-                        PairId = s[0],
-                        TimeStamp = s[1],
-                        BaseTokenVolume = s[2],
-                        QuoteTokenVolume = s[3],
-                        OpenPrice = s[4],
-                        HeighestPrice = s[5],
-                        LowestPrice = s[6],
-                        ClosingPrice = s[7],
-                        NumberOfTrades = s[8],
-                        HighestBidPrice = s[9],
-                        LowestAskPrice = s[10],
-                        BaseFeeAmmount = s[11],
-                        QuoteFeeAmount = s[12]
-                    }).ToList();
-                }
-                else
+                return apiTickersResult.tickers.Select(s => new Ticker()
                 {
-                    if (httpResult.Content != null)
-                    {
-                        throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString() + " | " + (await httpResult.Content.ReadAsStringAsync()));
-                    }
-                    throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString());
-                }
+                    PairId = s[0],
+                    TimeStamp = s[1],
+                    BaseTokenVolume = s[2],
+                    QuoteTokenVolume = s[3],
+                    OpenPrice = s[4],
+                    HeighestPrice = s[5],
+                    LowestPrice = s[6],
+                    ClosingPrice = s[7],
+                    NumberOfTrades = s[8],
+                    HighestBidPrice = s[9],
+                    LowestAskPrice = s[10],
+                    BaseFeeAmmount = s[11],
+                    QuoteFeeAmount = s[12]
+                }).ToList();
             }
         }
 
@@ -86,20 +76,12 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.TimestampUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                var httpResult = await _client.SendAsync(httpRequest);
-                if (httpResult.IsSuccessStatusCode)
+                using (var httpResult = await _client.SendAsync(httpRequest))
                 {
+                    _ = await ThrowIfHttpFail(httpResult);
                     var resultBody = await httpResult.Content.ReadAsStringAsync();
                     var apiresult = JsonConvert.DeserializeObject<ApiTimestampResult>(resultBody);
                     return apiresult.timestamp;
-                }
-                else
-                {
-                    if (httpResult.Content != null)
-                    {
-                        throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString() + " | " + (await httpResult.Content.ReadAsStringAsync()));
-                    }
-                    throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString());
                 }
             }
         }
@@ -116,35 +98,23 @@ namespace LoopringAPI
         /// <returns>The api key</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public async Task<string> ApiKey(string l2Pk, string accountId)
-        {
-            var signatureBase = "";
-            signatureBase += "GET&" + UrlEncodeUpperCase(_apiUrl + Constants.ApiKeyUrl)+"&";
-            var parameterString = "accountId="+accountId;
-            signatureBase += UrlEncodeUpperCase(parameterString);
-            var message = SHA256Helper.CalculateSHA256HashNumber(signatureBase);
-
-            var signer = new Eddsa(message, l2Pk);
-            var signedMessage = signer.Sign();
+        {  
+            var signedMessage = EddsaSignUrl(
+                l2Pk,
+                HttpMethod.Get,
+                new List<(string Key, string Value)>() { ("accountId", accountId) },
+                null);
 
             var url = $"{_apiUrl}{Constants.ApiKeyUrl}?accountId={accountId}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
                 httpRequest.Headers.Add("X-API-SIG", signedMessage);
-                var httpResult = await _client.SendAsync(httpRequest);
-                
-                if (httpResult.IsSuccessStatusCode)
+                using (var httpResult = await _client.SendAsync(httpRequest))
                 {
+                    _ = await ThrowIfHttpFail(httpResult);
                     var resultBody = await httpResult.Content.ReadAsStringAsync();
                     var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(resultBody);
                     return apiresult.apiKey;
-                }
-                else
-                {
-                    if (httpResult.Content != null)
-                    {
-                        throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString() + " | " + (await httpResult.Content.ReadAsStringAsync()));
-                    }
-                    throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString());
                 }
             }
         }
@@ -162,16 +132,12 @@ namespace LoopringAPI
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public async Task<string> UpdateApiKey(string l2Pk, string apiKey, string accountId)
         {
-            string requestBody = "{\"accountId\":"+accountId+"}";
-
-            var signatureBase = "";
-            signatureBase += "POST&" + UrlEncodeUpperCase(_apiUrl + Constants.ApiKeyUrl) + "&";
-            var parameterString = requestBody;
-            signatureBase += UrlEncodeUpperCase(parameterString);
-            var message = SHA256Helper.CalculateSHA256HashNumber(signatureBase);
-
-            var signer = new Eddsa(message, l2Pk);
-            var signedMessage = signer.Sign();
+            string requestBody = "{\"accountId\":" + accountId + "}";
+            var signedMessage = EddsaSignUrl(
+                l2Pk,
+                HttpMethod.Post,
+                null,
+                requestBody);
 
             var url = $"{_apiUrl}{Constants.ApiKeyUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
@@ -179,29 +145,17 @@ namespace LoopringAPI
                 httpRequest.Headers.Add("X-API-SIG", signedMessage);
                 httpRequest.Headers.Add("X-API-KEY", apiKey);
                 httpRequest.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
-
-                var httpResult = await _client.SendAsync(httpRequest);
-
-                if (httpResult.IsSuccessStatusCode)
+                using (var httpResult = await _client.SendAsync(httpRequest))
                 {
+                    _ = ThrowIfHttpFail(httpResult);
                     var resultBody = await httpResult.Content.ReadAsStringAsync();
                     var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(resultBody);
                     return apiresult.apiKey;
-                }
-                else
-                {
-                    if (httpResult.Content != null)
-                    {
-                        throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString() + " | " + (await httpResult.Content.ReadAsStringAsync()));
-                    }
-                    throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString());
                 }
             }
         }
 
         #endregion
-
-
         #region apiKey
 
         /// <summary>
@@ -217,6 +171,7 @@ namespace LoopringAPI
         {
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+
             var url = $"{_apiUrl}{Constants.StorageIdUrl}?accountId={accountId}&sellTokenId={sellTokenId}&maxNext={maxNext}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
@@ -257,6 +212,7 @@ namespace LoopringAPI
         {
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+
             var url = $"{_apiUrl}{Constants.OffchainFeeUrl}?accountId={accountId}&requestType={(int)requestType}&tokenSymbol={tokenSymbol}&amount={amount}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
@@ -268,7 +224,7 @@ namespace LoopringAPI
                     var apiresult = JsonConvert.DeserializeObject<ApiOffchainFeeResult>(resultBody);
                     return new OffchainFee()
                     {
-                        fees =apiresult.fees,
+                        fees = apiresult.fees,
                         gasPrice = apiresult.gasPrice
                     };
                 }
@@ -283,7 +239,6 @@ namespace LoopringAPI
             }
         }
         #endregion
-
         #region apiKeyL1L2
         public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
@@ -324,7 +279,7 @@ namespace LoopringAPI
             // TODO : Compare Eddsa with python result
 
             // TODO : Implement ECDSA
-            
+
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
@@ -335,32 +290,75 @@ namespace LoopringAPI
                 using (var stringContent = new StringContent(JsonConvert.SerializeObject(apiRequest), Encoding.UTF8, "application/json"))
                 {
                     httpRequest.Content = stringContent;
-                    var httpResult = await _client.SendAsync(httpRequest);
-                    if (httpResult.IsSuccessStatusCode)
+                    using (var httpResult = await _client.SendAsync(httpRequest))
                     {
+                        _ = await ThrowIfHttpFail(httpResult);
                         var resultBody = await httpResult.Content.ReadAsStringAsync();
                         var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(resultBody);
                         return new Transfer(apiresult);
-                    }
-                    else
-                    {
-                        if (httpResult.Content != null)
-                        {
-                            throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString() + " | " + (await httpResult.Content.ReadAsStringAsync()));
-                        }
-                        throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString());
                     }
                 }
             }
         }
         #endregion
 
-        private static string UrlEncodeUpperCase(string stringToEncode)
+        #region private methods
+        private string UrlEncodeUpperCase(string stringToEncode)
         {
             var reg = new Regex(@"%[a-f0-9]{2}");
             stringToEncode = HttpUtility.UrlEncode(stringToEncode);
             return reg.Replace(stringToEncode, m => m.Value.ToUpperInvariant());
         }
+
+        private async Task<bool> ThrowIfHttpFail(HttpResponseMessage httpResult)
+        {
+            if (httpResult.IsSuccessStatusCode)
+                return true;
+            if (httpResult.Content != null)
+                throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString() + " | " + (await httpResult.Content.ReadAsStringAsync()));
+            throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString());
+        }
+
+        private BigInteger CreateSha256Signature(HttpMethod method, List<(string Key,string Value)> queryParams, string postBody)
+        {
+            var signatureBase = "";
+            var parameterString = "";
+            if (method == HttpMethod.Post)
+            {
+                signatureBase += "POST&";
+                parameterString = postBody;
+            }
+            else if (method == HttpMethod.Get)
+            {
+                signatureBase += "GET&";
+                if (queryParams != null)
+                {
+                    foreach (var parameter in queryParams)
+                    {
+                        parameterString += parameter.Key + "=" + parameter.Value;
+                    }
+                }
+            }
+            else
+                throw new Exception("Http method type not supported");
+
+            signatureBase += UrlEncodeUpperCase(_apiUrl + Constants.ApiKeyUrl) + "&";            
+            signatureBase += UrlEncodeUpperCase(parameterString);
+
+            return SHA256Helper.CalculateSHA256HashNumber(signatureBase);
+        }
+
+        private string EddsaSignUrl(string l2Pk, HttpMethod method, List<(string Key, string Value)> queryParams, string postBody)
+        {
+            var message = CreateSha256Signature(
+                method,
+                queryParams,
+                postBody);
+
+            var signer = new Eddsa(message, l2Pk);
+            return signer.Sign();
+        }
+        #endregion
     }
 
 }
