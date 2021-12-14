@@ -310,7 +310,8 @@ namespace LoopringAPI
         }
         #endregion
 
-        private static string UrlEncodeUpperCase(string stringToEncode)
+        #region private methods
+        private string UrlEncodeUpperCase(string stringToEncode)
         {
             var reg = new Regex(@"%[a-f0-9]{2}");
             stringToEncode = HttpUtility.UrlEncode(stringToEncode);
@@ -325,6 +326,7 @@ namespace LoopringAPI
                 throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString() + " | " + (await httpResult.Content.ReadAsStringAsync()));
             throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString());
         }
+        #endregion
     }
 
 }
