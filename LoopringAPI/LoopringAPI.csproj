@@ -10,10 +10,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\ApiRequests\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\PoseidonSharp\PoseidonSharp\PoseidonSharp.csproj" />
   </ItemGroup>
 
