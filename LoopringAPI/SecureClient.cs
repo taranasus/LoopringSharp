@@ -98,15 +98,12 @@ namespace LoopringAPI
         /// <returns>The api key</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public async Task<string> ApiKey(string l2Pk, string accountId)
-        {
-            var signatureBase = "";
-            signatureBase += "GET&" + UrlEncodeUpperCase(_apiUrl + Constants.ApiKeyUrl) + "&";
-            var parameterString = "accountId=" + accountId;
-            signatureBase += UrlEncodeUpperCase(parameterString);
-            var message = SHA256Helper.CalculateSHA256HashNumber(signatureBase);
-
-            var signer = new Eddsa(message, l2Pk);
-            var signedMessage = signer.Sign();
+        {  
+            var signedMessage = EddsaSignUrl(
+                l2Pk,
+                HttpMethod.Get,
+                new List<(string Key, string Value)>() { ("accountId", accountId) },
+                null);
 
             var url = $"{_apiUrl}{Constants.ApiKeyUrl}?accountId={accountId}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
@@ -136,15 +133,11 @@ namespace LoopringAPI
         public async Task<string> UpdateApiKey(string l2Pk, string apiKey, string accountId)
         {
             string requestBody = "{\"accountId\":" + accountId + "}";
-
-            var signatureBase = "";
-            signatureBase += "POST&" + UrlEncodeUpperCase(_apiUrl + Constants.ApiKeyUrl) + "&";
-            var parameterString = requestBody;
-            signatureBase += UrlEncodeUpperCase(parameterString);
-            var message = SHA256Helper.CalculateSHA256HashNumber(signatureBase);
-
-            var signer = new Eddsa(message, l2Pk);
-            var signedMessage = signer.Sign();
+            var signedMessage = EddsaSignUrl(
+                l2Pk,
+                HttpMethod.Post,
+                null,
+                requestBody);
 
             var url = $"{_apiUrl}{Constants.ApiKeyUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
@@ -163,8 +156,6 @@ namespace LoopringAPI
         }
 
         #endregion
-
-
         #region apiKey
 
         /// <summary>
@@ -246,7 +237,6 @@ namespace LoopringAPI
             }
         }
         #endregion
-
         #region apiKeyL1L2
         public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
@@ -325,6 +315,46 @@ namespace LoopringAPI
             if (httpResult.Content != null)
                 throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString() + " | " + (await httpResult.Content.ReadAsStringAsync()));
             throw new System.Exception("Error from Loopring API: " + httpResult.StatusCode.ToString());
+        }
+
+        private BigInteger CreateSha256Signature(HttpMethod method, List<(string Key,string Value)> queryParams, string postBody)
+        {
+            var signatureBase = "";
+            var parameterString = "";
+            if (method == HttpMethod.Post)
+            {
+                signatureBase += "POST&";
+                parameterString = postBody;
+            }
+            else if (method == HttpMethod.Get)
+            {
+                signatureBase += "GET&";
+                if (queryParams != null)
+                {
+                    foreach (var parameter in queryParams)
+                    {
+                        parameterString += parameter.Key + "=" + parameter.Value;
+                    }
+                }
+            }
+            else
+                throw new Exception("Http method type not supported");
+
+            signatureBase += UrlEncodeUpperCase(_apiUrl + Constants.ApiKeyUrl) + "&";            
+            signatureBase += UrlEncodeUpperCase(parameterString);
+
+            return SHA256Helper.CalculateSHA256HashNumber(signatureBase);
+        }
+
+        private string EddsaSignUrl(string l2Pk, HttpMethod method, List<(string Key, string Value)> queryParams, string postBody)
+        {
+            var message = CreateSha256Signature(
+                method,
+                queryParams,
+                postBody);
+
+            var signer = new Eddsa(message, l2Pk);
+            return signer.Sign();
         }
         #endregion
     }
