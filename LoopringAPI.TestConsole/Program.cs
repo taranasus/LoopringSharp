@@ -11,7 +11,7 @@ string l2Pk = apiKeys.l2Pk;             // Loopring Private Key (Layer 2 Private
 string l1Pk = apiKeys.l1Pk;             // Ethereum Private Key (Layer 1 Private Key)
 string accountId = apiKeys.accountId;   // The user's accountId
 
-LoopringAPI.Client client = new LoopringAPI.Client(apiKey, l2Pk, l1Pk, apiKeys.useTestNet);
+LoopringAPI.Client client = new LoopringAPI.Client(apiKey, l2Pk, l1Pk, accountId, apiKeys.useTestNet);
 
 #region Ticker
 Console.WriteLine("Testing TICKER: ");
@@ -23,22 +23,37 @@ foreach(var ticker in tickers)
 Console.WriteLine("");
 #endregion
 
+#region Timestamp
+var timestamp = await client.Timestamp();
+Console.WriteLine("Testing timestamp: "+ timestamp);
+Console.WriteLine("");
+#endregion
+
 #region StorageId
 Console.WriteLine("Testing StorageId");
 
-var storageId = await client.StorageId(accountId, 1);
+var storageId = await client.StorageId(1);
 Console.WriteLine("Normal: "+JsonConvert.SerializeObject(storageId));
 
-storageId = await client.StorageId(accountId, 1, 1);
+storageId = await client.StorageId(1, 1);
 Console.WriteLine("MaxNext: " + JsonConvert.SerializeObject(storageId));
+#endregion
+
+#region StorageId
+Console.WriteLine("Testing APIKEYGET");
+
+var apikey = await client.ApiKey();
+Console.WriteLine("Key: " + apikey);
+
+Console.WriteLine();
 #endregion
 
 #region OffChainFee
 Console.WriteLine("Testing OffChainFee - Transfer");
-var fee = await client.OffchainFee(accountId, LoopringAPI.OffChainRequestType.Transfer,null,null);
+var fee = await client.OffchainFee(LoopringAPI.OffChainRequestType.Transfer,null,null);
 Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee));
 Console.WriteLine("Testing OffChainFee - OffchainWithdrawl");
-fee = await client.OffchainFee(accountId, LoopringAPI.OffChainRequestType.OffchainWithdrawl, "LRC", "10000000000");
+fee = await client.OffchainFee(LoopringAPI.OffChainRequestType.OffchainWithdrawl, "LRC", "10000000000");
 Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee));
 
 #endregion
