@@ -113,6 +113,22 @@ namespace LoopringAPI
             return _client.SubmitOrder(_loopringPrivateKey, _apiKey, _accountId, sellCurrency, sellAmmount, buyCurrency, buyAmmount, orderType, poolAddress);
         }
 
+        /// <summary>
+        /// Submit an order to exchange two currencies
+        /// </summary>
+        /// <param name="sellToken">The token you are selling</param>
+        /// <param name="buyToken">The token you are buying</param>
+        /// <param name="allOrNone">Whether the order supports partial fills or not.Currently only supports false as a valid value</param>
+        /// <param name="fillAmountBOrS">Fill size by buy token or by sell token</param>
+        /// <param name="validUntil">Order expiration time, accuracy is in seconds</param>
+        /// <param name="maxFeeBips">Maximum order fee that the user can accept, value range (in ten thousandths) 1 ~ 63</param>
+        /// <param name="clientOrderId">An arbitrary, client-set unique order identifier, max length is 120 bytes</param>
+        /// <param name="orderType">Order types, can be AMM, LIMIT_ORDER, MAKER_ONLY, TAKER_ONLY</param>
+        /// <param name="tradeChannel">	Order channel, can be ORDER_BOOK, AMM_POOL, MIXED</param>
+        /// <param name="taker">Used by the P2P order which user specify the taker, so far its 0x0000000000000000000000000000000000000000</param>
+        /// <param name="poolAddress">The AMM pool address if order type is AMM</param>
+        /// <param name="affiliate">An accountID who will recieve a share of the fee of this order</param>
+        /// <returns>Returns OrderResult which basically contains the status of your transaction after it was succesfully requested</returns>
         public Task<OrderResult> SubmitOrder(
         Token sellToken,
         Token buyToken,

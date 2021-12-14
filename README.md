@@ -39,11 +39,16 @@ As for which endpoint requires what, I'll atempt to make a table bellow with all
 
 |API Call|ApiKey|l1Pk|l2Pk|Description
 |-|-|-|-|-|
+|ExchangeInfo|N|N|N|Gets all sorts of properties about the exchange you're contacting
 |Ticker|N|N|N|Gets the price information for any crypto pair available to trade on Loopring|
 |Timestamp|N|N|N|Returns the relayer's current time in millisecond
 |ApiKey|N|N|Y|Get the ApiKey associated with the user's account
+|CancelOrder|Y|N|Y|Cancels a open exchange / swap order
+|SubmitOrder|Y|N|Y|Submits a new exchange / swap order
 |UpdateApiKey|Y|N|Y|Request a new ApiKey for this user account
 |StorageId|Y|N|N|Fetches the next order id for a given sold token
+|OrderDetails|Y|N|N|Gets the details of one specific order using the hashId
+|OrdersDetails|Y|N|N|Gets a detailed list of multiple orders based on the filtering criteria
 |OffchainFee|Y|N|N|Get how much fee you need to pay right now to carry out a transaction of a specified type
 
 ## LoopringAPI.TestConsole
