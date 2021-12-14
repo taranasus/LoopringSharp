@@ -43,7 +43,7 @@ namespace LoopringAPI
             string url = $"{_apiUrl}{Constants.TickerUrl}?market={string.Join(",", pairs)}";
             using (var httpResult = await _client.GetAsync(url))
             {
-                _ = await IsApiSuccess(httpResult);
+                _ = await ThrowIfHttpFail(httpResult);
                 var resultBody = await httpResult.Content.ReadAsStringAsync();
                 var apiTickersResult = JsonConvert.DeserializeObject<ApiTickersResult>(resultBody);
 
@@ -78,7 +78,7 @@ namespace LoopringAPI
             {
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
-                    _ = await IsApiSuccess(httpResult);
+                    _ = await ThrowIfHttpFail(httpResult);
                     var resultBody = await httpResult.Content.ReadAsStringAsync();
                     var apiresult = JsonConvert.DeserializeObject<ApiTimestampResult>(resultBody);
                     return apiresult.timestamp;
@@ -114,7 +114,7 @@ namespace LoopringAPI
                 httpRequest.Headers.Add("X-API-SIG", signedMessage);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
-                    _ = await IsApiSuccess(httpResult);
+                    _ = await ThrowIfHttpFail(httpResult);
                     var resultBody = await httpResult.Content.ReadAsStringAsync();
                     var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(resultBody);
                     return apiresult.apiKey;
@@ -154,7 +154,7 @@ namespace LoopringAPI
                 httpRequest.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
-                    _ = IsApiSuccess(httpResult);
+                    _ = ThrowIfHttpFail(httpResult);
                     var resultBody = await httpResult.Content.ReadAsStringAsync();
                     var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(resultBody);
                     return apiresult.apiKey;
@@ -300,7 +300,7 @@ namespace LoopringAPI
                     httpRequest.Content = stringContent;
                     using (var httpResult = await _client.SendAsync(httpRequest))
                     {
-                        _ = await IsApiSuccess(httpResult);
+                        _ = await ThrowIfHttpFail(httpResult);
                         var resultBody = await httpResult.Content.ReadAsStringAsync();
                         var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(resultBody);
                         return new Transfer(apiresult);
@@ -317,7 +317,7 @@ namespace LoopringAPI
             return reg.Replace(stringToEncode, m => m.Value.ToUpperInvariant());
         }
 
-        private async Task<bool> IsApiSuccess(HttpResponseMessage httpResult)
+        private async Task<bool> ThrowIfHttpFail(HttpResponseMessage httpResult)
         {
             if (httpResult.IsSuccessStatusCode)
                 return true;
