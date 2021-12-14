@@ -8,14 +8,21 @@ ApiKeys apiKeys = ReadConfigFile();
 // If this is confusing, check the read.me file
 string l2Pk = apiKeys.l2Pk;             // Loopring Private Key (Layer 2 Private Key)
 string l1Pk = apiKeys.l1Pk;             // Ethereum Private Key (Layer 1 Private Key)
-string accountId = apiKeys.accountId;   // The user's accountId
+int accountId = int.Parse(apiKeys.accountId);   // The user's accountId
 
 LoopringAPI.Client client = new LoopringAPI.Client(l2Pk, l1Pk, accountId, apiKeys.useTestNet);
+
+#region Exchange info
+Console.WriteLine("Exchange Info: ");
+var exchangeInfo = await client.ExchangeInfo();
+Console.WriteLine(JsonConvert.SerializeObject(exchangeInfo, Formatting.Indented));
+Console.WriteLine("");
+#endregion
 
 #region Ticker
 Console.WriteLine("Testing TICKER: ");
 var tickers = await client.Ticker("LRC-ETH");
-foreach(var ticker in tickers)
+foreach (var ticker in tickers)
 {
     Console.WriteLine(ticker.PairId + " - ASK: " + ticker.LowestAskPrice);
 }
@@ -24,7 +31,7 @@ Console.WriteLine("");
 
 #region Timestamp
 var timestamp = await client.Timestamp();
-Console.WriteLine("Testing timestamp: "+ timestamp);
+Console.WriteLine("Testing timestamp: " + timestamp);
 Console.WriteLine("");
 #endregion
 
@@ -32,7 +39,7 @@ Console.WriteLine("");
 Console.WriteLine("Testing StorageId");
 
 var storageId = await client.StorageId(1);
-Console.WriteLine("Normal: "+JsonConvert.SerializeObject(storageId));
+Console.WriteLine("Normal: " + JsonConvert.SerializeObject(storageId));
 
 storageId = await client.StorageId(1, 1);
 Console.WriteLine("MaxNext: " + JsonConvert.SerializeObject(storageId));
@@ -46,6 +53,10 @@ Console.WriteLine("Key: " + apikey);
 
 Console.WriteLine();
 #endregion
+
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
 
 #region UpdateApiKey
 Console.WriteLine("Testing APIKEY UPDATE");
@@ -67,17 +78,111 @@ else
 Console.WriteLine();
 #endregion
 
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
 #region OffChainFee
 Console.WriteLine("Testing OffChainFee - Transfer");
-var fee = await client.OffchainFee(LoopringAPI.OffChainRequestType.Transfer,null,null);
-Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee));
+var fee = await client.OffchainFee(LoopringAPI.OffChainRequestType.Transfer, null, null);
+Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee, Formatting.Indented));
 Console.WriteLine("Testing OffChainFee - OffchainWithdrawl");
 fee = await client.OffchainFee(LoopringAPI.OffChainRequestType.OffchainWithdrawl, "LRC", "10000000000");
-Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee));
+Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee, Formatting.Indented));
+Console.WriteLine("");
 
 #endregion
 
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
 Console.ReadLine();
+Console.Clear();
+
+#region Orders
+
+Console.WriteLine("-------- TESTING ORDERS ---------");
+Console.WriteLine("Testing order submit! 0.3 ETH -> 1000 LRC");
+var tradeResult = await client.SubmitOrder(
+        sellToken: new LoopringAPI.Token() { tokenId = 0, /*ETH*/ volume = "30000000000000000" /* 0.03 ETH */  },
+        buyToken: new LoopringAPI.Token() { tokenId = 1, /*LRC*/ volume = "1000000000000000000000" /* 1000 LRC */ },
+        allOrNone: false,
+        fillAmountBOrS: false,
+        validUntil: 1700000000, // Will expire eventually...
+        maxFeeBips: 63,
+        clientOrderId: null,
+        orderType: LoopringAPI.OrderType.TAKER_ONLY,
+        tradeChannel: LoopringAPI.TradeChannel.MIXED
+    );
+
+Console.WriteLine("Testing simple order submit! 0.04 ETH -> 150 LRC");
+var simpleTradeResult = await client.SubmitOrder(
+        sellCurrency: "ETH",
+        sellAmmount: 0.04m,
+        buyCurrency: "LRC",
+        buyAmmount: 150,
+        orderType: LoopringAPI.OrderType.MAKER_ONLY
+    );
+Console.WriteLine("Trade result:");
+Console.WriteLine(JsonConvert.SerializeObject(tradeResult, Formatting.Indented));
+
+Console.WriteLine("Simple Trade Result:");
+Console.WriteLine(JsonConvert.SerializeObject(simpleTradeResult, Formatting.Indented));
+Console.WriteLine("");
+
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
+Console.WriteLine("Gonna take a 1 second pause here...");
+System.Threading.Thread.Sleep(1000);
+Console.WriteLine("");
+
+Console.WriteLine("Let's get the details around those trades: ");
+Console.WriteLine("Normal Order:");
+var normalTradeDetails = await client.OrderDetails(tradeResult.hash);
+Console.WriteLine(JsonConvert.SerializeObject(normalTradeDetails, Formatting.Indented));
+Console.WriteLine("Simple Order:");
+var simpleTradeDetails = await client.OrderDetails(simpleTradeResult.hash);
+Console.WriteLine(JsonConvert.SerializeObject(simpleTradeDetails, Formatting.Indented));
+
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
+Console.WriteLine("Cancel both trades if they are still active: ");
+if (normalTradeDetails.status == LoopringAPI.OrderStatus.processing)
+{
+    var normalDeleteResult = await client.CancelOrder(normalTradeDetails.hash, simpleTradeDetails.clientOrderId);
+    Console.WriteLine("CANCELED normal trade");
+    Console.WriteLine(JsonConvert.SerializeObject(normalDeleteResult, Formatting.Indented));
+}
+else
+    Console.WriteLine("Normal trade no longer active anyway...");
+
+if (simpleTradeDetails.status == LoopringAPI.OrderStatus.processing)
+{
+    var simpleDeleteResult = await client.CancelOrder(simpleTradeDetails.hash, simpleTradeDetails.clientOrderId);
+    Console.WriteLine("CANCELED simple trade:");
+    Console.WriteLine(JsonConvert.SerializeObject(simpleDeleteResult, Formatting.Indented));
+}
+else
+    Console.WriteLine("simple trade no longer active anyway...");
+
+Console.WriteLine("Wana get some previous trades to see if the get trades works? [Y]es / [S]kip: ");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{    
+    Console.Clear();
+
+    var results = await client.OrdersDetails(null, 0, 0, null, null, null, null,5);
+    Console.WriteLine("You asked for it: ");
+    Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
+}
+
+    #endregion
+
+
+
+    Console.ReadLine();
 
 static ApiKeys ReadConfigFile()
 {
@@ -95,9 +200,9 @@ static ApiKeys ReadConfigFile()
     result = JsonConvert.DeserializeObject<ApiKeys>(File.ReadAllText("apiKeys.json")) ?? new ApiKeys();
 
     if (string.IsNullOrWhiteSpace(result.l2Pk))
-    {        
-        Console.WriteLine("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: "+ Directory.GetCurrentDirectory()+"\\apiKeys.json");
-        throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\apiKeys.json");        
+    {
+        Console.WriteLine("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\apiKeys.json");
+        throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\apiKeys.json");
     }
     return result;
 }

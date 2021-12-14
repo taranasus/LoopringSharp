@@ -15,6 +15,5 @@
         public string LowestAskPrice { get; set; }
         public string BaseFeeAmmount { get; set; }
         public string QuoteFeeAmount { get; set; }
-
     }
 }

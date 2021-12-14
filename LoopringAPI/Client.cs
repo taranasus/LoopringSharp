@@ -9,7 +9,7 @@ namespace LoopringAPI
         private string _apiKey;
         private string _ethPrivateKey;
         private string _loopringPrivateKey;
-        private string _accountId;
+        private int _accountId;
         private SecureClient _client;
 
         /// <summary>
@@ -19,7 +19,7 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey, string accountId, bool useTestNet)
+        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey, int accountId, bool useTestNet)
         {
             _apiKey = apiKey;
             _loopringPrivateKey = loopringPrivateKey;
@@ -34,7 +34,7 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string loopringPrivateKey, string ethPrivateKey, string accountId, bool useTestNet)
+        public Client(string loopringPrivateKey, string ethPrivateKey, int accountId, bool useTestNet)
         {
             _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
@@ -63,6 +63,15 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// Return various configurations of Loopring.io
+        /// </summary>
+        /// <returns>Fees, exchange address, all sort of useful stuff</returns>
+        public Task<ExchangeInfo> ExchangeInfo()
+        {
+            return _client.ExchangeInfo();
+        }
+
+        /// <summary>
         /// Get the ApiKey associated with the user's account.
         /// </summary>
         /// <returns>The api key</returns>
@@ -70,6 +79,56 @@ namespace LoopringAPI
         public Task<string> ApiKey()
         {
             return _client.ApiKey(_loopringPrivateKey, _accountId);
+        }
+
+        /// <summary>
+        /// Submit an order to exchange two currencies, but with all the nonsense removed
+        /// </summary>
+        /// <param name="orderHash">The hash of the order you wish to nuke.</param>
+        /// <param name="clientOrderId">The unique order ID of the client</param>
+        /// <returns>Returns OrderResult which basically contains the status of your transaction after the cancel was succesfully requested</returns>
+        public Task<OrderResult> CancelOrder(string orderHash, string clientOrderId)
+        {
+            return _client.DeleteOrder(_loopringPrivateKey, _apiKey, _accountId, orderHash, clientOrderId);
+        }
+
+        /// <summary>
+        /// Submit an order to exchange two currencies, but with all the nonsense removed
+        /// </summary>
+        /// <param name="sellCurrency">The name of the token you are selling (ETH, LRC, USDT, etc)</param>
+        /// <param name="sellAmmount">How much of that token you are selling</param>
+        /// <param name="buyCurrency">The name of the token you are buying (ETH, LRC, USDT, etc)</param>
+        /// <param name="buyAmmount">How much of that token you are buying</param>        
+        /// <param name="orderType">Order types, can be AMM, LIMIT_ORDER, MAKER_ONLY, TAKER_ONLY</param>
+        /// <param name="poolAddress">The AMM pool address if order type is AMM</param>
+        /// <returns>Returns OrderResult which basically contains the status of your transaction after it was succesfully requested</returns>
+        public Task<OrderResult> SubmitOrder(
+        string sellCurrency,
+        decimal sellAmmount,
+        string buyCurrency,
+        decimal buyAmmount,
+        OrderType orderType,
+        string poolAddress = null)
+        {
+            return _client.SubmitOrder(_loopringPrivateKey, _apiKey, _accountId, sellCurrency, sellAmmount, buyCurrency, buyAmmount, orderType, poolAddress);
+        }
+
+        public Task<OrderResult> SubmitOrder(
+        Token sellToken,
+        Token buyToken,
+        bool allOrNone,
+        bool fillAmountBOrS,
+        int validUntil,
+        int maxFeeBips = 20,
+        string clientOrderId = null,
+        OrderType? orderType = null,
+        TradeChannel? tradeChannel = null,
+        string taker = null,
+        string poolAddress = null,
+        string affiliate = null)
+
+        {
+            return _client.SubmitOrder(_loopringPrivateKey, _apiKey, _accountId, sellToken, buyToken, allOrNone, fillAmountBOrS, validUntil, maxFeeBips, clientOrderId, orderType, tradeChannel, taker, poolAddress, affiliate);
         }
 
         /// <summary>
@@ -98,6 +157,17 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// Get the details of an order based on order hash.
+        /// </summary>        
+        /// <param name="orderHash">The hash of the worder for which you want details</param>
+        /// <returns>OrderDetails object filled with awesome order details</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public Task<OrderDetails> OrderDetails(string orderHash)
+        {
+            return _client.OrderDetails(_apiKey, _accountId, orderHash);
+        }
+
+        /// <summary>
         /// Get how much fee you need to pay right now to carry out a transaction of a specified type
         /// </summary>        
         /// <param name="accountId">Loopring account identifier</param>
@@ -108,6 +178,33 @@ namespace LoopringAPI
         public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
         {
             return _client.OffchainFee(_apiKey, _accountId, requestType, tokenSymbol, amount);
+        }
+
+        /// <summary>
+        /// Get a list of orders satisfying certain criteria.
+        /// </summary>
+        /// <param name="market">Trading pair (ex. Trading pair)</param>
+        /// <param name="start">Lower bound of order's creation timestamp in millisecond (ex. 1567053142000)</param>
+        /// <param name="end">Upper bound of order's creation timestamp in millisecond (ex. 1567053242000)</param>
+        /// <param name="side">"BUY" or "SELL"</param>
+        /// <param name="statuses">Order statuses to search by</param>
+        /// <param name="orderTypes">Order types to search by</param>
+        /// <param name="tradeChannels">Trade channels to search by</param>
+        /// <param name="limit">How many results per call? Default 50</param>
+        /// <param name="offset">How many results to skip? Default 0 </param>
+        /// <returns>List of OrderDetails objects containing the searched-for items</returns>
+        public Task<List<OrderDetails>> OrdersDetails(
+            string market,
+            long start,
+            long end,
+            Side? side,
+            List<OrderStatus> statuses,
+            List<OrderType> orderTypes,
+            List<TradeChannel> tradeChannels,
+            int limit = 50,
+            int offset = 0)
+        {
+            return _client.OrdersDetails(_apiKey,_accountId, market,start, end, side, statuses, orderTypes, tradeChannels, limit, offset);
         }
     }
 }
