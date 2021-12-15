@@ -689,7 +689,10 @@ namespace LoopringAPI
 
         public static BigInteger ParseHexUnsigned(string toParse)
         {
-            return BigInteger.Parse("0" + toParse, System.Globalization.NumberStyles.HexNumber);
+            var parsResult = BigInteger.Parse(toParse, System.Globalization.NumberStyles.HexNumber);
+            if(parsResult == 0)
+                parsResult = BigInteger.Parse("0" + toParse, System.Globalization.NumberStyles.HexNumber);
+            return parsResult;
         }
     }
 
