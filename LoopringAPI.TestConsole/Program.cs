@@ -170,7 +170,7 @@ else
 Console.WriteLine("Wana get some previous trades to see if the get trades works? [Y]es / [S]kip: ");
 choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
-{    
+{
     Console.Clear();
 
     var results = await client.OrdersDetails(5);
@@ -178,11 +178,9 @@ if (choice.ToLower().StartsWith("y"))
     Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
 }
 
-    #endregion
+#endregion
 
-
-
-    Console.ReadLine();
+Console.ReadLine();
 
 static ApiKeys ReadConfigFile()
 {

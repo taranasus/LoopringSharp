@@ -296,9 +296,9 @@ namespace LoopringAPI
             int MAX_INPUT = 11;
             var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
 
-            BigInteger itaker = string.IsNullOrWhiteSpace(request.taker) ? 0 : BigInteger.Parse(request.taker, System.Globalization.NumberStyles.HexNumber);
+            BigInteger itaker = string.IsNullOrWhiteSpace(request.taker) ? 0 : ParseHexUnsigned(request.taker);
             int ifillAmountBOrS = (fillAmountBOrS ? 1 : 0);
-            var exchange = BigInteger.Parse(request.exchange.Substring(2, request.exchange.Length - 2), System.Globalization.NumberStyles.HexNumber);
+            var exchange = ParseHexUnsigned(request.exchange.Substring(2, request.exchange.Length - 2));
 
             BigInteger[] inputs = {
                 exchange,
@@ -552,14 +552,14 @@ namespace LoopringAPI
             int MAX_INPUT = 13;
             var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
             BigInteger[] inputs = {
-                BigInteger.Parse(request.exchange, System.Globalization.NumberStyles.HexNumber),
+                ParseHexUnsigned(request.exchange),
                 (BigInteger)request.payerId,
                 (BigInteger)request.payeeId,
                 (BigInteger)request.token.tokenId,
                 BigInteger.Parse(request.token.volume),
                 (BigInteger)request.maxFee.tokenId,
                 BigInteger.Parse(request.maxFee.volume),
-                BigInteger.Parse(request.payeeAddress, System.Globalization.NumberStyles.HexNumber),
+                ParseHexUnsigned(request.payeeAddress),
                 0,
                 0,
                 (BigInteger)request.validUnitl,
@@ -686,6 +686,11 @@ namespace LoopringAPI
         }
 
         public long GetUnixTimestamp() => (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+
+        public static BigInteger ParseHexUnsigned(string toParse)
+        {
+            return BigInteger.Parse("0" + toParse, System.Globalization.NumberStyles.HexNumber);
+        }
     }
 
 }
