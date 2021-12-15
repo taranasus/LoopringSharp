@@ -485,16 +485,17 @@ namespace LoopringAPI
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <returns>List of OrderDetails objects containing the searched-for items</returns>
         public async Task<List<OrderDetails>> OrdersDetails(string apiKey, 
-            int accountId, 
-            string market, 
-            long start, 
-            long end, 
-            Side? side, 
-            List<OrderStatus> statuses, 
-            List<OrderType> orderTypes, 
-            List<TradeChannel> tradeChannels, 
-            int limit = 50, 
-            int offset = 0)
+            int accountId,
+            int limit = 50,
+            int offset = 0,
+            string market=null, 
+            long start=0, 
+            long end=0, 
+            Side? side=0, 
+            List<OrderStatus> statuses=null, 
+            List<OrderType> orderTypes=null, 
+            List<TradeChannel> tradeChannels=null
+            )
         {
             var url = $"{_apiUrl}{Constants.OrdersUrl}?accountId={accountId}";
             if (!string.IsNullOrWhiteSpace(market))

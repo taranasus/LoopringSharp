@@ -173,7 +173,7 @@ if (choice.ToLower().StartsWith("y"))
 {    
     Console.Clear();
 
-    var results = await client.OrdersDetails(null, 0, 0, null, null, null, null,5);
+    var results = await client.OrdersDetails(5);
     Console.WriteLine("You asked for it: ");
     Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
 }
