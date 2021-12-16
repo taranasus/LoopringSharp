@@ -538,8 +538,6 @@ namespace LoopringAPI
         #region apiKeyL1L2
         public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
-            throw new NotImplementedException("Still working on it...");
-
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
             if (string.IsNullOrWhiteSpace(l2Pk))
@@ -547,9 +545,7 @@ namespace LoopringAPI
             if (string.IsNullOrWhiteSpace(l1Pk))
                 throw new System.Exception("Transfer REQUIRES a valid Eth Wallet Layer 1 Private key");
 
-            string apiSig = ""; //Need to generate            
-
-            int MAX_INPUT = 13;
+            int MAX_INPUT = 12;
             var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
             BigInteger[] inputs = {
                 ParseHexUnsigned(request.exchange),
@@ -559,23 +555,24 @@ namespace LoopringAPI
                 BigInteger.Parse(request.token.volume),
                 (BigInteger)request.maxFee.tokenId,
                 BigInteger.Parse(request.maxFee.volume),
-                ParseHexUnsigned(request.payeeAddress),
+                ParseHexUnsigned(request.payeeAddr),
                 0,
                 0,
                 (BigInteger)request.validUnitl,
                 (BigInteger)request.storageId
             };
+            
+            var poseidonHash = poseidonHasher.CalculatePoseidonHash(inputs);
+
+            var signer = new Eddsa(poseidonHash, l2Pk);
+            var signedMessage = signer.Sign();
 
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
-
-            var signer = new Eddsa(poseidonHasher.CalculatePoseidonHash(inputs), l2Pk);
-            var signedMessage = signer.Sign(apiRequest);
             apiRequest.eddsaSignature = signedMessage;
 
-            // TODO : Compare Eddsa with python result
-
-            // TODO : Implement ECDSA
-
+            EIP712Helper helper = new EIP712Helper("Loopring Protocol", "3.6.0", 1, request.exchange);
+            string apiSig = helper.GenerateTransactionXAIPSIG(apiRequest,l1Pk);
+            apiRequest.ecdsaSignature = apiSig;
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
@@ -596,6 +593,60 @@ namespace LoopringAPI
                 }
             }
         }
+
+        public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress, string toAddress, string token, decimal value, string feeToken, string memo)
+        {
+            var amount = (value * 1000000000000000000m).ToString("0");
+            var feeamountresult = await OffchainFee(apiKey, accountId, OffChainRequestType.Transfer, feeToken, amount);
+            var feeamount= feeamountresult.fees.Where(w => w.token == feeToken).First().fee;
+            
+
+            TransferRequest req = new TransferRequest()
+            {
+                exchange = (await ExchangeInfo()).exchangeAddress,
+                maxFee = new Token()
+                {
+                    tokenId = Constants.TokenIDMapper[feeToken],
+                    volume = feeamount
+                },
+                token = new Token()
+                {
+                    tokenId = Constants.TokenIDMapper[token],
+                    volume = amount
+                },
+                payeeAddr = toAddress,
+                payerAddr = fromAddress,
+                payeeId = 0,
+                payerId = accountId,
+                storageId = (await StorageId(apiKey, accountId, Constants.TokenIDMapper[token])).offchainId,
+                validUnitl = GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds
+            };
+
+            //req = new TransferRequest()
+            //{
+            //    exchange = "0x2e76EBd1c7c0C8e7c2B875b6d505a260C525d25e",
+            //    maxFee = new Token()
+            //    {
+            //        tokenId = 1,
+            //        volume = "5120000000000000"
+            //    },
+            //    token = new Token()
+            //    {
+            //        tokenId = 1,
+            //        volume = "1000000000000000000"
+            //    },
+            //    payeeAddr = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e",
+            //    payerAddr = "0x452386e0516cC1600E9F43c719d0c80c6aBc51F9",
+            //    payeeId = 0,
+            //    payerId = 11201,
+            //    storageId = 3,
+            //    validUnitl = 1642248560
+            //};
+            //memo = "aaaa";
+
+            return await Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null);
+        }
+
         #endregion
 
         #region private methods
@@ -679,21 +730,29 @@ namespace LoopringAPI
         }
         #endregion
 
+        #region public methods
+
         public void LoadTokenMapper()
         {
-            Constants.TokenIDMapper.Add("ETH", 0);
-            Constants.TokenIDMapper.Add("LRC", 1);
+            if (Constants.TokenIDMapper.Count == 0)
+            {
+                Constants.TokenIDMapper.Add("ETH", 0);
+                Constants.TokenIDMapper.Add("LRC", 1);
+            }
         }
 
-        public long GetUnixTimestamp() => (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        public int GetUnixTimestamp() => (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
 
         public static BigInteger ParseHexUnsigned(string toParse)
         {
+            toParse = toParse.Replace("0x", "");
             var parsResult = BigInteger.Parse(toParse, System.Globalization.NumberStyles.HexNumber);
-            if(parsResult == 0)
+            if(parsResult < 0)
                 parsResult = BigInteger.Parse("0" + toParse, System.Globalization.NumberStyles.HexNumber);
             return parsResult;
         }
+
+        #endregion
     }
 
 }

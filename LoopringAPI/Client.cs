@@ -9,6 +9,7 @@ namespace LoopringAPI
         private string _apiKey;
         private string _ethPrivateKey;
         private string _loopringPrivateKey;
+        private string _ethAddress;
         private int _accountId;
         private SecureClient _client;
 
@@ -19,13 +20,14 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey, int accountId, bool useTestNet)
+        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey, int accountId, string ethAddress, bool useTestNet)
         {
             _apiKey = apiKey;
             _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
             _client = new SecureClient(useTestNet);
             _accountId = accountId;
+            _ethAddress = ethAddress;
         }
 
         /// <summary>
@@ -34,13 +36,14 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string loopringPrivateKey, string ethPrivateKey, int accountId, bool useTestNet)
+        public Client(string loopringPrivateKey, string ethPrivateKey, int accountId, string ethAddress, bool useTestNet)
         {
             _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
             _client = new SecureClient(useTestNet);
             _accountId = accountId;
             _apiKey = ApiKey().Result;
+            _ethAddress = ethAddress;
         }
 
         /// <summary>
@@ -220,7 +223,18 @@ namespace LoopringAPI
             List<OrderType> orderTypes = null,
             List<TradeChannel> tradeChannels = null)
         {
-            return _client.OrdersDetails(_apiKey,_accountId, limit, offset, market,start, end, side, statuses, orderTypes, tradeChannels);
+            return _client.OrdersDetails(_apiKey, _accountId, limit, offset, market, start, end, side, statuses, orderTypes, tradeChannels);
+        }
+
+
+        public Task<Transfer> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
+        {
+            return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo);
+        }
+
+        public async Task<Transfer> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
+        {
+            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo);
         }
     }
 }

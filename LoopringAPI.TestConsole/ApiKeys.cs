@@ -11,6 +11,7 @@ namespace LoopringAPI.TestConsole
         public string l1Pk { get; set; }
         public string l2Pk { get; set; }
         public string accountId { get; set; }
+        public string ethAddress { get; set; }
         public bool useTestNet { get; set; }
     }
 }

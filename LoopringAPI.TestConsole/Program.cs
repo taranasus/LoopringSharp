@@ -1,16 +1,49 @@
-﻿using LoopringAPI.TestConsole;
+﻿using LoopringAPI;
+using LoopringAPI.TestConsole;
 using Newtonsoft.Json;
+using PoseidonSharp;
+using System.Numerics;
 
 Console.WriteLine("Hello, Loops!");
 
-ApiKeys apiKeys = ReadConfigFile();
+ApiKeys apiKeys = ReadConfigFile(false) ;
 
-// If this is confusing, check the read.me file
-string l2Pk = apiKeys.l2Pk;             // Loopring Private Key (Layer 2 Private Key)
-string l1Pk = apiKeys.l1Pk;             // Ethereum Private Key (Layer 1 Private Key)
-int accountId = int.Parse(apiKeys.accountId);   // The user's accountId
+LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.l2Pk, apiKeys.l1Pk, int.Parse(apiKeys.accountId), apiKeys.ethAddress, apiKeys.useTestNet);
 
-LoopringAPI.Client client = new LoopringAPI.Client(l2Pk, l1Pk, accountId, apiKeys.useTestNet);
+#region TestTransfer
+Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ontinue / [S]kip");
+var choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    string transfertoAddress = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e";
+    //transfertoAddress = "0x865281bF6cF78060d18E71aedaA9a5c9532B947a";
+    Console.WriteLine("TYPE RECEPIENT ADDRESS BELLOW:");
+    Console.Write("[DEFAULT: " + transfertoAddress + "] ");
+    string potentialNewAddress = Console.ReadLine();
+    if (potentialNewAddress.StartsWith("0x"))
+    {
+        transfertoAddress = potentialNewAddress;
+        Console.WriteLine("Destination address changed to: " + transfertoAddress);
+    }
+    Console.WriteLine("BEGINNING TRANSFER!");
+    var transferResult = await client.Transfer(transfertoAddress, "LRC", 1m, "LRC", "aaaa");
+
+    Console.WriteLine("TRANSFER COMPLETE:");
+    Console.WriteLine(JsonConvert.SerializeObject(transferResult, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping Transfer test as it costs MONEY!");
+}
+
+Console.WriteLine();
+#endregion
+
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
+Environment.Exit(0);   
 
 #region Exchange info
 Console.WriteLine("Exchange Info: ");
@@ -62,7 +95,7 @@ Console.Clear();
 Console.WriteLine("Testing APIKEY UPDATE");
 Console.WriteLine("WARNING! WARNING WARNING WARNING! THIS WILL GENERATE A NEW API KEY ON YOUR WALLET! YOU WILL NEED TO USE THAT KEY GOING FORWARD.");
 Console.Write("Are you sure you want to continue with this test? [Y]es / [S]kip: ");
-var choice = Console.ReadLine();
+choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
 {
     apikey = await client.UpdateApiKey();
@@ -182,10 +215,16 @@ if (choice.ToLower().StartsWith("y"))
 
 Console.ReadLine();
 
-static ApiKeys ReadConfigFile()
+static ApiKeys ReadConfigFile(bool prod)
 {
     ApiKeys result;
-    if (!File.Exists("apiKeys.json"))
+    string filename = "apiKeys.json";
+    if(prod)
+    {
+        filename = "apiKeysProd.json";
+    }
+
+    if (!File.Exists(filename))
     {
         result = new ApiKeys()
         {
@@ -193,15 +232,35 @@ static ApiKeys ReadConfigFile()
             l2Pk = "",
             useTestNet = false,
         };
-        File.WriteAllText("apiKeys.json", JsonConvert.SerializeObject(result, Formatting.Indented));
+        File.WriteAllText(filename, JsonConvert.SerializeObject(result, Formatting.Indented));
     }
-    result = JsonConvert.DeserializeObject<ApiKeys>(File.ReadAllText("apiKeys.json")) ?? new ApiKeys();
+    result = JsonConvert.DeserializeObject<ApiKeys>(File.ReadAllText(filename)) ?? new ApiKeys();
 
     if (string.IsNullOrWhiteSpace(result.l2Pk))
     {
-        Console.WriteLine("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\apiKeys.json");
-        throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\apiKeys.json");
+        Console.WriteLine("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\"+ filename);
+        throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\"+ filename);
     }
     return result;
 }
 
+static void TestConsole()
+{
+    var tr = new ApiTransferRequest()
+    {
+        exchange = "0x2e76EBd1c7c0C8e7c2B875b6d505a260C525d25e",
+        payerId = 11201,
+        payerAddr = "0x452386e0516cC1600E9F43c719d0c80c6aBc51F9",
+        payeeId = 0,
+        payeeAddr = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e",
+        token = new Token() { tokenId = 1, volume = "1000000000000000000" },
+        maxFee = new Token() { tokenId = 1, volume = "5120000000000000" },
+        storageId = 3,
+        validUntil = 1642248560,
+        eddsaSignature = "0x1ec683caf7280cd3c0d24c640491f92836ca8ee129ae22e72b668c6cc82c8d990d4ecfed0ffd4d3cbe6cafcc20a4f5ef961822b88156f63ef875c27958ba84560016edb0d479fdc43fc2ab7afc00b9fbd6852f0f80c982949842fae5751db6b1"
+    };
+
+    EIP712Helper helper = new EIP712Helper("Loopring Protocol", "3.6.0", 1, "0x2e76EBd1c7c0C8e7c2B875b6d505a260C525d25e");
+    helper.GenerateTransactionXAIPSIG(tr, "0x5ce27884b99146b4d67a3d3c5ea9566401bdc11f1f561b54d62c0e4a516d7aa0");    
+
+}
