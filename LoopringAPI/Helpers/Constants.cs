@@ -16,5 +16,12 @@ namespace LoopringAPI
         public static string ExchangeInfo = "api/v3/exchange/info";
         public static string OrderUrl = "api/v3/order";
         public static string OrdersUrl = "api/v3/orders";
+
+        public static string EIP721DomainName = "Loopring Protocol";
+        public static string EIP721DomainVersion = "3.6.0";
+        public static int EIP721DomainChainId = 1;
+
+        public static string HttpHeaderAPIKeyName = "X-API-KEY";
+        public static string HttpHeaderAPISigName = "X-API-SIG";
     }
 }

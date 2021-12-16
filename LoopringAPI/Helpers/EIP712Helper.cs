@@ -32,19 +32,6 @@ namespace LoopringAPI
 
             string primaryTypeName = "Transfer";
 
-            var transferLrc = new TransferLRC()
-            {
-                from = transferRequest.payerAddr,
-                to = transferRequest.payeeAddr,
-                tokenID = transferRequest.token.tokenId,
-                amount = BigInteger.Parse(transferRequest.token.volume),
-                feeTokenID = transferRequest.maxFee.tokenId,
-                maxFee = BigInteger.Parse(transferRequest.maxFee.volume),
-                validUntil = transferRequest.validUntil,
-                storageID = transferRequest.storageId
-            };
-
-
             TypedData data = new TypedData();
             data.Domain = exchangeDomain;
             data.PrimaryType = primaryTypeName;
@@ -62,9 +49,9 @@ namespace LoopringAPI
                         new MemberDescription {Name = "from", Type = "address"},            // payerAddr
                         new MemberDescription {Name = "to", Type = "address"},              // payeeAddr
                         new MemberDescription {Name = "tokenID", Type = "uint16"},          // token.tokenId 
-                        new MemberDescription {Name = "amount", Type = "uint96"},           // token.volume (MUST BE INT)
+                        new MemberDescription {Name = "amount", Type = "uint96"},           // token.volume 
                         new MemberDescription {Name = "feeTokenID", Type = "uint16"},       // maxFee.tokenId
-                        new MemberDescription {Name = "maxFee", Type = "uint96"},           // maxFee.volume (MUST BE INT)
+                        new MemberDescription {Name = "maxFee", Type = "uint96"},           // maxFee.volume
                         new MemberDescription {Name = "validUntil", Type = "uint32"},       // validUntill
                         new MemberDescription {Name = "storageID", Type = "uint32"}         // storageId
                     },
@@ -72,16 +59,14 @@ namespace LoopringAPI
             };
             data.Message = new[]
             {
-
-                            new MemberValue {TypeName = "address", Value = transferRequest.payerAddr},
-                            new MemberValue {TypeName = "address", Value = transferRequest.payeeAddr},
-                            new MemberValue {TypeName = "uint16", Value = transferRequest.token.tokenId},
-                            new MemberValue {TypeName = "uint96", Value = long.Parse(transferRequest.token.volume)},
-                            new MemberValue {TypeName = "uint16", Value = transferRequest.maxFee.tokenId},
-                            new MemberValue {TypeName = "uint96", Value = long.Parse(transferRequest.maxFee.volume)},
-                            new MemberValue {TypeName = "uint32", Value = transferRequest.validUntil},
-                            new MemberValue {TypeName = "uint32", Value = transferRequest.storageId},
-
+                new MemberValue {TypeName = "address", Value = transferRequest.payerAddr},
+                new MemberValue {TypeName = "address", Value = transferRequest.payeeAddr},
+                new MemberValue {TypeName = "uint16", Value = transferRequest.token.tokenId},
+                new MemberValue {TypeName = "uint96", Value = long.Parse(transferRequest.token.volume)},
+                new MemberValue {TypeName = "uint16", Value = transferRequest.maxFee.tokenId},
+                new MemberValue {TypeName = "uint96", Value = long.Parse(transferRequest.maxFee.volume)},
+                new MemberValue {TypeName = "uint32", Value = transferRequest.validUntil},
+                new MemberValue {TypeName = "uint32", Value = transferRequest.storageId},
             };
 
             var signerKey = new Nethereum.Signer.EthECKey(ethPrivateKey.Replace("0x", ""));
@@ -108,15 +93,5 @@ namespace LoopringAPI
         }
     }
 
-    public class TransferLRC
-    {
-        public string from { get; set; }
-        public string to { get; set; }
-        public BigInteger tokenID { get; set; }
-        public BigInteger amount { get; set; }
-        public BigInteger feeTokenID { get; set; }
-        public BigInteger maxFee { get; set; }
-        public BigInteger validUntil { get; set; }
-        public BigInteger storageID { get; set; }
-    }
+
 }

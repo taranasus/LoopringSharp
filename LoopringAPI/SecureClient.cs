@@ -145,7 +145,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.ApiKeyUrl}?accountId={accountId}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-SIG", signedMessage);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPISigName, signedMessage);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -180,8 +180,8 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.OrderUrl}?accountId={accountId}&clientOrderId={clientOrderId}&orderHash={orderHash}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Delete, url))
             {
-                httpRequest.Headers.Add("X-API-SIG", signedMessage);
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPISigName, signedMessage);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -321,7 +321,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.OrderUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
 
                 using (var stringContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json"))
                 {
@@ -358,8 +358,8 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.ApiKeyUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                httpRequest.Headers.Add("X-API-SIG", signedMessage);
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPISigName, signedMessage);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 httpRequest.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
@@ -391,7 +391,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.StorageIdUrl}?accountId={accountId}&sellTokenId={sellTokenId}&maxNext={maxNext}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -424,7 +424,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.OrderUrl}?accountId={accountId}&orderHash={orderHash}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -453,7 +453,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.OffchainFeeUrl}?accountId={accountId}&requestType={(int)requestType}&tokenSymbol={tokenSymbol}&amount={amount}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = ThrowIfHttpFail(httpResult);
@@ -519,7 +519,7 @@ namespace LoopringAPI
 
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -536,6 +536,18 @@ namespace LoopringAPI
 
         #endregion
         #region apiKeyL1L2
+        /// <summary>
+        /// Send some tokens to anyone else on L2
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="l1Pk">Ethereum Private Key</param>
+        /// <param name="request">The basic transaction details needed in order to actually do a transaction</param>
+        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
+        /// <param name="clientId">(Optional)A user-defined id. It's similar to the memo field? Again the original documentation is not very clear</param>
+        /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
+        /// <returns>An object containing the status of the transfer at the end of the request</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
@@ -570,15 +582,14 @@ namespace LoopringAPI
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
             apiRequest.eddsaSignature = signedMessage;
 
-            EIP712Helper helper = new EIP712Helper("Loopring Protocol", "3.6.0", 1, request.exchange);
-            string apiSig = helper.GenerateTransactionXAIPSIG(apiRequest,l1Pk);
-            apiRequest.ecdsaSignature = apiSig;
+            EIP712Helper helper = new EIP712Helper(Constants.EIP721DomainName, Constants.EIP721DomainVersion, Constants.EIP721DomainChainId, request.exchange);            
+            apiRequest.ecdsaSignature = helper.GenerateTransactionXAIPSIG(apiRequest, l1Pk);
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
-                httpRequest.Headers.Add("X-API-SIG", apiSig);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature);
 
                 using (var stringContent = new StringContent(JsonConvert.SerializeObject(apiRequest), Encoding.UTF8, "application/json"))
                 {
@@ -594,12 +605,26 @@ namespace LoopringAPI
             }
         }
 
-        public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress, string toAddress, string token, decimal value, string feeToken, string memo)
+        /// <summary>
+        /// Send some tokens to anyone else on L2
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="l1Pk">Ethereum Private Key</param>
+        /// <param name="accountId">Loopring account identifier</param>
+        /// <param name="fromAddress">The loopring address that's doing the sending</param>
+        /// <param name="toAddress">The loopring address that's doing the receiving</param>
+        /// <param name="token">What token is being sent</param>
+        /// <param name="value">And how much of that token are we sending</param>
+        /// <param name="feeToken">In what token are we paying the fee</param>
+        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
+        /// <returns>An object containing the status of the transfer at the end of the request</returns>
+        public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress, 
+            string toAddress, string token, decimal value, string feeToken, string memo)
         {
             var amount = (value * 1000000000000000000m).ToString("0");
             var feeamountresult = await OffchainFee(apiKey, accountId, OffChainRequestType.Transfer, feeToken, amount);
-            var feeamount= feeamountresult.fees.Where(w => w.token == feeToken).First().fee;
-            
+            var feeamount= feeamountresult.fees.Where(w => w.token == feeToken).First().fee;            
 
             TransferRequest req = new TransferRequest()
             {
@@ -621,29 +646,6 @@ namespace LoopringAPI
                 storageId = (await StorageId(apiKey, accountId, Constants.TokenIDMapper[token])).offchainId,
                 validUnitl = GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds
             };
-
-            //req = new TransferRequest()
-            //{
-            //    exchange = "0x2e76EBd1c7c0C8e7c2B875b6d505a260C525d25e",
-            //    maxFee = new Token()
-            //    {
-            //        tokenId = 1,
-            //        volume = "5120000000000000"
-            //    },
-            //    token = new Token()
-            //    {
-            //        tokenId = 1,
-            //        volume = "1000000000000000000"
-            //    },
-            //    payeeAddr = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e",
-            //    payerAddr = "0x452386e0516cC1600E9F43c719d0c80c6aBc51F9",
-            //    payeeId = 0,
-            //    payerId = 11201,
-            //    storageId = 3,
-            //    validUnitl = 1642248560
-            //};
-            //memo = "aaaa";
-
             return await Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null);
         }
 

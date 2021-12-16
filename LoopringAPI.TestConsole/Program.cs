@@ -11,12 +11,11 @@ ApiKeys apiKeys = ReadConfigFile(false) ;
 LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.l2Pk, apiKeys.l1Pk, int.Parse(apiKeys.accountId), apiKeys.ethAddress, apiKeys.useTestNet);
 
 #region TestTransfer
-Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ontinue / [S]kip");
+Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ontinue / [S]kip (WARNING! THIS CURRENTLY DOESN'T WORK ON THE TESTNET BECAUSE... I'm not sure. Bug was raised here https://github.com/Loopring/hello_loopring/issues/22 . Ironically, it works with the real / production api. Use at own risk boys.");
 var choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
 {
-    string transfertoAddress = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e";
-    //transfertoAddress = "0x865281bF6cF78060d18E71aedaA9a5c9532B947a";
+    string transfertoAddress = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e";    
     Console.WriteLine("TYPE RECEPIENT ADDRESS BELLOW:");
     Console.Write("[DEFAULT: " + transfertoAddress + "] ");
     string potentialNewAddress = Console.ReadLine();

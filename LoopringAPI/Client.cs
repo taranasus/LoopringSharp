@@ -226,12 +226,29 @@ namespace LoopringAPI
             return _client.OrdersDetails(_apiKey, _accountId, limit, offset, market, start, end, side, statuses, orderTypes, tradeChannels);
         }
 
-
+        /// <summary>
+        /// Send some tokens to anyone else on L2
+        /// </summary>
+        /// <param name="request">The basic transaction details needed in order to actually do a transaction</param>
+        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
+        /// <param name="clientId">(Optional)A user-defined id. It's similar to the memo field? Again the original documentation is not very clear</param>
+        /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
+        /// <returns>An object containing the status of the transfer at the end of the request</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public Task<Transfer> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
         {
             return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo);
         }
 
+        /// <summary>
+        /// Send some tokens to anyone else on L2
+        /// </summary>
+        /// <param name="toAddress">The loopring address that's doing the receiving</param>
+        /// <param name="token">What token is being sent</param>
+        /// <param name="value">And how much of that token are we sending</param>
+        /// <param name="feeToken">In what token are we paying the fee</param>
+        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
+        /// <returns>An object containing the status of the transfer at the end of the request</returns>
         public async Task<Transfer> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
         {
             return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo);
