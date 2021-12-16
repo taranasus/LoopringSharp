@@ -2,13 +2,16 @@
 using LoopringAPI.TestConsole;
 using Newtonsoft.Json;
 using PoseidonSharp;
+using System.Net;
+using System.Net.Security;
 using System.Numerics;
+using System.Security.Cryptography.X509Certificates;
 
 Console.WriteLine("Hello, Loops!");
 
 ApiKeys apiKeys = ReadConfigFile(false) ;
 
-LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.l2Pk, apiKeys.l1Pk, int.Parse(apiKeys.accountId), apiKeys.ethAddress, apiKeys.useTestNet);
+LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.l2Pk, apiKeys.l1Pk, apiKeys.apiUrl);
 
 #region TestTransfer
 Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ontinue / [S]kip (WARNING! THIS CURRENTLY DOESN'T WORK ON THE TESTNET BECAUSE... I'm not sure. Bug was raised here https://github.com/Loopring/hello_loopring/issues/22 . Ironically, it works with the real / production api. Use at own risk boys.");
@@ -26,7 +29,6 @@ if (choice.ToLower().StartsWith("y"))
     }
     Console.WriteLine("BEGINNING TRANSFER!");
     var transferResult = await client.Transfer(transfertoAddress, "LRC", 1m, "LRC", "aaaa");
-
     Console.WriteLine("TRANSFER COMPLETE:");
     Console.WriteLine(JsonConvert.SerializeObject(transferResult, Formatting.Indented));
 }
@@ -229,7 +231,9 @@ static ApiKeys ReadConfigFile(bool prod)
         {
             l1Pk = "",
             l2Pk = "",
-            useTestNet = false,
+            accountId = "",
+            apiUrl = "",
+            ethAddress = ""
         };
         File.WriteAllText(filename, JsonConvert.SerializeObject(result, Formatting.Indented));
     }
@@ -260,6 +264,6 @@ static void TestConsole()
     };
 
     EIP712Helper helper = new EIP712Helper("Loopring Protocol", "3.6.0", 1, "0x2e76EBd1c7c0C8e7c2B875b6d505a260C525d25e");
-    helper.GenerateTransactionXAIPSIG(tr, "0x5ce27884b99146b4d67a3d3c5ea9566401bdc11f1f561b54d62c0e4a516d7aa0");    
+    helper.GenerateTransferSignature(tr, "0x5ce27884b99146b4d67a3d3c5ea9566401bdc11f1f561b54d62c0e4a516d7aa0");    
 
 }

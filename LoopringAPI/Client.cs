@@ -20,12 +20,12 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey, int accountId, string ethAddress, bool useTestNet)
+        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey, int accountId, string ethAddress, string apiUrl)
         {
+            _client = new SecureClient(apiUrl);
             _apiKey = apiKey;
             _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
-            _client = new SecureClient(useTestNet);
             _accountId = accountId;
             _ethAddress = ethAddress;
         }
@@ -36,14 +36,14 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string loopringPrivateKey, string ethPrivateKey, int accountId, string ethAddress, bool useTestNet)
+        public Client(string loopringPrivateKey, string ethPrivateKey, string apiUrl)
         {
+            _client = new SecureClient(apiUrl);
             _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
-            _client = new SecureClient(useTestNet);
-            _accountId = accountId;
-            _apiKey = ApiKey().Result;
-            _ethAddress = ethAddress;
+            _ethAddress = EIP712Helper.GetPublicAddress(ethPrivateKey);
+            _accountId = GetAccountInfo().Result.accountId;
+            _apiKey = ApiKey().Result;            
         }
 
         /// <summary>
@@ -53,6 +53,18 @@ namespace LoopringAPI
         public Task<long> Timestamp()
         {
             return _client.Timestamp();
+        }
+
+        /// <summary>
+        /// Returns data associated with the user's exchange account.
+        /// </summary>
+        /// <param name="address">(optional) Ethereum / Loopring public address. If let null it will get your own account info</param>
+        /// <returns>A lot of data about the account</returns>
+        public Task<Account> GetAccountInfo(string address = null)
+        {
+            if(address == null)
+                return _client.GetAccountInfo(_ethAddress);
+            return _client.GetAccountInfo(address);
         }
 
         /// <summary>

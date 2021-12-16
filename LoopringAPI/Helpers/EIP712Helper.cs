@@ -13,29 +13,27 @@ namespace LoopringAPI
 {
     public class EIP712Helper
     {
-        private Domain exchangeDomain;
-        private BigInteger _chainId;
+        private Domain exchangeDomain;        
 
         public EIP712Helper(string name, string version, BigInteger chainId, string verifyingContract)
         {
             exchangeDomain = new Domain();
             exchangeDomain.Name = name;
             exchangeDomain.Version = version;
-            exchangeDomain.ChainId = chainId;
-            _chainId = chainId;
+            exchangeDomain.ChainId = chainId;            
             exchangeDomain.VerifyingContract = verifyingContract;
         }
 
-        public string GenerateTransactionXAIPSIG(ApiTransferRequest transferRequest, string ethPrivateKey)
+        public string GenerateTransferSignature(ApiTransferRequest transferRequest, string ethPrivateKey)
         {
             Eip712TypedDataSigner singer = new Eip712TypedDataSigner();
 
             string primaryTypeName = "Transfer";
 
-            TypedData data = new TypedData();
-            data.Domain = exchangeDomain;
-            data.PrimaryType = primaryTypeName;
-            data.Types = new Dictionary<string, MemberDescription[]>()
+            TypedData eip712TypedData = new TypedData();
+            eip712TypedData.Domain = exchangeDomain;
+            eip712TypedData.PrimaryType = primaryTypeName;
+            eip712TypedData.Types = new Dictionary<string, MemberDescription[]>()
             {
                 ["EIP712Domain"] = new[]
                     {
@@ -57,41 +55,29 @@ namespace LoopringAPI
                     },
 
             };
-            data.Message = new[]
+            eip712TypedData.Message = new[]
             {
                 new MemberValue {TypeName = "address", Value = transferRequest.payerAddr},
                 new MemberValue {TypeName = "address", Value = transferRequest.payeeAddr},
                 new MemberValue {TypeName = "uint16", Value = transferRequest.token.tokenId},
-                new MemberValue {TypeName = "uint96", Value = long.Parse(transferRequest.token.volume)},
+                new MemberValue {TypeName = "uint96", Value = BigInteger.Parse(transferRequest.token.volume)},
                 new MemberValue {TypeName = "uint16", Value = transferRequest.maxFee.tokenId},
-                new MemberValue {TypeName = "uint96", Value = long.Parse(transferRequest.maxFee.volume)},
+                new MemberValue {TypeName = "uint96", Value = BigInteger.Parse(transferRequest.maxFee.volume)},
                 new MemberValue {TypeName = "uint32", Value = transferRequest.validUntil},
                 new MemberValue {TypeName = "uint32", Value = transferRequest.storageId},
             };
 
-            var signerKey = new Nethereum.Signer.EthECKey(ethPrivateKey.Replace("0x", ""));
-            var encrypted2 = singer.EncodeTypedData(data);
-            var signature = signerKey.SignAndCalculateV(Sha3Keccack.Current.CalculateHash(encrypted2));
-            var thing2 = EthECDSASignature.CreateStringSignature(signature);
+            var ethECKey = new Nethereum.Signer.EthECKey(ethPrivateKey.Replace("0x", ""));
+            var encodedTypedData = singer.EncodeTypedData(eip712TypedData);
+            var ECDRSASignature = ethECKey.SignAndCalculateV(Sha3Keccack.Current.CalculateHash(encodedTypedData));
+            var serializedECDRSASignature = EthECDSASignature.CreateStringSignature(ECDRSASignature);
 
-            return thing2 + "02";
+            return serializedECDRSASignature + "0" + (int)EthSignType.EIP_712;
         }
-
-        public string HahsPacked(string clsEIP191Header, string domainHahs, string dataHash)
+        public static string GetPublicAddress(string privateKey)
         {
-            string keccakstring = clsEIP191Header + domainHahs + dataHash;
-            string afterhash = Web3.Sha3(keccakstring);
-            return afterhash;
-        }
-
-        public static string ByteArrayToString(byte[] ba)
-        {
-            StringBuilder hex = new StringBuilder(ba.Length * 2);
-            foreach (byte b in ba)
-                hex.AppendFormat("{0:x2}", b);
-            return hex.ToString();
+            var key = new EthECKey(privateKey.HexToByteArray(), true);
+            return key.GetPublicAddress();
         }
     }
-
-
 }

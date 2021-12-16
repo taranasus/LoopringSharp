@@ -19,21 +19,21 @@ namespace LoopringAPI
         string _apiUrl;
         string _exchange;
         HttpClient _client;
-        public SecureClient(bool useTestNet)
+
+        public SecureClient(string apiUrl)
         {
+            var httpClientHandler = new HttpClientHandler();
+            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) =>
+            {
+                return true;
+            };
+            _client = new HttpClient(httpClientHandler);
+            
+            _apiUrl = apiUrl;
+
             // TODO: Replace with an api call to get all of them from the exchange
             LoadTokenMapper();
-
-            _client = new HttpClient();
-            if (useTestNet)
-            {
-                _apiUrl = "https://uat2.loopring.io/";
-            }
-            else
-            {
-                _apiUrl = "https://api3.loopring.io/";
-            }
-
+            
             _exchange = ExchangeInfo().Result.exchangeAddress;
         }
 
@@ -88,6 +88,36 @@ namespace LoopringAPI
                     var resultBody = await httpResult.Content.ReadAsStringAsync();
                     var apiresult = JsonConvert.DeserializeObject<ApiTimestampResult>(resultBody);
                     return apiresult.timestamp;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns data associated with the user's exchange account.
+        /// </summary>
+        /// <param name="address">Ethereum / Loopring public address</param>
+        /// <returns>A lot of data about the account</returns>
+        public async Task<Account> GetAccountInfo(string address)
+        {
+            var url = $"{_apiUrl}{Constants.AccountUrl}?owner={address}";
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                using (var httpResult = await _client.SendAsync(httpRequest))
+                {
+                    _ = await ThrowIfHttpFail(httpResult);
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();
+                    var apiresult = JsonConvert.DeserializeObject<ApiAccountResult>(resultBody);
+                    return new Account()
+                    {
+                        accountId = apiresult.accountId,
+                        frozen = apiresult.frozen,
+                        keyNonce = apiresult.keyNonce,
+                        keySeed = apiresult.keySeed,
+                        nonce = apiresult.nonce,
+                        owner = apiresult.owner,
+                        publicKey = apiresult.publicKey,
+                        tags = apiresult.tags
+                    };
                 }
             }
         }
@@ -583,7 +613,7 @@ namespace LoopringAPI
             apiRequest.eddsaSignature = signedMessage;
 
             EIP712Helper helper = new EIP712Helper(Constants.EIP721DomainName, Constants.EIP721DomainVersion, Constants.EIP721DomainChainId, request.exchange);            
-            apiRequest.ecdsaSignature = helper.GenerateTransactionXAIPSIG(apiRequest, l1Pk);
+            apiRequest.ecdsaSignature = helper.GenerateTransferSignature(apiRequest, l1Pk);
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
