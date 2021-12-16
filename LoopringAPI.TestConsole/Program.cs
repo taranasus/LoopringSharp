@@ -44,7 +44,7 @@ Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
 Console.ReadLine();
 Console.Clear();
 
-Environment.Exit(0);   
+//Environment.Exit(0);   
 
 #region Exchange info
 Console.WriteLine("Exchange Info: ");
