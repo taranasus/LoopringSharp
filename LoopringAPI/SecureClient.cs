@@ -17,7 +17,7 @@ namespace LoopringAPI
     public class SecureClient
     {
         string _apiUrl;
-        string _exchange;
+        ExchangeInfo _exchange;
         HttpClient _client;
 
         public SecureClient(string apiUrl)
@@ -34,7 +34,7 @@ namespace LoopringAPI
             // TODO: Replace with an api call to get all of them from the exchange
             LoadTokenMapper();
             
-            _exchange = ExchangeInfo().Result.exchangeAddress;
+            _exchange = ExchangeInfo().Result;
         }
 
         #region NoAuthentication
@@ -299,7 +299,7 @@ namespace LoopringAPI
         {
             var request = new ApiSubmitOrderRequest()
             {
-                exchange = _exchange,
+                exchange = _exchange.exchangeAddress,
                 accountId = accountId,
                 storageId = (await StorageId(apiKey, accountId, sellToken.tokenId)).orderId, // MAYBE? NOT SURE
                 sellToken = sellToken,
@@ -587,6 +587,8 @@ namespace LoopringAPI
             if (string.IsNullOrWhiteSpace(l1Pk))
                 throw new System.Exception("Transfer REQUIRES a valid Eth Wallet Layer 1 Private key");
 
+            var account = await GetAccountInfo(request.payerAddr);
+
             int MAX_INPUT = 12;
             var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
             BigInteger[] inputs = {
@@ -602,8 +604,8 @@ namespace LoopringAPI
                 0,
                 (BigInteger)request.validUnitl,
                 (BigInteger)request.storageId
-            };
-            
+            };            
+
             var poseidonHash = poseidonHasher.CalculatePoseidonHash(inputs);
 
             var signer = new Eddsa(poseidonHash, l2Pk);
@@ -612,7 +614,7 @@ namespace LoopringAPI
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
             apiRequest.eddsaSignature = signedMessage;
 
-            EIP712Helper helper = new EIP712Helper(Constants.EIP721DomainName, Constants.EIP721DomainVersion, Constants.EIP721DomainChainId, request.exchange);            
+            EIP712Helper helper = new EIP712Helper(Constants.EIP721DomainName, Constants.EIP721DomainVersion, _exchange.chainId, request.exchange);            
             apiRequest.ecdsaSignature = helper.GenerateTransferSignature(apiRequest, l1Pk);
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";

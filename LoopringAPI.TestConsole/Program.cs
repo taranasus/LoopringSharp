@@ -14,7 +14,7 @@ ApiKeys apiKeys = ReadConfigFile(false) ;
 LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.l2Pk, apiKeys.l1Pk, apiKeys.apiUrl);
 
 #region TestTransfer
-Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ontinue / [S]kip (WARNING! THIS CURRENTLY DOESN'T WORK ON THE TESTNET BECAUSE... I'm not sure. Bug was raised here https://github.com/Loopring/hello_loopring/issues/22 . Ironically, it works with the real / production api. Use at own risk boys.");
+Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ontinue / [S]kip");
 var choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
 {
@@ -245,25 +245,4 @@ static ApiKeys ReadConfigFile(bool prod)
         throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\"+ filename);
     }
     return result;
-}
-
-static void TestConsole()
-{
-    var tr = new ApiTransferRequest()
-    {
-        exchange = "0x2e76EBd1c7c0C8e7c2B875b6d505a260C525d25e",
-        payerId = 11201,
-        payerAddr = "0x452386e0516cC1600E9F43c719d0c80c6aBc51F9",
-        payeeId = 0,
-        payeeAddr = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e",
-        token = new Token() { tokenId = 1, volume = "1000000000000000000" },
-        maxFee = new Token() { tokenId = 1, volume = "5120000000000000" },
-        storageId = 3,
-        validUntil = 1642248560,
-        eddsaSignature = "0x1ec683caf7280cd3c0d24c640491f92836ca8ee129ae22e72b668c6cc82c8d990d4ecfed0ffd4d3cbe6cafcc20a4f5ef961822b88156f63ef875c27958ba84560016edb0d479fdc43fc2ab7afc00b9fbd6852f0f80c982949842fae5751db6b1"
-    };
-
-    EIP712Helper helper = new EIP712Helper("Loopring Protocol", "3.6.0", 1, "0x2e76EBd1c7c0C8e7c2B875b6d505a260C525d25e");
-    helper.GenerateTransferSignature(tr, "0x5ce27884b99146b4d67a3d3c5ea9566401bdc11f1f561b54d62c0e4a516d7aa0");    
-
 }
