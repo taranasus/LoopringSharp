@@ -13,10 +13,16 @@ namespace LoopringAPI
         public static string TimestampUrl = "api/v3/timestamp";
         public static string TransferUrl = "api/v3/transfer";
         public static string ApiKeyUrl = "api/v3/apiKey";
-        public static string ExchangeInfo = "api/v3/exchange/info";
+        
         public static string OrderUrl = "api/v3/order";
         public static string OrdersUrl = "api/v3/orders";
         public static string AccountUrl = "api/v3/account";
+        public static string MarketsUrl = "api/v3/exchange/markets";
+        public static string TokensUrl = "api/v3/exchange/tokens";
+        public static string InfoUrl = "api/v3/exchange/info";
+        public static string DepthUrl = "api/v3/depth";
+        public static string CandlestickUrl = "api/v3/candlestick";
+        public static string PriceUrl = "api/v3/price";
 
         public static string EIP721DomainName = "Loopring Protocol";
         public static string EIP721DomainVersion = "3.6.0";

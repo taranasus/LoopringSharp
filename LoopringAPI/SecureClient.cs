@@ -30,9 +30,8 @@ namespace LoopringAPI
             _client = new HttpClient(httpClientHandler);
             
             _apiUrl = apiUrl;
-
-            // TODO: Replace with an api call to get all of them from the exchange
-            LoadTokenMapper();
+            
+            _ = GetTokenId("ETH");
             
             _exchange = ExchangeInfo().Result;
         }
@@ -128,7 +127,7 @@ namespace LoopringAPI
         /// <returns>Fees, exchange address, all sort of useful stuff</returns>
         public async Task<ExchangeInfo> ExchangeInfo()
         {
-            var url = $"{_apiUrl}{Constants.ExchangeInfo}";
+            var url = $"{_apiUrl}{Constants.InfoUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
                 using (var httpResult = await _client.SendAsync(httpRequest))
@@ -149,6 +148,154 @@ namespace LoopringAPI
                         updateFees = apiresult.updateFees,
                         withdrawalFees = apiresult.withdrawalFees
                     };
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get a list of all the markets available on the exchange
+        /// </summary>
+        /// <returns>List of all the markets available on the exchange and their configurations</returns>
+        public async Task<List<Market>> GetMarkets()
+        {
+            var url = $"{_apiUrl}{Constants.MarketsUrl}";
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                using (var httpResult = await _client.SendAsync(httpRequest))
+                {
+                    _ = await ThrowIfHttpFail(httpResult);
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();
+                    var apiresult = JsonConvert.DeserializeObject<ApiMarketsGetResult>(resultBody);
+                    return apiresult.markets;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns the configurations of all supported tokens, including Ether.
+        /// </summary>
+        /// <returns>List of all the supported tokens and their configurations</returns>
+        public async Task<List<TokenConfig>> GetTokens()
+        {
+            var url = $"{_apiUrl}{Constants.TokensUrl}";
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                using (var httpResult = await _client.SendAsync(httpRequest))
+                {
+                    _ = await ThrowIfHttpFail(httpResult);
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();                    
+                    return JsonConvert.DeserializeObject<List<TokenConfig>>(resultBody);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns the order book of a given trading pair.
+        /// </summary>
+        /// <param name="market">The ID of a trading pair.</param>
+        /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
+        /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
+        /// <returns>Returns the order book of a given trading pair.</returns>
+        public async Task<Depth> GetDepth(string market, int level = 2, int limit = 50)
+        {
+            var url = $"{_apiUrl}{Constants.DepthUrl}?market={market}&level={level}&limit={limit}";
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                using (var httpResult = await _client.SendAsync(httpRequest))
+                {
+                    _ = await ThrowIfHttpFail(httpResult);
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();
+                    var apiresult = JsonConvert.DeserializeObject<ApiDepthResult>(resultBody);
+                    return new Depth()
+                    {
+                        asks = apiresult.asks,
+                        market = apiresult.market,
+                        bids = apiresult.bids,
+                        timestamp = apiresult.timestamp,
+                        version = apiresult.version
+                    };
+                }
+            }
+        }
+
+        /// <summary>
+        /// Return the candlestick data of a given trading pair.
+        /// </summary>
+        /// <param name="market">Trading pair ID, multi-market is not supported</param>
+        /// <param name="intervals">Candlestick interval</param>
+        /// <param name="start">(Optional)Start time in milliseconds</param>
+        /// <param name="end">(Optional)End time in milliseconds</param>
+        /// <param name="limit">(Optional)Number of data points. If more data points are available, the API will only return the first 'limit' data points.</param>
+        /// <returns>List of candlesticks... what else?</returns>
+        public async Task<List<Candlestick>> GetCandlesticks(string market, Intervals intervals, string start=null, string end=null, int? limit = null)
+        {
+            var interval = "";
+            switch (intervals)
+            {
+                case Intervals.min1:
+                case Intervals.min15:
+                case Intervals.min30:
+                case Intervals.min5:
+                    interval = intervals.ToString().Replace("min", "") + "min";
+                    break;
+                case Intervals.hr4:
+                case Intervals.hr2:
+                case Intervals.hr1:
+                case Intervals.hr12:
+                    interval = intervals.ToString().Replace("hr", "") + "hr";
+                    break;
+                case Intervals.w1:
+                    interval = "1w";
+                    break;
+                case Intervals.d1:
+                    interval = "1d";
+                    break;
+            }
+
+            var url = $"{_apiUrl}{Constants.CandlestickUrl}?market={market}&interval={interval}";
+            if (start != null)
+                url += "&start=" + start;
+            if (end != null)
+                url += "&end=" + end;
+            if (limit.HasValue)
+                url += "&limit=" + limit.Value;
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                using (var httpResult = await _client.SendAsync(httpRequest))
+                {
+                    _ = await ThrowIfHttpFail(httpResult);
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();
+                    var apiresult = JsonConvert.DeserializeObject<ApiCandlestickResult>(resultBody);
+                    return apiresult.candlesticks.Select(s => new Candlestick()
+                    {
+                        startTime = s[0],
+                        numberOfTransactions = long.Parse(s[1]),
+                        open = decimal.Parse(s[2]),
+                        close = decimal.Parse(s[3]),
+                        high = decimal.Parse(s[4]),
+                        low = decimal.Parse(s[5]),
+                        baseTokenVolume = decimal.Parse(s[6]),
+                        quoteTokenVolume = decimal.Parse(s[7]),
+                    }).ToList();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Fetches, for all the tokens supported by Loopring, their fiat price.
+        /// </summary>
+        /// <param name="legal">The fiat currency to uses. Currently the following values are supported: USD,CNY,JPY,EUR,GBP,HKD</param>
+        /// <returns>Fiat price of all the tokens in the system</returns>
+        public async Task<List<Price>> GetPrice(LegalCurrencies legal)
+        {
+            var url = $"{_apiUrl}{Constants.PriceUrl}?legal={legal.ToString()}";
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                using (var httpResult = await _client.SendAsync(httpRequest))
+                {
+                    _ = await ThrowIfHttpFail(httpResult);
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<ApiPriceResult>(resultBody).prices;
                 }
             }
         }
@@ -249,8 +396,8 @@ namespace LoopringAPI
                 tradeChannel = TradeChannel.ORDER_BOOK;
 
             return SubmitOrder(l2Pk, apiKey, accountId,
-                new Token() { tokenId = Constants.TokenIDMapper[sellCurrency], volume = (sellAmmount * 1000000000000000000m).ToString("0") },
-                new Token() { tokenId = Constants.TokenIDMapper[buyCurrency], volume = (buyAmmount * 1000000000000000000m).ToString("0") },
+                new Token() { tokenId = GetTokenId(sellCurrency), volume = (sellAmmount * 1000000000000000000m).ToString("0") },
+                new Token() { tokenId = GetTokenId(buyCurrency), volume = (buyAmmount * 1000000000000000000m).ToString("0") },
                 false,
                 false,
                 GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds, // one year
@@ -651,19 +798,19 @@ namespace LoopringAPI
                 exchange = (await ExchangeInfo()).exchangeAddress,
                 maxFee = new Token()
                 {
-                    tokenId = Constants.TokenIDMapper[feeToken],
+                    tokenId = GetTokenId(feeToken),
                     volume = feeamount
                 },
                 token = new Token()
                 {
-                    tokenId = Constants.TokenIDMapper[token],
+                    tokenId = GetTokenId(token),
                     volume = amount
                 },
                 payeeAddr = toAddress,
                 payerAddr = fromAddress,
                 payeeId = 0,
                 payerId = accountId,
-                storageId = (await StorageId(apiKey, accountId, Constants.TokenIDMapper[token])).offchainId,
+                storageId = (await StorageId(apiKey, accountId, GetTokenId(token))).offchainId,
                 validUnitl = GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds
             };
             return await Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null);
@@ -754,13 +901,20 @@ namespace LoopringAPI
 
         #region public methods
 
-        public void LoadTokenMapper()
+        public int GetTokenId(string token)
         {
-            if (Constants.TokenIDMapper.Count == 0)
+            if (Constants.TokenIDMapper.Count == 0 || !Constants.TokenIDMapper.ContainsKey(token))
             {
-                Constants.TokenIDMapper.Add("ETH", 0);
-                Constants.TokenIDMapper.Add("LRC", 1);
+                var tokens = GetTokens().Result;
+                foreach(var rtoken in tokens)
+                {
+                    if (!Constants.TokenIDMapper.ContainsKey(rtoken.symbol))
+                        Constants.TokenIDMapper.Add(rtoken.symbol, rtoken.tokenId);
+                    else
+                        Constants.TokenIDMapper[rtoken.symbol] = rtoken.tokenId;
+                }
             }
+            return Constants.TokenIDMapper[token];
         }
 
         public int GetUnixTimestamp() => (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;

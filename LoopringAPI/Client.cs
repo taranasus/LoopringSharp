@@ -43,7 +43,7 @@ namespace LoopringAPI
             _ethPrivateKey = ethPrivateKey;
             _ethAddress = ECDSAHelper.GetPublicAddress(ethPrivateKey);
             _accountId = GetAccountInfo().Result.accountId;
-            _apiKey = ApiKey().Result;            
+            _apiKey = ApiKey().Result;
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace LoopringAPI
         /// <returns>A lot of data about the account</returns>
         public Task<Account> GetAccountInfo(string address = null)
         {
-            if(address == null)
+            if (address == null)
                 return _client.GetAccountInfo(_ethAddress);
             return _client.GetAccountInfo(address);
         }
@@ -94,6 +94,61 @@ namespace LoopringAPI
         public Task<string> ApiKey()
         {
             return _client.ApiKey(_loopringPrivateKey, _accountId);
+        }
+
+        /// <summary>
+        /// Get a list of all the markets available on the exchange
+        /// </summary>
+        /// <returns>List of all the markets available on the exchange and their configurations</returns>
+        public Task<List<Market>> GetMarkets()
+        {
+            return _client.GetMarkets();
+
+        }
+
+        /// <summary>
+        /// Return the candlestick data of a given trading pair.
+        /// </summary>
+        /// <param name="market">Trading pair ID, multi-market is not supported</param>
+        /// <param name="intervals">Candlestick interval</param>
+        /// <param name="start">(Optional)Start time in milliseconds</param>
+        /// <param name="end">(Optional)End time in milliseconds</param>
+        /// <param name="limit">(Optional)Number of data points. If more data points are available, the API will only return the first 'limit' data points.</param>
+        /// <returns>List of candlesticks... what else?</returns>
+        public Task<List<Candlestick>> GetCandlesticks(string market, Intervals intervals, string start = null, string end = null, int? limit = null)
+        {
+            return _client.GetCandlesticks(market, intervals, start, end, limit);
+        }
+        /// <summary>
+        /// Fetches, for all the tokens supported by Loopring, their fiat price.
+        /// </summary>
+        /// <param name="legal">The fiat currency to uses. Currently the following values are supported: USD,CNY,JPY,EUR,GBP,HKD</param>
+        /// <returns>Fiat price of all the tokens in the system</returns>
+        public Task<List<Price>> GetPrice(LegalCurrencies legal)
+        {
+            return _client.GetPrice(legal);
+        }
+
+
+            /// <summary>
+            /// Returns the configurations of all supported tokens, including Ether.
+            /// </summary>
+            /// <returns>List of all the supported tokens and their configurations</returns>
+            public Task<List<TokenConfig>> GetTokens()
+        {
+            return _client.GetTokens();
+        }
+
+        /// <summary>
+        /// Returns the order book of a given trading pair.
+        /// </summary>
+        /// <param name="market">The ID of a trading pair.</param>
+        /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
+        /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
+        /// <returns>Returns the order book of a given trading pair.</returns>
+        public Task<Depth> GetDepth(string market, int level = 2, int limit = 50)
+        {
+            return _client.GetDepth(market, level, limit);
         }
 
         /// <summary>

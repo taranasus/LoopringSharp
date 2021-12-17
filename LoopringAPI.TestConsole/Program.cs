@@ -214,6 +214,55 @@ if (choice.ToLower().StartsWith("y"))
 
 #endregion
 
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
+#region market
+
+Console.WriteLine("Wanna see the order book for ETH-USDT [Y]es / [S]kip: ");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.Clear();
+
+    var results = await client.GetDepth("ETH-USDT");
+    Console.WriteLine("You asked for it: ");
+    Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
+}
+
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
+Console.WriteLine("Wanna see some candlesticks? Yeah? [Y]es / [S]kip: ");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.Clear();
+
+    var results = await client.GetCandlesticks("ETH-USDT", Intervals.d1);
+    Console.WriteLine("You asked for it: ");
+    Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
+}
+
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
+Console.WriteLine("Wanna see some token prices? Yeah? [Y]es / [S]kip: ");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.Clear();
+
+    var results = await client.GetPrice(LegalCurrencies.GBP);
+    Console.WriteLine("You asked for it: ");
+    Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
+}
+
+#endregion
+
 Console.ReadLine();
 
 static ApiKeys ReadConfigFile(bool prod)
