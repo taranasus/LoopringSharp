@@ -39,17 +39,24 @@ As for which endpoint requires what, I'll atempt to make a table bellow with all
 
 |API Call|ApiKey|l1Pk|l2Pk|Description
 |-|-|-|-|-|
-|ExchangeInfo|N|N|N|Gets all sorts of properties about the exchange you're contacting
 |Ticker|N|N|N|Gets the price information for any crypto pair available to trade on Loopring|
 |Timestamp|N|N|N|Returns the relayer's current time in millisecond
+|GetAccountInfo|N|N|N|Returns data associated with the user's exchange account
+|ExchangeInfo|N|N|N|Gets all sorts of properties about the exchange you're contacting
+|GetMarkets|N|N|N|Get a list of all the markets available on the exchange
+|GetTokens|N|N|N|Returns the configurations of all supported tokens, including Ether.
+|GetDepth|N|N|N|Returns the order book of a given trading pair.
+|GetCandlesticks|N|N|N|Return the candlestick data of a given trading pair.
+|GetPrice|N|N|N|Fetches, for all the tokens supported by Loopring, their fiat price.
 |ApiKey|N|N|Y|Get the ApiKey associated with the user's account
-|CancelOrder|Y|N|Y|Cancels a open exchange / swap order
+|DeleteOrder|Y|N|Y|Cancels a open exchange / swap order
 |SubmitOrder|Y|N|Y|Submits a new exchange / swap order
 |UpdateApiKey|Y|N|Y|Request a new ApiKey for this user account
 |StorageId|Y|N|N|Fetches the next order id for a given sold token
+|OffchainFee|Y|N|N|Get how much fee you need to pay right now to carry out a transaction of a specified type
 |OrderDetails|Y|N|N|Gets the details of one specific order using the hashId
 |OrdersDetails|Y|N|N|Gets a detailed list of multiple orders based on the filtering criteria
-|OffchainFee|Y|N|N|Get how much fee you need to pay right now to carry out a transaction of a specified type
+|Transfer|Y|Y|Y|Send some tokens to anyone else on L2
 
 ## LoopringAPI.TestConsole
 
