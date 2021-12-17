@@ -324,14 +324,10 @@ namespace LoopringAPI
                 request.affiliate = affiliate;
 
             int MAX_INPUT = 11;
-            var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
-
-            BigInteger itaker = string.IsNullOrWhiteSpace(request.taker) ? 0 : ParseHexUnsigned(request.taker);
-            int ifillAmountBOrS = (fillAmountBOrS ? 1 : 0);
-            var exchange = ParseHexUnsigned(request.exchange.Substring(2, request.exchange.Length - 2));
+            var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);                      
 
             BigInteger[] inputs = {
-                exchange,
+                ParseHexUnsigned(request.exchange),
                 request.storageId,
                 request.accountId,
                 request.sellToken.tokenId,
@@ -340,13 +336,11 @@ namespace LoopringAPI
                 BigInteger.Parse(request.buyToken.volume),
                 request.validUntil,
                 request.maxFeeBips,
-                ifillAmountBOrS,
-                itaker
+                (fillAmountBOrS ? 1 : 0),
+                string.IsNullOrWhiteSpace(request.taker) ? 0 : ParseHexUnsigned(request.taker)
             };
 
-            var signer = new Eddsa(poseidonHasher.CalculatePoseidonHash(inputs), l2Pk);
-            var signedMessage = signer.Sign();
-            request.eddsaSignature = signedMessage;
+            request.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
 
             var url = $"{_apiUrl}{Constants.OrderUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
@@ -588,9 +582,7 @@ namespace LoopringAPI
                 throw new System.Exception("Transfer REQUIRES a valid Eth Wallet Layer 1 Private key");
 
             var account = await GetAccountInfo(request.payerAddr);
-
-            int MAX_INPUT = 12;
-            var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
+           
             BigInteger[] inputs = {
                 ParseHexUnsigned(request.exchange),
                 (BigInteger)request.payerId,
@@ -606,16 +598,12 @@ namespace LoopringAPI
                 (BigInteger)request.storageId
             };            
 
-            var poseidonHash = poseidonHasher.CalculatePoseidonHash(inputs);
-
-            var signer = new Eddsa(poseidonHash, l2Pk);
-            var signedMessage = signer.Sign();
-
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
-            apiRequest.eddsaSignature = signedMessage;
-
-            EIP712Helper helper = new EIP712Helper(Constants.EIP721DomainName, Constants.EIP721DomainVersion, _exchange.chainId, request.exchange);            
-            apiRequest.ecdsaSignature = helper.GenerateTransferSignature(apiRequest, l1Pk);
+            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);            
+            apiRequest.ecdsaSignature = EIP712Helper.GenerateTransferSignature(              
+                _exchange.chainId, 
+                apiRequest, 
+                l1Pk);
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))

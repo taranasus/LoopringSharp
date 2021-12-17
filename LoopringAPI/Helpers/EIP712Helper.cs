@@ -11,22 +11,15 @@ using Nethereum.Web3;
 
 namespace LoopringAPI
 {
-    public class EIP712Helper
+    public static class EIP712Helper
     {
-        private Domain exchangeDomain;        
-
-        public EIP712Helper(string name, string version, BigInteger chainId, string verifyingContract)
-        {
-            exchangeDomain = new Domain();
-            exchangeDomain.Name = name;
-            exchangeDomain.Version = version;
-            exchangeDomain.ChainId = chainId;            
-            exchangeDomain.VerifyingContract = verifyingContract;
-        }
-
-        public string GenerateTransferSignature(ApiTransferRequest transferRequest, string ethPrivateKey)
-        {
-            Eip712TypedDataSigner singer = new Eip712TypedDataSigner();
+        public static string GenerateTransferSignature(BigInteger chainId, ApiTransferRequest transferRequest, string ethPrivateKey)
+        {             
+            Domain exchangeDomain = new Domain();
+            exchangeDomain.Name = Constants.EIP721DomainName;
+            exchangeDomain.Version = Constants.EIP721DomainVersion;
+            exchangeDomain.ChainId = chainId;
+            exchangeDomain.VerifyingContract = transferRequest.exchange;            
 
             string primaryTypeName = "Transfer";
 
@@ -67,6 +60,12 @@ namespace LoopringAPI
                 new MemberValue {TypeName = "uint32", Value = transferRequest.storageId},
             };
 
+            return GenerateSignature(eip712TypedData, ethPrivateKey);
+        }
+
+        public static string GenerateSignature(TypedData eip712TypedData, string ethPrivateKey)
+        {
+            Eip712TypedDataSigner singer = new Eip712TypedDataSigner();
             var ethECKey = new Nethereum.Signer.EthECKey(ethPrivateKey.Replace("0x", ""));
             var encodedTypedData = singer.EncodeTypedData(eip712TypedData);
             var ECDRSASignature = ethECKey.SignAndCalculateV(Sha3Keccack.Current.CalculateHash(encodedTypedData));
@@ -74,6 +73,7 @@ namespace LoopringAPI
 
             return serializedECDRSASignature + "0" + (int)EthSignType.EIP_712;
         }
+
         public static string GetPublicAddress(string privateKey)
         {
             var key = new EthECKey(privateKey.HexToByteArray(), true);
