@@ -27,12 +27,12 @@ namespace LoopringAPI
             {
                 return true;
             };
-            _client = new HttpClient(httpClientHandler);
-
-            _apiUrl = apiUrl;
-
-            _ = GetTokenId("ETH");
-
+            _client = new HttpClient(httpClientHandler);
+
+            _apiUrl = apiUrl;
+
+            _ = GetTokenId("ETH");
+
             _exchange = ExchangeInfo().Result;
         }
 
@@ -48,24 +48,24 @@ namespace LoopringAPI
             (string, string)[] parameters = { ("market", string.Join(",", pairs)) };
             (string, string)[] headers = null;
 
-            var apiTickersResult = JsonConvert.DeserializeObject<ApiTickersResult>(
-                await HttpGet(Constants.TickerUrl, parameters, headers));
-
-            return apiTickersResult.tickers.Select(s => new Ticker()
-            {
-                PairId = s[0],
-                TimeStamp = s[1],
-                BaseTokenVolume = s[2],
-                QuoteTokenVolume = s[3],
-                OpenPrice = s[4],
-                HeighestPrice = s[5],
-                LowestPrice = s[6],
-                ClosingPrice = s[7],
-                NumberOfTrades = s[8],
-                HighestBidPrice = s[9],
-                LowestAskPrice = s[10],
-                BaseFeeAmmount = s[11],
-                QuoteFeeAmount = s[12]
+            var apiTickersResult = JsonConvert.DeserializeObject<ApiTickersResult>(
+                await HttpGet(Constants.TickerUrl, parameters, headers));
+
+            return apiTickersResult.tickers.Select(s => new Ticker()
+            {
+                PairId = s[0],
+                TimeStamp = s[1],
+                BaseTokenVolume = s[2],
+                QuoteTokenVolume = s[3],
+                OpenPrice = s[4],
+                HeighestPrice = s[5],
+                LowestPrice = s[6],
+                ClosingPrice = s[7],
+                NumberOfTrades = s[8],
+                HighestBidPrice = s[9],
+                LowestAskPrice = s[10],
+                BaseFeeAmmount = s[11],
+                QuoteFeeAmount = s[12]
             }).ToList();
 
 
@@ -73,8 +73,8 @@ namespace LoopringAPI
             using (var httpResult = await _client.GetAsync(url))
             {
                 _ = await ThrowIfHttpFail(httpResult);
-                var resultBody = await httpResult.Content.ReadAsStringAsync();
-
+                var resultBody = await httpResult.Content.ReadAsStringAsync();
+
             }
         }
 
@@ -88,7 +88,7 @@ namespace LoopringAPI
             (string, string)[] parameters = null;
             (string, string)[] headers = null;
 
-            var apiresult = JsonConvert.DeserializeObject<ApiTimestampResult>(
+            var apiresult = JsonConvert.DeserializeObject<ApiTimestampResult>(
                 await HttpGet(Constants.TimestampUrl, parameters, headers));
 
             return apiresult.timestamp;            
@@ -100,23 +100,23 @@ namespace LoopringAPI
         /// <param name="address">Ethereum / Loopring public address</param>
         /// <returns>A lot of data about the account</returns>
         public async Task<Account> GetAccountInfo(string address)
-        {
+        {
             (string, string)[] parameters = {("owner",address) };
             (string, string)[] headers = null;
 
-            var apiresult = JsonConvert.DeserializeObject<ApiAccountResult>(
+            var apiresult = JsonConvert.DeserializeObject<ApiAccountResult>(
                 await HttpGet(Constants.AccountUrl, parameters, headers));
 
-            return new Account()
-            {
-                accountId = apiresult.accountId,
-                frozen = apiresult.frozen,
-                keyNonce = apiresult.keyNonce,
-                keySeed = apiresult.keySeed,
-                nonce = apiresult.nonce,
-                owner = apiresult.owner,
-                publicKey = apiresult.publicKey,
-                tags = apiresult.tags
+            return new Account()
+            {
+                accountId = apiresult.accountId,
+                frozen = apiresult.frozen,
+                keyNonce = apiresult.keyNonce,
+                keySeed = apiresult.keySeed,
+                nonce = apiresult.nonce,
+                owner = apiresult.owner,
+                publicKey = apiresult.publicKey,
+                tags = apiresult.tags
             };           
         }
 
@@ -129,21 +129,21 @@ namespace LoopringAPI
             (string, string)[] parameters = null;
             (string, string)[] headers = null;
 
-            var apiresult = JsonConvert.DeserializeObject<ApiExchangeInfoResult>(
+            var apiresult = JsonConvert.DeserializeObject<ApiExchangeInfoResult>(
                 await HttpGet(Constants.InfoUrl, parameters, headers));
 
-            return new ExchangeInfo()
-            {
-                ammExitFees = apiresult.ammExitFees,
-                chainId = apiresult.chainId,
-                depositAddress = apiresult.depositAddress,
-                exchangeAddress = apiresult.exchangeAddress,
-                fastWithdrawalFees = apiresult.fastWithdrawalFees,
-                onchainFees = apiresult.onchainFees,
-                openAccountFees = apiresult.openAccountFees,
-                transferFees = apiresult.transferFees,
-                updateFees = apiresult.updateFees,
-                withdrawalFees = apiresult.withdrawalFees
+            return new ExchangeInfo()
+            {
+                ammExitFees = apiresult.ammExitFees,
+                chainId = apiresult.chainId,
+                depositAddress = apiresult.depositAddress,
+                exchangeAddress = apiresult.exchangeAddress,
+                fastWithdrawalFees = apiresult.fastWithdrawalFees,
+                onchainFees = apiresult.onchainFees,
+                openAccountFees = apiresult.openAccountFees,
+                transferFees = apiresult.transferFees,
+                updateFees = apiresult.updateFees,
+                withdrawalFees = apiresult.withdrawalFees
             };
         }
 
@@ -152,11 +152,11 @@ namespace LoopringAPI
         /// </summary>
         /// <returns>List of all the markets available on the exchange and their configurations</returns>
         public async Task<List<Market>> GetMarkets()
-        {
+        {
             (string, string)[] parameters = null;
             (string, string)[] headers = null;
 
-            var apiresult = JsonConvert.DeserializeObject<ApiMarketsGetResult>(
+            var apiresult = JsonConvert.DeserializeObject<ApiMarketsGetResult>(
                 await HttpGet(Constants.MarketsUrl, parameters, headers));
 
             return apiresult.markets;           
@@ -171,7 +171,7 @@ namespace LoopringAPI
             (string, string)[] parameters = null;
             (string, string)[] headers = null;
 
-            return  JsonConvert.DeserializeObject<List<TokenConfig>>(
+            return  JsonConvert.DeserializeObject<List<TokenConfig>>(
                 await HttpGet(Constants.TokensUrl, parameters, headers));           
         }
 
@@ -187,16 +187,16 @@ namespace LoopringAPI
             (string, string)[] parameters = { ("market", market), ("level", level.ToString()), ("limit", limit.ToString()) };
             (string, string)[] headers = null;
 
-            var apiresult = JsonConvert.DeserializeObject<ApiDepthResult>(
+            var apiresult = JsonConvert.DeserializeObject<ApiDepthResult>(
                 await HttpGet(Constants.DepthUrl, parameters, headers));
 
-            return new Depth()
-            {
-                asks = apiresult.asks,
-                market = apiresult.market,
-                bids = apiresult.bids,
-                timestamp = apiresult.timestamp,
-                version = apiresult.version
+            return new Depth()
+            {
+                asks = apiresult.asks,
+                market = apiresult.market,
+                bids = apiresult.bids,
+                timestamp = apiresult.timestamp,
+                version = apiresult.version
             };           
         }
 
@@ -221,17 +221,17 @@ namespace LoopringAPI
             };
             (string, string)[] headers = null;
 
-            return JsonConvert.DeserializeObject<ApiCandlestickResult>(
-                await HttpGet(Constants.CandlestickUrl, parameters, headers)).candlesticks.Select(s => new Candlestick()
-                {
-                    startTime = s[0],
-                    numberOfTransactions = long.Parse(s[1]),
-                    open = decimal.Parse(s[2]),
-                    close = decimal.Parse(s[3]),
-                    high = decimal.Parse(s[4]),
-                    low = decimal.Parse(s[5]),
-                    baseTokenVolume = decimal.Parse(s[6]),
-                    quoteTokenVolume = decimal.Parse(s[7]),
+            return JsonConvert.DeserializeObject<ApiCandlestickResult>(
+                await HttpGet(Constants.CandlestickUrl, parameters, headers)).candlesticks.Select(s => new Candlestick()
+                {
+                    startTime = s[0],
+                    numberOfTransactions = long.Parse(s[1]),
+                    open = decimal.Parse(s[2]),
+                    close = decimal.Parse(s[3]),
+                    high = decimal.Parse(s[4]),
+                    low = decimal.Parse(s[5]),
+                    baseTokenVolume = decimal.Parse(s[6]),
+                    quoteTokenVolume = decimal.Parse(s[7]),
                 }).ToList();
 
             
@@ -427,8 +427,8 @@ namespace LoopringAPI
                 request.affiliate = affiliate;
 
             int MAX_INPUT = 11;
-            var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
-
+            var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
+
             BigInteger[] inputs = {
                 ParseHexUnsigned(request.exchange),
                 request.storageId,
@@ -534,6 +534,40 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// Get how much fee you need to pay right now to carry out a transaction of a specified type
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="accountId">Loopring account identifier</param>
+        /// <param name="requestType">Off-chain request type</param>
+        /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
+        /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
+        /// <returns>Returns the fee amount</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public async Task<OffchainFee> OffchainFee(string apiKey, int accountId, OffChainRequestType requestType, string tokenSymbol, string amount)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+
+            var url = $"{_apiUrl}{Constants.OffchainFeeUrl}?accountId={accountId}&requestType={(int)requestType}&tokenSymbol={tokenSymbol}&amount={amount}";
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
+                using (var httpResult = await _client.SendAsync(httpRequest))
+                {
+                    _ = await ThrowIfHttpFail(httpResult);
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();
+                    var apiresult = JsonConvert.DeserializeObject<ApiOffchainFeeResult>(resultBody);
+                    return new OffchainFee()
+                    {
+                        fees = apiresult.fees,
+                        gasPrice = apiresult.gasPrice
+                    };
+                }
+
+            }
+        }
+
+        /// <summary>
         /// Get the details of an order based on order hash.
         /// </summary>
         /// <param name="apiKey">Current Loopring API Key</param>
@@ -561,41 +595,7 @@ namespace LoopringAPI
                 }
             }
         }
-
-        /// <summary>
-        /// Get how much fee you need to pay right now to carry out a transaction of a specified type
-        /// </summary>
-        /// <param name="apiKey">Your Loopring API Key</param>
-        /// <param name="accountId">Loopring account identifier</param>
-        /// <param name="requestType">Off-chain request type</param>
-        /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
-        /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
-        /// <returns>Returns the fee amount</returns>
-        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public async Task<OffchainFee> OffchainFee(string apiKey, int accountId, OffChainRequestType requestType, string tokenSymbol, string amount)
-        {
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
-
-            var url = $"{_apiUrl}{Constants.OffchainFeeUrl}?accountId={accountId}&requestType={(int)requestType}&tokenSymbol={tokenSymbol}&amount={amount}";
-            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
-            {
-                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
-                using (var httpResult = await _client.SendAsync(httpRequest))
-                {
-                    _ = ThrowIfHttpFail(httpResult);
-                    var resultBody = await httpResult.Content.ReadAsStringAsync();
-                    var apiresult = JsonConvert.DeserializeObject<ApiOffchainFeeResult>(resultBody);
-                    return new OffchainFee()
-                    {
-                        fees = apiresult.fees,
-                        gasPrice = apiresult.gasPrice
-                    };
-                }
-
-            }
-        }
-
+        
         /// <summary>
         /// Get a list of orders satisfying certain criteria.
         /// </summary>
@@ -611,16 +611,16 @@ namespace LoopringAPI
         /// <param name="limit">How many results per call? Default 50</param>
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <returns>List of OrderDetails objects containing the searched-for items</returns>
-        public async Task<List<OrderDetails>> OrdersDetails(string apiKey,
+        public async Task<List<OrderDetails>> OrdersDetails(string apiKey,
             int accountId,
             int limit = 50,
             int offset = 0,
-            string market = null,
-            long start = 0,
-            long end = 0,
-            Side? side = 0,
-            List<OrderStatus> statuses = null,
-            List<OrderType> orderTypes = null,
+            string market = null,
+            long start = 0,
+            long end = 0,
+            Side? side = 0,
+            List<OrderStatus> statuses = null,
+            List<OrderType> orderTypes = null,
             List<TradeChannel> tradeChannels = null
             )
         {
@@ -684,8 +684,8 @@ namespace LoopringAPI
             if (string.IsNullOrWhiteSpace(l1Pk))
                 throw new System.Exception("Transfer REQUIRES a valid Eth Wallet Layer 1 Private key");
 
-            var account = await GetAccountInfo(request.payerAddr);
-
+            var account = await GetAccountInfo(request.payerAddr);
+
             BigInteger[] inputs = {
                 ParseHexUnsigned(request.exchange),
                 (BigInteger)request.payerId,
@@ -699,13 +699,13 @@ namespace LoopringAPI
                 0,
                 (BigInteger)request.validUnitl,
                 (BigInteger)request.storageId
-            };
-
+            };
+
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
-            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
-            apiRequest.ecdsaSignature = ECDSAHelper.TransferSign(
-                _exchange.chainId,
-                apiRequest,
+            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
+            apiRequest.ecdsaSignature = ECDSAHelper.TransferSign(
+                _exchange.chainId,
+                apiRequest,
                 l1Pk);
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";
@@ -742,13 +742,13 @@ namespace LoopringAPI
         /// <param name="feeToken">In what token are we paying the fee</param>
         /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
-        public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress,
+        public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress,
             string toAddress, string token, decimal value, string feeToken, string memo)
         {
             var amount = (value * 1000000000000000000m).ToString("0");
             var feeamountresult = await OffchainFee(apiKey, accountId, OffChainRequestType.Transfer, feeToken, amount);
-            var feeamount = feeamountresult.fees.Where(w => w.token == feeToken).First().fee;
-
+            var feeamount = feeamountresult.fees.Where(w => w.token == feeToken).First().fee;
+
             TransferRequest req = new TransferRequest()
             {
                 exchange = (await ExchangeInfo()).exchangeAddress,
@@ -854,40 +854,40 @@ namespace LoopringAPI
             return signer.Sign();
         }
 
-        private async Task<string> HttpGet(string endpoint, (string, string)[] parameters, (string, string)[] headers)
-        {
+        private async Task<string> HttpGet(string endpoint, (string, string)[] parameters, (string, string)[] headers)
+        {
             var url = $"{_apiUrl}{endpoint}";
-            if (parameters != null && parameters.Length > 0)
-            {
-                if (parameters.Any(a => !string.IsNullOrWhiteSpace(a.Item2)))
-                {
-                    url += "?";
-                    foreach (var parameter in parameters)
-                    {
-                        if (!string.IsNullOrWhiteSpace(parameter.Item2))
-                        {
-                            url += parameter.Item1 + "=" + parameter.Item2 + "&";
-                        }
-                    }
-                    url = url.TrimEnd('&');
-                }
+            if (parameters != null && parameters.Length > 0)
+            {
+                if (parameters.Any(a => !string.IsNullOrWhiteSpace(a.Item2)))
+                {
+                    url += "?";
+                    foreach (var parameter in parameters)
+                    {
+                        if (!string.IsNullOrWhiteSpace(parameter.Item2))
+                        {
+                            url += parameter.Item1 + "=" + parameter.Item2 + "&";
+                        }
+                    }
+                    url = url.TrimEnd('&');
+                }
             }
 
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                if (headers != null && headers.Length > 0)
-                {
-                    foreach (var header in headers)
-                    {
-                        httpRequest.Headers.Add(header.Item1, header.Item2);
-                    }
-                }
+                if (headers != null && headers.Length > 0)
+                {
+                    foreach (var header in headers)
+                    {
+                        httpRequest.Headers.Add(header.Item1, header.Item2);
+                    }
+                }
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
-                    return await httpResult.Content.ReadAsStringAsync();
+                    return await httpResult.Content.ReadAsStringAsync();
                 }
-            }
+            }
         }
         #endregion
 
