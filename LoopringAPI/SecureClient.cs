@@ -578,6 +578,40 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// Get how much fee you need to pay right now to carry out a transaction of a specified type
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="accountId">Loopring account identifier</param>
+        /// <param name="requestType">Off-chain request type</param>
+        /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
+        /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
+        /// <returns>Returns the fee amount</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public async Task<OffchainFee> OffchainFee(string apiKey, int accountId, OffChainRequestType requestType, string tokenSymbol, string amount)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+
+            var url = $"{_apiUrl}{Constants.OffchainFeeUrl}?accountId={accountId}&requestType={(int)requestType}&tokenSymbol={tokenSymbol}&amount={amount}";
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
+                using (var httpResult = await _client.SendAsync(httpRequest))
+                {
+                    _ = await ThrowIfHttpFail(httpResult);
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();
+                    var apiresult = JsonConvert.DeserializeObject<ApiOffchainFeeResult>(resultBody);
+                    return new OffchainFee()
+                    {
+                        fees = apiresult.fees,
+                        gasPrice = apiresult.gasPrice
+                    };
+                }
+
+            }
+        }
+
+        /// <summary>
         /// Get the details of an order based on order hash.
         /// </summary>
         /// <param name="apiKey">Current Loopring API Key</param>
@@ -605,41 +639,7 @@ namespace LoopringAPI
                 }
             }
         }
-
-        /// <summary>
-        /// Get how much fee you need to pay right now to carry out a transaction of a specified type
-        /// </summary>
-        /// <param name="apiKey">Your Loopring API Key</param>
-        /// <param name="accountId">Loopring account identifier</param>
-        /// <param name="requestType">Off-chain request type</param>
-        /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
-        /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
-        /// <returns>Returns the fee amount</returns>
-        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public async Task<OffchainFee> OffchainFee(string apiKey, int accountId, OffChainRequestType requestType, string tokenSymbol, string amount)
-        {
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
-
-            var url = $"{_apiUrl}{Constants.OffchainFeeUrl}?accountId={accountId}&requestType={(int)requestType}&tokenSymbol={tokenSymbol}&amount={amount}";
-            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
-            {
-                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
-                using (var httpResult = await _client.SendAsync(httpRequest))
-                {
-                    _ = ThrowIfHttpFail(httpResult);
-                    var resultBody = await httpResult.Content.ReadAsStringAsync();
-                    var apiresult = JsonConvert.DeserializeObject<ApiOffchainFeeResult>(resultBody);
-                    return new OffchainFee()
-                    {
-                        fees = apiresult.fees,
-                        gasPrice = apiresult.gasPrice
-                    };
-                }
-
-            }
-        }
-
+        
         /// <summary>
         /// Get a list of orders satisfying certain criteria.
         /// </summary>
@@ -660,6 +660,7 @@ namespace LoopringAPI
             int limit = 50,
             int offset = 0,
             string market=null, 
+
             long start=0, 
             long end=0, 
             Side? side=0, 
