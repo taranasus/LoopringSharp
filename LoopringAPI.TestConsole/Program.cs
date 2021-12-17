@@ -14,7 +14,7 @@ ApiKeys apiKeys = ReadConfigFile(false) ;
 LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.l2Pk, apiKeys.l1Pk, apiKeys.apiUrl);
 
 #region TestTransfer
-Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ontinue / [S]kip");
+Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 var choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
 {
