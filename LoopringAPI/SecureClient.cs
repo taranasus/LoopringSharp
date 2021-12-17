@@ -17,24 +17,24 @@ namespace LoopringAPI
     public class SecureClient
     {
         string _apiUrl;
-        string _exchange;
+        ExchangeInfo _exchange;
         HttpClient _client;
-        public SecureClient(bool useTestNet)
+
+        public SecureClient(string apiUrl)
         {
+            var httpClientHandler = new HttpClientHandler();
+            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) =>
+            {
+                return true;
+            };
+            _client = new HttpClient(httpClientHandler);
+            
+            _apiUrl = apiUrl;
+
             // TODO: Replace with an api call to get all of them from the exchange
             LoadTokenMapper();
-
-            _client = new HttpClient();
-            if (useTestNet)
-            {
-                _apiUrl = "https://uat2.loopring.io/";
-            }
-            else
-            {
-                _apiUrl = "https://api3.loopring.io/";
-            }
-
-            _exchange = ExchangeInfo().Result.exchangeAddress;
+            
+            _exchange = ExchangeInfo().Result;
         }
 
         #region NoAuthentication
@@ -93,6 +93,36 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// Returns data associated with the user's exchange account.
+        /// </summary>
+        /// <param name="address">Ethereum / Loopring public address</param>
+        /// <returns>A lot of data about the account</returns>
+        public async Task<Account> GetAccountInfo(string address)
+        {
+            var url = $"{_apiUrl}{Constants.AccountUrl}?owner={address}";
+            using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                using (var httpResult = await _client.SendAsync(httpRequest))
+                {
+                    _ = await ThrowIfHttpFail(httpResult);
+                    var resultBody = await httpResult.Content.ReadAsStringAsync();
+                    var apiresult = JsonConvert.DeserializeObject<ApiAccountResult>(resultBody);
+                    return new Account()
+                    {
+                        accountId = apiresult.accountId,
+                        frozen = apiresult.frozen,
+                        keyNonce = apiresult.keyNonce,
+                        keySeed = apiresult.keySeed,
+                        nonce = apiresult.nonce,
+                        owner = apiresult.owner,
+                        publicKey = apiresult.publicKey,
+                        tags = apiresult.tags
+                    };
+                }
+            }
+        }
+
+        /// <summary>
         /// Return various configurations of Loopring.io
         /// </summary>
         /// <returns>Fees, exchange address, all sort of useful stuff</returns>
@@ -145,7 +175,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.ApiKeyUrl}?accountId={accountId}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-SIG", signedMessage);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPISigName, signedMessage);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -180,8 +210,8 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.OrderUrl}?accountId={accountId}&clientOrderId={clientOrderId}&orderHash={orderHash}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Delete, url))
             {
-                httpRequest.Headers.Add("X-API-SIG", signedMessage);
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPISigName, signedMessage);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -269,7 +299,7 @@ namespace LoopringAPI
         {
             var request = new ApiSubmitOrderRequest()
             {
-                exchange = _exchange,
+                exchange = _exchange.exchangeAddress,
                 accountId = accountId,
                 storageId = (await StorageId(apiKey, accountId, sellToken.tokenId)).orderId, // MAYBE? NOT SURE
                 sellToken = sellToken,
@@ -296,9 +326,9 @@ namespace LoopringAPI
             int MAX_INPUT = 11;
             var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
 
-            BigInteger itaker = string.IsNullOrWhiteSpace(request.taker) ? 0 : BigInteger.Parse(request.taker, System.Globalization.NumberStyles.HexNumber);
+            BigInteger itaker = string.IsNullOrWhiteSpace(request.taker) ? 0 : ParseHexUnsigned(request.taker);
             int ifillAmountBOrS = (fillAmountBOrS ? 1 : 0);
-            var exchange = BigInteger.Parse(request.exchange.Substring(2, request.exchange.Length - 2), System.Globalization.NumberStyles.HexNumber);
+            var exchange = ParseHexUnsigned(request.exchange.Substring(2, request.exchange.Length - 2));
 
             BigInteger[] inputs = {
                 exchange,
@@ -321,7 +351,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.OrderUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
 
                 using (var stringContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json"))
                 {
@@ -358,8 +388,8 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.ApiKeyUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                httpRequest.Headers.Add("X-API-SIG", signedMessage);
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPISigName, signedMessage);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 httpRequest.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
@@ -391,7 +421,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.StorageIdUrl}?accountId={accountId}&sellTokenId={sellTokenId}&maxNext={maxNext}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -424,7 +454,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.OrderUrl}?accountId={accountId}&orderHash={orderHash}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -453,7 +483,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.OffchainFeeUrl}?accountId={accountId}&requestType={(int)requestType}&tokenSymbol={tokenSymbol}&amount={amount}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = ThrowIfHttpFail(httpResult);
@@ -485,16 +515,17 @@ namespace LoopringAPI
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <returns>List of OrderDetails objects containing the searched-for items</returns>
         public async Task<List<OrderDetails>> OrdersDetails(string apiKey, 
-            int accountId, 
-            string market, 
-            long start, 
-            long end, 
-            Side? side, 
-            List<OrderStatus> statuses, 
-            List<OrderType> orderTypes, 
-            List<TradeChannel> tradeChannels, 
-            int limit = 50, 
-            int offset = 0)
+            int accountId,
+            int limit = 50,
+            int offset = 0,
+            string market=null, 
+            long start=0, 
+            long end=0, 
+            Side? side=0, 
+            List<OrderStatus> statuses=null, 
+            List<OrderType> orderTypes=null, 
+            List<TradeChannel> tradeChannels=null
+            )
         {
             var url = $"{_apiUrl}{Constants.OrdersUrl}?accountId={accountId}";
             if (!string.IsNullOrWhiteSpace(market))
@@ -518,7 +549,7 @@ namespace LoopringAPI
 
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
                 using (var httpResult = await _client.SendAsync(httpRequest))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
@@ -535,10 +566,20 @@ namespace LoopringAPI
 
         #endregion
         #region apiKeyL1L2
+        /// <summary>
+        /// Send some tokens to anyone else on L2
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="l1Pk">Ethereum Private Key</param>
+        /// <param name="request">The basic transaction details needed in order to actually do a transaction</param>
+        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
+        /// <param name="clientId">(Optional)A user-defined id. It's similar to the memo field? Again the original documentation is not very clear</param>
+        /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
+        /// <returns>An object containing the status of the transfer at the end of the request</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
-            throw new NotImplementedException("Still working on it...");
-
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
             if (string.IsNullOrWhiteSpace(l2Pk))
@@ -546,41 +587,41 @@ namespace LoopringAPI
             if (string.IsNullOrWhiteSpace(l1Pk))
                 throw new System.Exception("Transfer REQUIRES a valid Eth Wallet Layer 1 Private key");
 
-            string apiSig = ""; //Need to generate            
+            var account = await GetAccountInfo(request.payerAddr);
 
-            int MAX_INPUT = 13;
+            int MAX_INPUT = 12;
             var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
             BigInteger[] inputs = {
-                BigInteger.Parse(request.exchange, System.Globalization.NumberStyles.HexNumber),
+                ParseHexUnsigned(request.exchange),
                 (BigInteger)request.payerId,
                 (BigInteger)request.payeeId,
                 (BigInteger)request.token.tokenId,
                 BigInteger.Parse(request.token.volume),
                 (BigInteger)request.maxFee.tokenId,
                 BigInteger.Parse(request.maxFee.volume),
-                BigInteger.Parse(request.payeeAddress, System.Globalization.NumberStyles.HexNumber),
+                ParseHexUnsigned(request.payeeAddr),
                 0,
                 0,
                 (BigInteger)request.validUnitl,
                 (BigInteger)request.storageId
-            };
+            };            
+
+            var poseidonHash = poseidonHasher.CalculatePoseidonHash(inputs);
+
+            var signer = new Eddsa(poseidonHash, l2Pk);
+            var signedMessage = signer.Sign();
 
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
-
-            var signer = new Eddsa(poseidonHasher.CalculatePoseidonHash(inputs), l2Pk);
-            var signedMessage = signer.Sign(apiRequest);
             apiRequest.eddsaSignature = signedMessage;
 
-            // TODO : Compare Eddsa with python result
-
-            // TODO : Implement ECDSA
-
+            EIP712Helper helper = new EIP712Helper(Constants.EIP721DomainName, Constants.EIP721DomainVersion, _exchange.chainId, request.exchange);            
+            apiRequest.ecdsaSignature = helper.GenerateTransferSignature(apiRequest, l1Pk);
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                httpRequest.Headers.Add("X-API-KEY", apiKey);
-                httpRequest.Headers.Add("X-API-SIG", apiSig);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPIKeyName, apiKey);
+                httpRequest.Headers.Add(Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature);
 
                 using (var stringContent = new StringContent(JsonConvert.SerializeObject(apiRequest), Encoding.UTF8, "application/json"))
                 {
@@ -595,6 +636,51 @@ namespace LoopringAPI
                 }
             }
         }
+
+        /// <summary>
+        /// Send some tokens to anyone else on L2
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="l1Pk">Ethereum Private Key</param>
+        /// <param name="accountId">Loopring account identifier</param>
+        /// <param name="fromAddress">The loopring address that's doing the sending</param>
+        /// <param name="toAddress">The loopring address that's doing the receiving</param>
+        /// <param name="token">What token is being sent</param>
+        /// <param name="value">And how much of that token are we sending</param>
+        /// <param name="feeToken">In what token are we paying the fee</param>
+        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
+        /// <returns>An object containing the status of the transfer at the end of the request</returns>
+        public async Task<Transfer> Transfer(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress, 
+            string toAddress, string token, decimal value, string feeToken, string memo)
+        {
+            var amount = (value * 1000000000000000000m).ToString("0");
+            var feeamountresult = await OffchainFee(apiKey, accountId, OffChainRequestType.Transfer, feeToken, amount);
+            var feeamount= feeamountresult.fees.Where(w => w.token == feeToken).First().fee;            
+
+            TransferRequest req = new TransferRequest()
+            {
+                exchange = (await ExchangeInfo()).exchangeAddress,
+                maxFee = new Token()
+                {
+                    tokenId = Constants.TokenIDMapper[feeToken],
+                    volume = feeamount
+                },
+                token = new Token()
+                {
+                    tokenId = Constants.TokenIDMapper[token],
+                    volume = amount
+                },
+                payeeAddr = toAddress,
+                payerAddr = fromAddress,
+                payeeId = 0,
+                payerId = accountId,
+                storageId = (await StorageId(apiKey, accountId, Constants.TokenIDMapper[token])).offchainId,
+                validUnitl = GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds
+            };
+            return await Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null);
+        }
+
         #endregion
 
         #region private methods
@@ -678,13 +764,29 @@ namespace LoopringAPI
         }
         #endregion
 
+        #region public methods
+
         public void LoadTokenMapper()
         {
-            Constants.TokenIDMapper.Add("ETH", 0);
-            Constants.TokenIDMapper.Add("LRC", 1);
+            if (Constants.TokenIDMapper.Count == 0)
+            {
+                Constants.TokenIDMapper.Add("ETH", 0);
+                Constants.TokenIDMapper.Add("LRC", 1);
+            }
         }
 
-        public long GetUnixTimestamp() => (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        public int GetUnixTimestamp() => (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+
+        public static BigInteger ParseHexUnsigned(string toParse)
+        {
+            toParse = toParse.Replace("0x", "");
+            var parsResult = BigInteger.Parse(toParse, System.Globalization.NumberStyles.HexNumber);
+            if(parsResult < 0)
+                parsResult = BigInteger.Parse("0" + toParse, System.Globalization.NumberStyles.HexNumber);
+            return parsResult;
+        }
+
+        #endregion
     }
 
 }

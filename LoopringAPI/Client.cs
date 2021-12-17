@@ -9,6 +9,7 @@ namespace LoopringAPI
         private string _apiKey;
         private string _ethPrivateKey;
         private string _loopringPrivateKey;
+        private string _ethAddress;
         private int _accountId;
         private SecureClient _client;
 
@@ -19,13 +20,14 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey, int accountId, bool useTestNet)
+        public Client(string apiKey, string loopringPrivateKey, string ethPrivateKey, int accountId, string ethAddress, string apiUrl)
         {
+            _client = new SecureClient(apiUrl);
             _apiKey = apiKey;
             _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
-            _client = new SecureClient(useTestNet);
             _accountId = accountId;
+            _ethAddress = ethAddress;
         }
 
         /// <summary>
@@ -34,13 +36,14 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string loopringPrivateKey, string ethPrivateKey, int accountId, bool useTestNet)
+        public Client(string loopringPrivateKey, string ethPrivateKey, string apiUrl)
         {
+            _client = new SecureClient(apiUrl);
             _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
-            _client = new SecureClient(useTestNet);
-            _accountId = accountId;
-            _apiKey = ApiKey().Result;
+            _ethAddress = EIP712Helper.GetPublicAddress(ethPrivateKey);
+            _accountId = GetAccountInfo().Result.accountId;
+            _apiKey = ApiKey().Result;            
         }
 
         /// <summary>
@@ -50,6 +53,18 @@ namespace LoopringAPI
         public Task<long> Timestamp()
         {
             return _client.Timestamp();
+        }
+
+        /// <summary>
+        /// Returns data associated with the user's exchange account.
+        /// </summary>
+        /// <param name="address">(optional) Ethereum / Loopring public address. If let null it will get your own account info</param>
+        /// <returns>A lot of data about the account</returns>
+        public Task<Account> GetAccountInfo(string address = null)
+        {
+            if(address == null)
+                return _client.GetAccountInfo(_ethAddress);
+            return _client.GetAccountInfo(address);
         }
 
         /// <summary>
@@ -210,17 +225,45 @@ namespace LoopringAPI
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <returns>List of OrderDetails objects containing the searched-for items</returns>
         public Task<List<OrderDetails>> OrdersDetails(
-            string market,
-            long start,
-            long end,
-            Side? side,
-            List<OrderStatus> statuses,
-            List<OrderType> orderTypes,
-            List<TradeChannel> tradeChannels,
             int limit = 50,
-            int offset = 0)
+            int offset = 0,
+            string market = null,
+            long start = 0,
+            long end = 0,
+            Side? side = null,
+            List<OrderStatus> statuses = null,
+            List<OrderType> orderTypes = null,
+            List<TradeChannel> tradeChannels = null)
         {
-            return _client.OrdersDetails(_apiKey,_accountId, market,start, end, side, statuses, orderTypes, tradeChannels, limit, offset);
+            return _client.OrdersDetails(_apiKey, _accountId, limit, offset, market, start, end, side, statuses, orderTypes, tradeChannels);
+        }
+
+        /// <summary>
+        /// Send some tokens to anyone else on L2
+        /// </summary>
+        /// <param name="request">The basic transaction details needed in order to actually do a transaction</param>
+        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
+        /// <param name="clientId">(Optional)A user-defined id. It's similar to the memo field? Again the original documentation is not very clear</param>
+        /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
+        /// <returns>An object containing the status of the transfer at the end of the request</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public Task<Transfer> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
+        {
+            return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo);
+        }
+
+        /// <summary>
+        /// Send some tokens to anyone else on L2
+        /// </summary>
+        /// <param name="toAddress">The loopring address that's doing the receiving</param>
+        /// <param name="token">What token is being sent</param>
+        /// <param name="value">And how much of that token are we sending</param>
+        /// <param name="feeToken">In what token are we paying the fee</param>
+        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
+        /// <returns>An object containing the status of the transfer at the end of the request</returns>
+        public async Task<Transfer> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
+        {
+            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo);
         }
     }
 }

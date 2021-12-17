@@ -9,11 +9,11 @@ namespace LoopringAPI
         public int payerId { get; set; }
         public string payerAddr { get; set; }
         public int payeeId { get; set; } = 0;           // Default of 0 if unknown is fine
-        public string payeeAddress { get; set; }
+        public string payeeAddr { get; set; }
         public Token token { get; set; }
         public Token maxFee { get; set; }
         public int storageId { get; set; }
-        public long validUnitl { get; set; }
+        public int validUnitl { get; set; }
 
 
         public ApiTransferRequest GetApiTransferRequest(string memo, string clientId, CounterFactualInfo counterFactualInfo)
@@ -24,11 +24,11 @@ namespace LoopringAPI
                 payerId = payerId,
                 payerAddr = payerAddr,
                 payeeId = payeeId,
-                payeeAddress = payeeAddress,
+                payeeAddr = payeeAddr,
                 token = token,
                 maxFee = maxFee,
                 storageId = storageId,
-                validUnitl = validUnitl,
+                validUntil = validUnitl,
                 clientId = clientId,
                 memo = memo,
 
