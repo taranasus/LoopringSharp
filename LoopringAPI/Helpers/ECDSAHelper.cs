@@ -13,7 +13,7 @@ namespace LoopringAPI
 {
     public static class ECDSAHelper
     {
-        public static string GenerateTransferSignature(BigInteger chainId, ApiTransferRequest transferRequest, string ethPrivateKey)
+        public static string TransferSign(BigInteger chainId, ApiTransferRequest transferRequest, string ethPrivateKey)
         {             
             Domain exchangeDomain = new Domain();
             exchangeDomain.Name = Constants.EIP721DomainName;
