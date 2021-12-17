@@ -600,7 +600,7 @@ namespace LoopringAPI
 
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
             apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);            
-            apiRequest.ecdsaSignature = EIP712Helper.GenerateTransferSignature(              
+            apiRequest.ecdsaSignature = ECDSAHelper.GenerateTransferSignature(              
                 _exchange.chainId, 
                 apiRequest, 
                 l1Pk);

@@ -41,7 +41,7 @@ namespace LoopringAPI
             _client = new SecureClient(apiUrl);
             _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
-            _ethAddress = EIP712Helper.GetPublicAddress(ethPrivateKey);
+            _ethAddress = ECDSAHelper.GetPublicAddress(ethPrivateKey);
             _accountId = GetAccountInfo().Result.accountId;
             _apiKey = ApiKey().Result;            
         }

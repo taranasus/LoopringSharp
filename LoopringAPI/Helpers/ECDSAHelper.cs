@@ -11,7 +11,7 @@ using Nethereum.Web3;
 
 namespace LoopringAPI
 {
-    public static class EIP712Helper
+    public static class ECDSAHelper
     {
         public static string GenerateTransferSignature(BigInteger chainId, ApiTransferRequest transferRequest, string ethPrivateKey)
         {             
