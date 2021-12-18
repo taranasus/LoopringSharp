@@ -13,6 +13,19 @@ namespace LoopringAPI
 {
     public static class ECDSAHelper
     {
+        public static string CreateSerializedTypedData(BigInteger chainId, ApiTransferRequest transferRequest)
+        {
+            var result = $"{{\"domain\":{{\"chainId\": {chainId},\"name\": \"{Constants.EIP721DomainName}\",\"verifyingContract\":\"{transferRequest.exchange}\",\"version\":\"{Constants.EIP721DomainVersion}\"}},";
+            result += $"\"message\":{{\"from\":\"{transferRequest.payerAddr}\",\"to\":\"{transferRequest.payeeAddr}\",\"tokenID\":{transferRequest.token.tokenId},\"amount\":\"{BigInteger.Parse(transferRequest.token.volume)}\"," +
+                $"\"feeTokenID\":{transferRequest.maxFee.tokenId},\"maxFee\":\"{BigInteger.Parse(transferRequest.maxFee.volume)}\",\"validUntil\":{transferRequest.validUntil},\"storageID\":{transferRequest.storageId}}}," +
+                $"\"primaryType\":\"Transfer\"," +
+                $"\"types\":{{" +
+                "\"EIP712Domain\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"version\",\"type\":\"string\"},{\"name\":\"chainId\",\"type\":\"uint256\"},{\"name\":\"verifyingContract\",\"type\":\"address\"}]," +
+                "\"Transfer\":[{\"name\":\"from\",\"type\":\"address\"},{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"tokenID\",\"type\":\"uint16\"},{\"name\":\"amount\",\"type\":\"uint96\"},{\"name\":\"feeTokenID\",\"type\":\"uint16\"},{\"name\":\"maxFee\",\"type\":\"uint96\"},{\"name\":\"validUntil\",\"type\":\"uint32\"},{\"name\":\"storageID\",\"type\":\"uint32\"}]" +
+                $"}}}}";
+
+            return result;
+        }
         public static string TransferSign(BigInteger chainId, ApiTransferRequest transferRequest, string ethPrivateKey)
         {             
             Domain exchangeDomain = new Domain();

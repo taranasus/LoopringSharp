@@ -10,5 +10,7 @@ namespace LoopringAPI
             var signer = new Eddsa(PoseidonHelper.GetPoseidonHash(inputs), loopringAddress);
             return signer.Sign();
         }
+
+    
     }
 }
