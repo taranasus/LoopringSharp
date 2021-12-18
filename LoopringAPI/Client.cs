@@ -47,6 +47,21 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// The Object you need in order to communicate with the Loopring API. Recommended to use as a signleton. Automatically gets the API Key using your Loopring Private Key
+        /// </summary>        
+        /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
+        /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
+        /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
+        public Client(string apiUrl, string ethAddress, string loopringPrivateKey, bool useMetaMask)
+        {
+            _client = new SecureClient(apiUrl);
+            _loopringPrivateKey = loopringPrivateKey;            
+            _ethAddress = ethAddress;
+            _accountId = GetAccountInfo().Result.accountId;
+            _apiKey = ApiKey().Result;
+        }
+
+        /// <summary>
         /// Returns the relayer's current time in millisecond
         /// </summary>
         /// <returns>Current time in milliseconds</returns>        
@@ -226,7 +241,7 @@ namespace LoopringAPI
         /// <returns>The new API Key</returns>
         public async Task<string> UpdateApiKey()
         {
-            _apiKey = await _client.UpdateApiKey(_loopringPrivateKey, _apiKey, _accountId);
+            _apiKey = await _client.UpdateApiKey(_loopringPrivateKey, _apiKey, _accountId).ConfigureAwait(false);
             return _apiKey;
         }
 
@@ -318,7 +333,7 @@ namespace LoopringAPI
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         public async Task<Transfer> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
         {
-            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo);
+            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo).ConfigureAwait(false);
         }
     }
 }

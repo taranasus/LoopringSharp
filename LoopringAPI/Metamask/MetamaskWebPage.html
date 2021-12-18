@@ -90,7 +90,7 @@ async function signPackage()
   console.log('MetaMask is installed!');
 }
 
-  const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+  const accounts = await ethereum.request({ method: 'eth_requestAccounts' }).ConfigureAwait(false);
 
   var from =  accounts[0];
 

@@ -8,8 +8,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  
+
   <ItemGroup>
-    <PackageReference Include="LoopringAPI" Version="0.0.3" />
+    <ProjectReference Include="..\LoopringAPI\LoopringAPI.csproj" />
   </ItemGroup>
 
 </Project>

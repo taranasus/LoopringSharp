@@ -1,4 +1,10 @@
 ﻿
+using EmbedIO;
+using EmbedIO.Actions;
+using EmbedIO.Files;
+using EmbedIO.Routing;
+using EmbedIO.Security;
+using EmbedIO.WebApi;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -6,9 +12,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Unosquare.Labs.EmbedIO;
-using Unosquare.Labs.EmbedIO.Constants;
-using Unosquare.Labs.EmbedIO.Modules;
+
 
 namespace LoopringAPI.Metamask
 {
@@ -22,23 +26,36 @@ namespace LoopringAPI.Metamask
             File.WriteAllText(Directory.GetCurrentDirectory() + "/sign.html",htmlPage);
 
             ecdsa = null;
-            string url = "http://localhost:9000/";
+            string url = "http://localhost:9000";
 
             if (server == null)
             {
-                server = new WebServer(url);
-                server.RegisterModule(new StaticFilesModule(Directory.GetCurrentDirectory()));
-                // The static files module will cache small files in ram until it detects they have been modified.
-                server.Module<StaticFilesModule>().UseRamCache = true;
-                server.RegisterModule(new WebApiModule());
+                server = new WebServer(o => o
+                    .WithUrlPrefix(url)
+                    .WithMode(HttpListenerMode.EmbedIO))
+                .WithIPBanning(o => o
+                    .WithMaxRequestsPerSecond()
+                    .WithRegexRules("HTTP exception 404"))
+                .WithLocalSessionManager()
+                .WithCors(
+                    // Origins, separated by comma without last slash
+                    "http://unosquare.github.io,http://run.plnkr.co",
+                    // Allowed headers
+                    "content-type, accept",
+                    // Allowed methods
+                    "post")
+                .WithWebApi("/api", m => m
+                    .WithController<PeopleController>())
+                .WithStaticFolder("/", Directory.GetCurrentDirectory(), true, m => m
+                    .WithContentCaching(true)) // Add static files after other modules to avoid conflicts
+                .WithModule(new ActionModule("/", HttpVerbs.Any, ctx => ctx.SendDataAsync(new { Message = "Error" })));
 
-                server.Module<WebApiModule>().RegisterController<PeopleController>();
                 server.RunAsync();
             }
 
             var browser = new System.Diagnostics.Process()
             {
-                StartInfo = new System.Diagnostics.ProcessStartInfo(url+"sign.html") { UseShellExecute = true }
+                StartInfo = new System.Diagnostics.ProcessStartInfo(url+"/sign.html") { UseShellExecute = true }
             };
             browser.Start();
 
@@ -55,34 +72,27 @@ namespace LoopringAPI.Metamask
     }
     // A controller is a class where the WebApi module will find available
     // endpoints. The class must extend WebApiController.
-    public class PeopleController : WebApiController
+    public sealed class PeopleController : WebApiController
     {
-        // You need to add a default constructor where the first argument
-        // is an IHttpContext
-        public PeopleController(IHttpContext context)
-            : base(context)
-        {
-        }
+        // Gets a single record.
+        // This will respond to 
+        //     GET http://localhost:9696/api/people/1
+        //     GET http://localhost:9696/api/people/{n}
+        //
+        // If the given ID is not found, this method will return false.
+        // By default, WebApiModule will then respond with "404 Not Found".
+        //
+        // If the given ID cannot be converted to an integer, an exception will be thrown.
+        // By default, WebApiModule will then respond with "500 Internal Server Error".
+        [Route(HttpVerbs.Get, "/people/{id?}")]
+        public async Task<string> GetPeople(string id)
+            => (await DoThing(id).ConfigureAwait(false))
+            ?? throw HttpException.NotFound();     
 
-        // You need to include the WebApiHandler attribute to each method
-        // where you want to export an endpoint. The method should return
-        // bool or Task<bool>.
-        [WebApiHandler(HttpVerbs.Get, "/api/people/{id}")]
-        public async Task<bool> GetPersonById(string id)
+        public async Task<string> DoThing(string id)
         {
-            try
-            {
-                MetamaskServer.ecdsa = id;
-                return await Ok("RECIEVED!");
-            }
-            catch (Exception ex)
-            {
-                return await InternalServerError(ex);
-            }
+            MetamaskServer.ecdsa = id;
+            return id;
         }
-
-        // You can override the default headers and add custom headers to each API Response.
-        public override void SetDefaultHeaders() => HttpContext.NoCache();
     }
-
 }

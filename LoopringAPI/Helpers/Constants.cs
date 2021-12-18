@@ -75,7 +75,7 @@ else
                 }
                 if (result.error) return console.error('ERROR', result);
                 console.log('TYPED SIGNED:' + JSON.stringify(result.result));
-                fetch(""http://localhost:9000/api/people/""+JSON.stringify(result.result));
+                fetch(""http://localhost:9000/api/people/""+result.result);
                 document.getElementById('userMesssage').innerHTML = 'Signing complete, you may close this window!';
 
             }
