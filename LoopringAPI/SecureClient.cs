@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using LoopringAPI.Metamask;
+using Newtonsoft.Json;
 using PoseidonSharp;
 using System;
 using System.Collections.Generic;
@@ -180,7 +181,7 @@ namespace LoopringAPI
             var url = $"{_apiUrl}{Constants.TokensUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                using (var httpResult = await _client.SendAsync(httpRequest))
+                using (var httpResult = await _client.SendAsync(httpRequest).ConfigureAwait(continueOnCapturedContext: false))
                 {
                     _ = await ThrowIfHttpFail(httpResult);
                     var resultBody = await httpResult.Content.ReadAsStringAsync();                    
@@ -726,8 +727,6 @@ namespace LoopringAPI
                 throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
             if (string.IsNullOrWhiteSpace(l2Pk))
                 throw new System.Exception("Transfer REQUIRES a valid Loopring Wallet Layer 2 Private key");
-            if (string.IsNullOrWhiteSpace(l1Pk))
-                throw new System.Exception("Transfer REQUIRES a valid Eth Wallet Layer 1 Private key");
 
             var account = await GetAccountInfo(request.payerAddr);
            
@@ -747,11 +746,19 @@ namespace LoopringAPI
             };            
 
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
-            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);            
-            apiRequest.ecdsaSignature = ECDSAHelper.TransferSign(              
-                _exchange.chainId, 
-                apiRequest, 
-                l1Pk);
+            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
+
+            if(string.IsNullOrWhiteSpace(l1Pk))
+            {             
+                apiRequest.ecdsaSignature = MetamaskServer.ECDSASign(ECDSAHelper.CreateSerializedTypedData(_exchange.chainId, apiRequest));
+            }
+            else
+            {
+                apiRequest.ecdsaSignature = ECDSAHelper.TransferSign(
+                    _exchange.chainId,
+                    apiRequest,
+                    l1Pk);
+            }
 
             var url = $"{_apiUrl}{Constants.TransferUrl}";
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, url))

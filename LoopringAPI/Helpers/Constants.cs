@@ -29,5 +29,62 @@ namespace LoopringAPI
 
         public static string HttpHeaderAPIKeyName = "X-API-KEY";
         public static string HttpHeaderAPISigName = "X-API-SIG";
+
+
+        public static string MetaMaskHTMLTemplate = @"<!DOCTYPE html>
+<html>
+<head>
+<title>Title of the document</title>
+<script src=""https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js""></script>
+</head>
+
+<body>   
+<h1><span id=""userMesssage"">Signing your request using metamask</span></h1>
+</body>
+
+</html>
+<script>
+
+async function signPackage()
+        {
+            const msgParams = ||||||;
+            if(typeof ethereum === 'undefined')
+{
+           document.getElementById('userMesssage').innerHTML = 'Metamask not detected! Please open this link in the browser with metamask installed';     
+}           
+else
+{
+            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+
+            var from = accounts[0];
+
+            var params = [from, msgParams];
+            var method = 'eth_signTypedData_v4';
+
+            ethereum.sendAsync(
+    {
+                method,
+      params,
+      from,
+    },
+    function(err, result) {
+                if (err) return console.dir(err);
+                if (result.error)
+                {
+                    alert(result.error.message);
+                }
+                if (result.error) return console.error('ERROR', result);
+                console.log('TYPED SIGNED:' + JSON.stringify(result.result));
+                fetch(""http://localhost:9000/api/people/""+JSON.stringify(result.result));
+                document.getElementById('userMesssage').innerHTML = 'Signing complete, you may close this window!';
+
+            }
+
+  );
+}
+
+        }
+        window.onload = signPackage;
+</script>";
     }
 }

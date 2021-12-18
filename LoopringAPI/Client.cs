@@ -36,7 +36,7 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string loopringPrivateKey, string ethPrivateKey, string apiUrl)
+        public Client(string apiUrl, string ethPrivateKey, string loopringPrivateKey)
         {
             _client = new SecureClient(apiUrl);
             _loopringPrivateKey = loopringPrivateKey;
