@@ -81,3 +81,6 @@ The regular client also makes use of the SecureClient internally, just that it s
 
 ## Credits to
 fudgey.eth - Creator of PoseidonSharp, without which it would be impossible to actually do transfers within this api. https://github.com/fudgebucket27/PoseidonSharp
+
+## Donations
+![Donations](donations.png 'donations')
