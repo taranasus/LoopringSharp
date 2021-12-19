@@ -14,6 +14,8 @@ namespace LoopringAPI
         public Token maxFee { get; set; }
         public int storageId { get; set; }
         public int validUnitl { get; set; }
+        public string tokenName { get; set; }
+        public string tokenFeeName { get; set; }
 
 
         public ApiTransferRequest GetApiTransferRequest(string memo, string clientId, CounterFactualInfo counterFactualInfo)

@@ -52,12 +52,13 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiUrl, string ethAddress, string loopringPrivateKey, bool useMetaMask)
+        public Client(string apiUrl,bool useMetaMask)
         {
             _client = new SecureClient(apiUrl);
-            _loopringPrivateKey = loopringPrivateKey;            
-            _ethAddress = ethAddress;
-            _accountId = GetAccountInfo().Result.accountId;
+            _ethAddress = Metamask.MetamaskServer.GetWalletPublicAddress();
+            var accountInfoResult = GetAccountInfo().Result;
+            _loopringPrivateKey = EDDSAHelper.EDDSASignMetamask(ExchangeInfo().Result.exchangeAddress, accountInfoResult.nonce);                       
+            _accountId = accountInfoResult.accountId;
             _apiKey = ApiKey().Result;
         }
 

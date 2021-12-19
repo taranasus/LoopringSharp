@@ -645,15 +645,12 @@ namespace LoopringAPI
                 (BigInteger)request.validUnitl,
                 (BigInteger)request.storageId
             };
-
-
-
-            var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
+            var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);            
             apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
 
-            if(string.IsNullOrWhiteSpace(l1Pk))
+            if (string.IsNullOrWhiteSpace(l1Pk))
             {             
-                apiRequest.ecdsaSignature = MetamaskServer.ECDSASign(ECDSAHelper.CreateSerializedTypedData(_exchange.chainId, apiRequest));
+                apiRequest.ecdsaSignature = MetamaskServer.Sign(ECDSAHelper.CreateSerializedTypedData(_exchange.chainId, apiRequest), "eth_signTypedData_v4", $"Please authorise the sending of {(decimal.Parse(request.token.volume) / 1000000000000000000m)} {request.tokenName} to {request.payeeAddr}. The fee will be {(decimal.Parse(request.maxFee.volume) / 1000000000000000000m)} {request.tokenFeeName}");
             }
             else
             {
@@ -712,7 +709,9 @@ namespace LoopringAPI
                 payeeId = 0,
                 payerId = accountId,
                 storageId = (await StorageId(apiKey, accountId, await GetTokenId(token).ConfigureAwait(false)).ConfigureAwait(false)).offchainId,
-                validUnitl = GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds
+                validUnitl = GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds,
+                tokenName = token,
+                tokenFeeName = feeToken
             };
             return await Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null).ConfigureAwait(false);
         }

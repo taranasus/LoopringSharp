@@ -6,20 +6,23 @@ using PoseidonSharp;
 using System.Net;
 using System.Net.Security;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 Console.WriteLine("Hello, Loops!");
 
-ApiKeys apiKeys = ReadConfigFile(false) ;
+ApiKeys apiKeys = ReadConfigFile(false);
 
-LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.apiUrl, apiKeys.l1Pk, apiKeys.l2Pk);
+//LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.apiUrl, apiKeys.l1Pk, apiKeys.l2Pk);
+LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.apiUrl, true);
 
 #region TestTransfer
 Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 var choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
 {
-    string transfertoAddress = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e";    
+    string transfertoAddress = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e";
     Console.WriteLine("TYPE RECEPIENT ADDRESS BELLOW:");
     Console.Write("[DEFAULT: " + transfertoAddress + "] ");
     string potentialNewAddress = Console.ReadLine();
@@ -270,7 +273,7 @@ static ApiKeys ReadConfigFile(bool prod)
 {
     ApiKeys result;
     string filename = "apiKeys.json";
-    if(prod)
+    if (prod)
     {
         filename = "apiKeysProd.json";
     }
@@ -291,8 +294,8 @@ static ApiKeys ReadConfigFile(bool prod)
 
     if (string.IsNullOrWhiteSpace(result.l2Pk))
     {
-        Console.WriteLine("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\"+ filename);
-        throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\"+ filename);
+        Console.WriteLine("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\" + filename);
+        throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\" + filename);
     }
     return result;
 }
