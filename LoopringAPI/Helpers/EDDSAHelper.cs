@@ -14,27 +14,43 @@ namespace LoopringAPI
             var signer = new Eddsa(PoseidonHelper.GetPoseidonHash(inputs), loopringAddress);
             return signer.Sign();
         }
-        public static string EDDSASignMetamask(string exchangeAddress, long nonce)
+
+        public static (string secretKey, string ethAddress) GetL2PKFromMetaMask(string exchangeAddress, string apiUrl)
         {
-            string rawKey = MetamaskServer.Sign("Sign this message to access Loopring Exchange: " + exchangeAddress + " with key nonce: " + (nonce - 1), "personal_sign", "We need you to sign this message in Metamask in order to access your Layer 2 wallet");
+            var sign = EDDSASignMetamask(exchangeAddress, apiUrl, true);
+            // We're only interested in the secret key for signing packages. Which ironically is the simplest one to get...
+            return (sign.secretKey, sign.ethAddress);
+        }
+
+        public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) EDDSASignMetamask(string exchangeAddress, string apiUrl, bool skipPublicKeyCalculation = false)
+        {
+            // Requesting metamask to sign our package so we can tare it apart and get our public and secret keys
+            var rawKey = MetamaskServer.L2Authenticate("We need you to sign this message in Metamask in order to access your Layer 2 wallet",apiUrl);
 
             BigInteger order = BigInteger.Parse("21888242871839275222246405745257275088614511777268538073601725287587578984328");
             BigInteger p = BigInteger.Parse("21888242871839275222246405745257275088548364400416034343698204186575808495617");
-            BigInteger[] Base8 = new BigInteger[] { BigInteger.Parse("16540640123574156134436876038791482806971768689494387082833631921987005038935"), BigInteger.Parse("20819045374670962167435360035096875258406992893633759881276124905556507972311") };
+            BigInteger[] Base8 = new BigInteger[] { 
+                BigInteger.Parse("16540640123574156134436876038791482806971768689494387082833631921987005038935"), 
+                BigInteger.Parse("20819045374670962167435360035096875258406992893633759881276124905556507972311") };
             BigInteger suborder = rsh(order, 3);
-            byte[] rawKeyBytes = ToHexBytes(rawKey.Replace("0x", ""));
-            var number = SecureClient.ParseHexUnsigned(rawKey);
+            byte[] rawKeyBytes = ToHexBytes(rawKey.Item1.Replace("0x", ""));
+            var number = SecureClient.ParseHexUnsigned(rawKey.Item1);
 
             var sha256Managed = new SHA256Managed();            
             byte[] seed = sha256Managed.ComputeHash(rawKeyBytes);
 
             var secertKey = leBuff2Int(seed) % suborder;
-            var publicKey = mulPointEscalar(Base8, secertKey, p);
+            BigInteger[] publicKey = new BigInteger[2];
 
-            //return "0x" + publicKey[0].ToString("x").PadLeft(64,'0') + publicKey[1].ToString("x").PadLeft(64, '0') + secertKey.ToString("x").PadLeft(64, '0');
+            // Have this logic to save on computing resources. No reason to calculate them unless needed
+            // The only time we actually need these is if the user wants to export their wallet
+            if(!skipPublicKeyCalculation)
+                publicKey = mulPointEscalar(Base8, secertKey, p);
 
-            return "0x" +secertKey.ToString("x");
+            return ("0x"+publicKey[0].ToString("x"), "0x"+publicKey[1].ToString("x"), "0x"+secertKey.ToString("x"), rawKey.ethAddress);
         }
+
+        #region Public Key calculation methods
 
         static BigInteger[] mulPointEscalar(BigInteger[] tbase, BigInteger secretKey, BigInteger p)
         {
@@ -118,8 +134,6 @@ namespace LoopringAPI
 
         static BigInteger leBuff2Int(byte[] buff)
         {
-            var hex = BitConverter.ToString(buff).Replace("-","").ToLower(); 
-            var haha = SecureClient.ParseHexUnsigned(hex);
             return new BigInteger(buff);
         }        
 
@@ -132,14 +146,14 @@ namespace LoopringAPI
         static byte[] ToHexBytes(string hex)
         {
             Dictionary<char, byte> hexmap = new Dictionary<char, byte>()
-    {
-        { 'a', 0xA },{ 'b', 0xB },{ 'c', 0xC },{ 'd', 0xD },
-        { 'e', 0xE },{ 'f', 0xF },{ 'A', 0xA },{ 'B', 0xB },
-        { 'C', 0xC },{ 'D', 0xD },{ 'E', 0xE },{ 'F', 0xF },
-        { '0', 0x0 },{ '1', 0x1 },{ '2', 0x2 },{ '3', 0x3 },
-        { '4', 0x4 },{ '5', 0x5 },{ '6', 0x6 },{ '7', 0x7 },
-        { '8', 0x8 },{ '9', 0x9 }
-    };
+            {
+                { 'a', 0xA },{ 'b', 0xB },{ 'c', 0xC },{ 'd', 0xD },
+                { 'e', 0xE },{ 'f', 0xF },{ 'A', 0xA },{ 'B', 0xB },
+                { 'C', 0xC },{ 'D', 0xD },{ 'E', 0xE },{ 'F', 0xF },
+                { '0', 0x0 },{ '1', 0x1 },{ '2', 0x2 },{ '3', 0x3 },
+                { '4', 0x4 },{ '5', 0x5 },{ '6', 0x6 },{ '7', 0x7 },
+                { '8', 0x8 },{ '9', 0x9 }
+            };
 
             if (string.IsNullOrWhiteSpace(hex))
                 throw new ArgumentException("Hex cannot be null/empty/whitespace");
@@ -176,7 +190,7 @@ namespace LoopringAPI
                 throw new FormatException("Hex string has non-hex character");
             }
         }
-    }
 
-    
+        #endregion
+    }
 }

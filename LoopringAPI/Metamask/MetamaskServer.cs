@@ -19,18 +19,19 @@ namespace LoopringAPI.Metamask
     public static class MetamaskServer
     {
         private static WebServer server;
-        public static string ecdsa;
-        public static string ethAddress;
+        public static string eddsa;
+        public static string ethAddress;        
 
-        public static string GetWalletPublicAddress()
+        public static (string eddsa,string ethAddress) L2Authenticate(string userMessage, string apiUrl)
         {
-            string htmlPage = Constants.MetaMaskStartTemplate;            
+            string htmlPage = Constants.MetaMaskStartTemplate;
             File.WriteAllText(Directory.GetCurrentDirectory() + "/start.html", htmlPage);
-            htmlPage = Constants.MetaMaskAuthTemplate;
-            htmlPage = htmlPage.Replace("|---------|", "The application needs your public address in order to work. Please approve this request in MetaMask");
-            File.WriteAllText(Directory.GetCurrentDirectory() + "/auth.html", htmlPage);
+            
+            htmlPage = Constants.MetaMaskAuthTemplate.Replace("||--||", apiUrl+Constants.AccountUrl+"?owner=");
+            htmlPage = htmlPage.Replace("|---------|", userMessage);
+            File.WriteAllText(Directory.GetCurrentDirectory() + "/l2au.html", htmlPage);
 
-            ethAddress = null;
+            eddsa = null;
             string url = "http://localhost:9000";
 
             if (server == null)
@@ -56,7 +57,7 @@ namespace LoopringAPI.Metamask
                 .WithModule(new ActionModule("/", HttpVerbs.Any, ctx => ctx.SendDataAsync(new { Message = "Error" })));
 
                 server.RunAsync();
-            }           
+            }
 
             var browser = new System.Diagnostics.Process()
             {
@@ -64,16 +65,15 @@ namespace LoopringAPI.Metamask
             };
             browser.Start();
 
-            while (ethAddress == null)
+            while (eddsa == null)
             {
                 System.Threading.Thread.Sleep(100);
             }
 
-            browser.Close();
-
             server.Dispose();
-            server = null;          
-            return ethAddress.Replace("\"", "");
+            server = null;           
+
+            return (eddsa.Replace("\"", ""),ethAddress);
         }
 
         public static string Sign(string dataGram, string signatureMethod, string userMessage)
@@ -83,7 +83,7 @@ namespace LoopringAPI.Metamask
             htmlPage = htmlPage.Replace("|---------|", userMessage);
             File.WriteAllText(Directory.GetCurrentDirectory() + "/sign.html",htmlPage);
 
-            ecdsa = null;
+            eddsa = null;
             string url = "http://localhost:9000";
 
             if (server == null)
@@ -117,7 +117,7 @@ namespace LoopringAPI.Metamask
             };
             browser.Start();
 
-            while (ecdsa == null)
+            while (eddsa == null)
             {
                 System.Threading.Thread.Sleep(100);
             }
@@ -126,9 +126,9 @@ namespace LoopringAPI.Metamask
             server = null;
 
             if(signatureMethod == "eth_signTypedData_v4")
-                return ecdsa.Replace("\"","")+"02";
+                return eddsa.Replace("\"","")+"02";
             else
-                return ecdsa.Replace("\"", "");
+                return eddsa.Replace("\"", "");
         }
     }
     // A controller is a class where the WebApi module will find available
@@ -152,10 +152,10 @@ namespace LoopringAPI.Metamask
 
         public async Task<string> DoThing(string id)
         {
-            MetamaskServer.ecdsa = id;
+            MetamaskServer.eddsa = id;
             return id;
         }
-
+        
         [Route(HttpVerbs.Get, "/address/{id?}")]
         public async Task<string> GetAddress(string id)
             => (await DoAddressThing(id).ConfigureAwait(false))
@@ -164,6 +164,18 @@ namespace LoopringAPI.Metamask
         public async Task<string> DoAddressThing(string address)
         {            
             MetamaskServer.ethAddress = address;
+            return address;
+        }
+
+        [Route(HttpVerbs.Get, "/signatureaddress/{id?}")]
+        public async Task<string> GetSignatureAddress(string id)
+            => (await SignatureAddress(id).ConfigureAwait(false))
+            ?? throw HttpException.NotFound();
+
+        public async Task<string> SignatureAddress(string address)
+        {
+            MetamaskServer.eddsa = address.Split('|')[0];
+            MetamaskServer.ethAddress = address.Split('|')[1];
             return address;
         }
 
