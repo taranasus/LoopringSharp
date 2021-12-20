@@ -30,6 +30,7 @@ namespace LoopringAPI
         public static string HttpHeaderAPIKeyName = "X-API-KEY";
         public static string HttpHeaderAPISigName = "X-API-SIG";
 
+        public static string MetaMaskWebServerUrl = "http://localhost:42069";
         public static string MetaMaskStartTemplate = @"<!DOCTYPE html>
             <html>
             <head>
@@ -42,25 +43,9 @@ namespace LoopringAPI
             </body>
 
             </html>
-            <script>
-                async function signPackage()
-                {                    
-                    if(typeof ethereum === 'undefined')
-                    {
-                        document.getElementById('userMesssage').innerHTML = 'Metamask not detected! Please open this link in the browser with metamask installed';     
-                    }           
-                    else
-                    {
-                        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-
-                        var from = accounts[0];
-
-                        fetch(""http://localhost:9000/api/address/""+from);                        
-                    }
-                }
-                window.onload = setTimeout(()=> window.location.href = ""http://localhost:9000/auth.html"" , 4000);
+            <script>               
+                window.onload = setTimeout(()=> window.location.href = """+MetaMaskWebServerUrl+ @"/l2au.html"" , 5000);
             </script>";
-
         public static string MetaMaskAuthTemplate = @"<!DOCTYPE html>
             <html>
             <head>
@@ -84,15 +69,46 @@ namespace LoopringAPI
                     {
                         const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
 
-                        var from = accounts[0];
-
-                        fetch(""http://localhost:9000/api/address/""+from);                        
+                        setTimeout(()=> signPackage2(), 1000);
                     }
                 }
+                
+                async function signPackage2()
+                {
+                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+
+                    var from = accounts[0];
+
+                    var accountInfo = await (await fetch(""||--||""+from)).json();
+
+                    var msgParams =  ""Sign this message to access Loopring Exchange: |-|-|-| with key nonce: "" + (accountInfo.nonce - 1);
+
+                    var params = [from, msgParams];
+                    var method = 'personal_sign';
+
+                    ethereum.sendAsync(
+                        {
+                            method,
+                            params,
+                            from,
+                        },
+                        function(err, result) 
+                        {
+                            if (err) return console.dir(err);
+                            if (result.error)
+                            {
+                                alert(result.error.message);
+                            }
+                            if (result.error) return console.error('ERROR', result);
+                            console.log('TYPED SIGNED:' + JSON.stringify(result.result));
+                            fetch(""" + MetaMaskWebServerUrl + @"/api/signatureaddress/""+result.result+""|""+from);
+                            document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
+                        }    
+                    );                    
+                }
+
                 window.onload = setTimeout(()=> signPackage(), 1000);
             </script>";
-
-
         public static string MetaMaskSignatureTemplate = @"<!DOCTYPE html>
             <html>
             <head>
@@ -137,7 +153,7 @@ namespace LoopringAPI
                                 }
                                 if (result.error) return console.error('ERROR', result);
                                 console.log('TYPED SIGNED:' + JSON.stringify(result.result));
-                                fetch(""http://localhost:9000/api/people/""+result.result);
+                                fetch(""" + MetaMaskWebServerUrl + @"/api/sign/""+result.result);
                                 document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
 
                             }    
