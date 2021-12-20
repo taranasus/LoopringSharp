@@ -25,7 +25,7 @@ namespace LoopringAPI
         public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) EDDSASignMetamask(string exchangeAddress, string apiUrl, bool skipPublicKeyCalculation = false)
         {
             // Requesting metamask to sign our package so we can tare it apart and get our public and secret keys
-            var rawKey = MetamaskServer.L2Authenticate("We need you to sign this message in Metamask in order to access your Layer 2 wallet",apiUrl);
+            var rawKey = MetamaskServer.L2Authenticate("We need you to sign this message in Metamask in order to access your Layer 2 wallet", exchangeAddress,apiUrl);
 
             BigInteger order = BigInteger.Parse("21888242871839275222246405745257275088614511777268538073601725287587578984328");
             BigInteger p = BigInteger.Parse("21888242871839275222246405745257275088548364400416034343698204186575808495617");

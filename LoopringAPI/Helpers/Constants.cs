@@ -30,6 +30,7 @@ namespace LoopringAPI
         public static string HttpHeaderAPIKeyName = "X-API-KEY";
         public static string HttpHeaderAPISigName = "X-API-SIG";
 
+        public static string MetaMaskWebServerUrl = "http://localhost:42069";
         public static string MetaMaskStartTemplate = @"<!DOCTYPE html>
             <html>
             <head>
@@ -43,9 +44,8 @@ namespace LoopringAPI
 
             </html>
             <script>               
-                window.onload = setTimeout(()=> window.location.href = ""http://localhost:9000/l2au.html"" , 5000);
+                window.onload = setTimeout(()=> window.location.href = """+MetaMaskWebServerUrl+ @"/l2au.html"" , 5000);
             </script>";
-
         public static string MetaMaskAuthTemplate = @"<!DOCTYPE html>
             <html>
             <head>
@@ -81,7 +81,7 @@ namespace LoopringAPI
 
                     var accountInfo = await (await fetch(""||--||""+from)).json();
 
-                    var msgParams =  ""Sign this message to access Loopring Exchange: "" + from + "" with key nonce: "" + (accountInfo.nonce - 1);
+                    var msgParams =  ""Sign this message to access Loopring Exchange: |-|-|-| with key nonce: "" + (accountInfo.nonce - 1);
 
                     var params = [from, msgParams];
                     var method = 'personal_sign';
@@ -101,7 +101,7 @@ namespace LoopringAPI
                             }
                             if (result.error) return console.error('ERROR', result);
                             console.log('TYPED SIGNED:' + JSON.stringify(result.result));
-                            fetch(""http://localhost:9000/api/signatureaddress/""+result.result+""|""+from);
+                            fetch(""" + MetaMaskWebServerUrl + @"/api/signatureaddress/""+result.result+""|""+from);
                             document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
                         }    
                     );                    
@@ -109,8 +109,6 @@ namespace LoopringAPI
 
                 window.onload = setTimeout(()=> signPackage(), 1000);
             </script>";
-
-
         public static string MetaMaskSignatureTemplate = @"<!DOCTYPE html>
             <html>
             <head>
@@ -155,7 +153,7 @@ namespace LoopringAPI
                                 }
                                 if (result.error) return console.error('ERROR', result);
                                 console.log('TYPED SIGNED:' + JSON.stringify(result.result));
-                                fetch(""http://localhost:9000/api/people/""+result.result);
+                                fetch(""" + MetaMaskWebServerUrl + @"/api/sign/""+result.result);
                                 document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
 
                             }    
