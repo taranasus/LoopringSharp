@@ -36,7 +36,7 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiUrl, string ethPrivateKey, string loopringPrivateKey)
+        public Client(string loopringPrivateKey, string ethPrivateKey, string apiUrl)
         {
             _client = new SecureClient(apiUrl);
             _loopringPrivateKey = loopringPrivateKey;
@@ -52,7 +52,7 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiUrl,bool useMetaMask)
+        public Client(string apiUrl)
         {            
             _client = new SecureClient(apiUrl);
             var l2Auth = EDDSAHelper.GetL2PKFromMetaMask(ExchangeInfo().Result.exchangeAddress, apiUrl);
@@ -272,7 +272,6 @@ namespace LoopringAPI
         /// <summary>
         /// Get how much fee you need to pay right now to carry out a transaction of a specified type
         /// </summary>        
-        /// <param name="accountId">Loopring account identifier</param>
         /// <param name="requestType">Off-chain request type</param>
         /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
         /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
@@ -280,6 +279,18 @@ namespace LoopringAPI
         public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
         {
             return _client.OffchainFee(_apiKey, _accountId, requestType, tokenSymbol, amount);
+        }
+
+        /// <summary>
+        /// Get how much fee you need to pay right now to carry out a transaction of a specified type
+        /// </summary>        
+        /// <param name="requestType">Off-chain request type</param>
+        /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
+        /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
+        /// <returns>Returns the fee amount</returns>
+        public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, decimal amount)
+        {
+            return _client.OffchainFee(_apiKey, _accountId, requestType, tokenSymbol, (amount * 1000000000000000000m).ToString());
         }
 
         /// <summary>

@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PoseidonConsole", "Poseidon
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PoseidonTests", "PoseidonSharp\PoseidonTests\PoseidonTests.csproj", "{2008B065-CC3A-4B4E-BFCC-58FF426970F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoopringAPI.OneButtonPayExample", "LoopringAPI.OneButtonPayExample\LoopringAPI.OneButtonPayExample.csproj", "{F82E405D-D04E-430C-9100-9F899B9B1954}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringAPI.Layer2TransferExample", "LoopringAPI.OneButtonPayExample\LoopringAPI.Layer2TransferExample.csproj", "{F82E405D-D04E-430C-9100-9F899B9B1954}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
