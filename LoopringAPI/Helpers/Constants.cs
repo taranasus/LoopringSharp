@@ -103,8 +103,15 @@ namespace LoopringAPI
                             console.log('TYPED SIGNED:' + JSON.stringify(result.result));
                             fetch(""" + MetaMaskWebServerUrl + @"/api/signatureaddress/""+result.result+""|""+from);
                             document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
+
+                            windowClose();
                         }    
                     );                    
+                }
+
+                function windowClose() {
+                    window.open('','_parent','');
+                    window.close();
                 }
 
                 window.onload = setTimeout(()=> signPackage(), 1000);
@@ -155,11 +162,16 @@ namespace LoopringAPI
                                 console.log('TYPED SIGNED:' + JSON.stringify(result.result));
                                 fetch(""" + MetaMaskWebServerUrl + @"/api/sign/""+result.result);
                                 document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
-
+                                windowClose();
                             }    
                         );
                     }
                 }
+                function windowClose() {
+                    window.open('','_parent','');
+                    window.close();
+                }
+
                 window.onload = setTimeout(()=> signPackage(), 1000);
             </script>";
     }

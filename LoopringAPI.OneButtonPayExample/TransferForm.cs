@@ -38,6 +38,12 @@ namespace LoopringAPI.OneButtonPayExample
             cbPaymentFeeToken.Enabled = true;
             nudPaymentAmmount.Enabled = true;
             btnMakePayment.Enabled = true;
+
+            // Bring the form to the front;
+            this.WindowState = FormWindowState.Minimized;
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+            this.Focus();
         }   
 
         private void cbPaymentToken_SelectedIndexChanged(object sender, EventArgs e)
@@ -89,6 +95,11 @@ namespace LoopringAPI.OneButtonPayExample
             //    System.Threading.Thread.Sleep(100);
             //}
 
+            // Bring the form to the front;            
+            this.WindowState = FormWindowState.Minimized;
+            this.Show();
+            this.WindowState = FormWindowState.Normal; 
+            this.Focus();
             MessageBox.Show("Thanks for the monye honey! I will use it to buy skittles!");
         }
     }
