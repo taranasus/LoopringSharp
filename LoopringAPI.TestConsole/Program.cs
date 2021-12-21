@@ -14,11 +14,36 @@ Console.WriteLine("Hello, Loops!");
 
 ApiKeys apiKeys = ReadConfigFile(false);
 
-LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.apiUrl, apiKeys.l1Pk, apiKeys.l2Pk);
+//var keys = EDDSAHelper.EDDSASignMetamask("0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e", "https://uat2.loopring.io/");
+//var keys2 = EDDSAHelper.EDDSASignLocal("0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e",2, "0x5ce27884b99146b4d67a3d3c5ea9566401bdc11f1f561b54d62c0e4a516d7aa0", "0x452386e0516cc1600e9f43c719d0c80c6abc51f9", false);
+
+//Environment.Exit(0);
+
+LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.apiUrl, apiKeys.l1Pk);
+//LoopringAPI.Client client = new LoopringAPI.Client("https://uat2.loopring.io/");
+
+#region UpdateAccountPrivateKey
+Console.WriteLine("Updating your account private key. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+var choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("BEGINNING UPDATE!");
+    var transferResult = await client.RequestNewL2PrivateKey("ETH");
+    Console.WriteLine("Update COMPLETE:");
+    Console.WriteLine(JsonConvert.SerializeObject(transferResult, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping Transfer test as it costs MONEY!");
+}
+
+Console.WriteLine();
+#endregion
+
 
 #region TestTransfer
 Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
-var choice = Console.ReadLine();
+choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
 {
     string transfertoAddress = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e";

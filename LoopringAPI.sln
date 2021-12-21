@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PoseidonTests", "PoseidonSh
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringAPI.Layer2TransferExample", "LoopringAPI.OneButtonPayExample\LoopringAPI.Layer2TransferExample.csproj", "{F82E405D-D04E-430C-9100-9F899B9B1954}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoopringAPI.UnitTests", "LoopringAPI.UnitTests\LoopringAPI.UnitTests.csproj", "{0AD5A558-B81E-448D-B588-744A5AF814F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{F82E405D-D04E-430C-9100-9F899B9B1954}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F82E405D-D04E-430C-9100-9F899B9B1954}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F82E405D-D04E-430C-9100-9F899B9B1954}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AD5A558-B81E-448D-B588-744A5AF814F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AD5A558-B81E-448D-B588-744A5AF814F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AD5A558-B81E-448D-B588-744A5AF814F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AD5A558-B81E-448D-B588-744A5AF814F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

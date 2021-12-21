@@ -20,14 +20,19 @@ namespace LoopringAPI.Metamask
         public static string eddsa;
         public static string ethAddress;        
 
-        public static (string eddsa,string ethAddress) L2Authenticate(string userMessage, string exchangeAddress, string apiUrl)
-        {         
+        public static (string eddsa,string ethAddress) L2Authenticate(string userMessage, string exchangeAddress, string apiUrl, bool nextNonce)
+        {
+            string nonceModifier = "- 1";
+            if (nextNonce)
+                nonceModifier = "+ 0";
+
             File.WriteAllText(Directory.GetCurrentDirectory() + "/start.html", 
                 Constants.MetaMaskStartTemplate);
             File.WriteAllText(Directory.GetCurrentDirectory() + "/l2au.html", 
                 Constants.MetaMaskAuthTemplate.Replace("||--||", apiUrl + Constants.AccountUrl + "?owner=")
                                               .Replace("|-|-|-|", exchangeAddress)
-                                              .Replace("|---------|", userMessage));
+                                              .Replace("|---------|", userMessage)
+                                              .Replace("|--|--|--|", nonceModifier));
 
             eddsa = null;
             ethAddress = null;

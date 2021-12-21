@@ -2,9 +2,9 @@
 
 namespace LoopringAPI
 {
-    public class Transfer
+    public class OperationResult
     {
-        public Transfer(ApiTransferResult apiTransfer)
+        public OperationResult(ApiTransferResult apiTransfer)
         {
             hash = apiTransfer.hash;
             isIdempotent = apiTransfer.isIdempotent;

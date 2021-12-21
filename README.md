@@ -60,6 +60,7 @@ As for which endpoint requires what, I'll atempt to make a table bellow with all
 |GetDepth|N|N|N|Returns the order book of a given trading pair.
 |GetCandlesticks|N|N|N|Return the candlestick data of a given trading pair.
 |GetPrice|N|N|N|Fetches, for all the tokens supported by Loopring, their fiat price.
+|GetTrades|N|N|N|Query latest trades with specified market
 |ApiKey|N|N|Y|Get the ApiKey associated with the user's account
 |DeleteOrder|Y|N|Y|Cancels a open exchange / swap order
 |SubmitOrder|Y|N|Y|Submits a new exchange / swap order
@@ -68,7 +69,10 @@ As for which endpoint requires what, I'll atempt to make a table bellow with all
 |OffchainFee|Y|N|N|Get how much fee you need to pay right now to carry out a transaction of a specified type
 |OrderDetails|Y|N|N|Gets the details of one specific order using the hashId
 |OrdersDetails|Y|N|N|Gets a detailed list of multiple orders based on the filtering criteria
+|CreateInfo|Y|N|N|Returns a list of Ethereum transactions from users for exchange account registration.
+|UpdateInfo|Y|N|N|Returns a list Ethereum transactions from users for resetting exchange passwords.
 |Transfer|Y|Y|Y|Send some tokens to anyone else on L2
+|RequestNewL2PrivateKey|Y|Y|Y|Generates a new L2 private key for your account. Does not return they key
 
 ## LoopringAPI.TestConsole
 

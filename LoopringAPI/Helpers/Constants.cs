@@ -8,6 +8,8 @@ namespace LoopringAPI
         public static Dictionary<string, int> TokenIDMapper = new Dictionary<string, int>();        
 
         public static string OffchainFeeUrl = "api/v3/user/offchainFee";
+        public static string CreateInfoUrl = "api/v3/user/createInfo";
+        public static string UpdateInfoUrl = "api/v3/user/updateInfo";
         public static string StorageIdUrl = "api/v3/storageId";
         public static string TickerUrl = "api/v3/ticker";
         public static string TimestampUrl = "api/v3/timestamp";
@@ -23,6 +25,7 @@ namespace LoopringAPI
         public static string DepthUrl = "api/v3/depth";
         public static string CandlestickUrl = "api/v3/candlestick";
         public static string PriceUrl = "api/v3/price";
+        public static string TradeUrl = "api/v3/trade";
 
         public static string EIP721DomainName = "Loopring Protocol";
         public static string EIP721DomainVersion = "3.6.0";
@@ -81,7 +84,7 @@ namespace LoopringAPI
 
                     var accountInfo = await (await fetch(""||--||""+from)).json();
 
-                    var msgParams =  ""Sign this message to access Loopring Exchange: |-|-|-| with key nonce: "" + (accountInfo.nonce - 1);
+                    var msgParams =  ""Sign this message to access Loopring Exchange: |-|-|-| with key nonce: "" + (accountInfo.nonce |--|--|--|);
 
                     var params = [from, msgParams];
                     var method = 'personal_sign';
@@ -103,15 +106,8 @@ namespace LoopringAPI
                             console.log('TYPED SIGNED:' + JSON.stringify(result.result));
                             fetch(""" + MetaMaskWebServerUrl + @"/api/signatureaddress/""+result.result+""|""+from);
                             document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
-
-                            windowClose();
                         }    
                     );                    
-                }
-
-                function windowClose() {
-                    window.open('','_parent','');
-                    window.close();
                 }
 
                 window.onload = setTimeout(()=> signPackage(), 1000);
@@ -162,7 +158,7 @@ namespace LoopringAPI
                                 console.log('TYPED SIGNED:' + JSON.stringify(result.result));
                                 fetch(""" + MetaMaskWebServerUrl + @"/api/sign/""+result.result);
                                 document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
-                                windowClose();
+                                setTimeout(()=>windowClose(),5000);
                             }    
                         );
                     }

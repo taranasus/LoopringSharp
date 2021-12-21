@@ -9,6 +9,8 @@ namespace LoopringAPI
         private string _apiKey;
         private string _ethPrivateKey;
         private string _loopringPrivateKey;
+        private string _loopringPublicKeyX;
+        private string _loopringPublicKeyY;
         private string _ethAddress;
         private int _accountId;
         private SecureClient _client;
@@ -32,17 +34,19 @@ namespace LoopringAPI
 
         /// <summary>
         /// The Object you need in order to communicate with the Loopring API. Recommended to use as a signleton. Automatically gets the API Key using your Loopring Private Key
-        /// </summary>        
-        /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
-        /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
-        /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string loopringPrivateKey, string ethPrivateKey, string apiUrl)
+        /// </summary>                
+        /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>        
+        public Client(string apiUrl, string ethPrivateKey)
         {
             _client = new SecureClient(apiUrl);
-            _loopringPrivateKey = loopringPrivateKey;
             _ethPrivateKey = ethPrivateKey;
             _ethAddress = ECDSAHelper.GetPublicAddress(ethPrivateKey);
-            _accountId = GetAccountInfo().Result.accountId;
+            var accountInfo = GetAccountInfo().Result;
+            _accountId = accountInfo.accountId;
+            var l2Auth = EDDSAHelper.EDDSASignLocal(ExchangeInfo().Result.exchangeAddress, accountInfo.nonce - 1, _ethPrivateKey, _ethAddress);
+            _loopringPrivateKey = l2Auth.secretKey;
+            _loopringPublicKeyX = l2Auth.publicKeyX;
+            _loopringPublicKeyY = l2Auth.publicKeyY;
             _apiKey = ApiKey().Result;
         }
 
@@ -53,11 +57,13 @@ namespace LoopringAPI
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
         public Client(string apiUrl)
-        {            
+        {
             _client = new SecureClient(apiUrl);
             var l2Auth = EDDSAHelper.GetL2PKFromMetaMask(ExchangeInfo().Result.exchangeAddress, apiUrl);
-            _ethAddress = l2Auth.ethAddress;            
+            _ethAddress = l2Auth.ethAddress;
             _loopringPrivateKey = l2Auth.secretKey;
+            _loopringPublicKeyX = l2Auth.publicKeyX;
+            _loopringPublicKeyY = l2Auth.publicKeyY;
             _accountId = GetAccountInfo().Result.accountId;
             _apiKey = ApiKey().Result;
         }
@@ -146,11 +152,11 @@ namespace LoopringAPI
         }
 
 
-            /// <summary>
-            /// Returns the configurations of all supported tokens, including Ether.
-            /// </summary>
-            /// <returns>List of all the supported tokens and their configurations</returns>
-            public Task<List<TokenConfig>> GetTokens()
+        /// <summary>
+        /// Returns the configurations of all supported tokens, including Ether.
+        /// </summary>
+        /// <returns>List of all the supported tokens and their configurations</returns>
+        public Task<List<TokenConfig>> GetTokens()
         {
             return _client.GetTokens();
         }
@@ -321,6 +327,39 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// Returns a list of Ethereum transactions from users for exchange account registration.
+        /// </summary>
+        /// <param name="limit"></param>
+        /// <param name="offset"></param>
+        /// <param name="start">Lower bound of order's creation timestamp in millisecond (ex. 1567053142000)</param>
+        /// <param name="end">Upper bound of order's creation timestamp in millisecond (ex. 1567053242000)</param>
+        /// <param name="limit">How many results per call? Default 50</param>
+        /// <param name="offset">How many results to skip? Default 0 </param>
+        /// <param name="statuses">Statuses which you would like to filter by</param>
+        /// <returns>List of Ethereum transactions from users for exchange account registration.</returns>
+        public Task<List<Transaction>> CreateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        {
+            return _client.CreateInfo(_apiKey, _accountId, limit, offset, start, end, statuses);
+        }
+
+        /// <summary>
+        /// Returns a list Ethereum transactions from users for resetting exchange passwords.
+        /// </summary>
+        /// <param name="limit"></param>
+        /// <param name="offset"></param>
+        /// <param name="start">Lower bound of order's creation timestamp in millisecond (ex. 1567053142000)</param>
+        /// <param name="end">Upper bound of order's creation timestamp in millisecond (ex. 1567053242000)</param>
+        /// <param name="limit">How many results per call? Default 50</param>
+        /// <param name="offset">How many results to skip? Default 0 </param>
+        /// <param name="statuses">Statuses which you would like to filter by</param>
+        /// <returns>List of Ethereum transactions from users for resetting exchange passwords.</returns>
+        public Task<List<Transaction>> UpdateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        {
+            return _client.UpdateInfo(_apiKey, _accountId, limit, offset, start, end, statuses);
+        }
+
+
+        /// <summary>
         /// Send some tokens to anyone else on L2
         /// </summary>
         /// <param name="request">The basic transaction details needed in order to actually do a transaction</param>
@@ -329,7 +368,7 @@ namespace LoopringAPI
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public Task<Transfer> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
+        public Task<OperationResult> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
         {
             return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo);
         }
@@ -343,9 +382,44 @@ namespace LoopringAPI
         /// <param name="feeToken">In what token are we paying the fee</param>
         /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
-        public async Task<Transfer> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
+        public async Task<OperationResult> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
         {
             return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Query trades with specified market
+        /// </summary>
+        /// <param name="market">Single market to query</param>
+        /// <param name="limit">Number of queries</param>
+        /// <param name="fillTypes">Filter by types of fills for the trade</param>
+        /// <returns>List of Trades</returns>
+        public Task<List<Trade>> GetTrades(string market, int? limit = null, FillTypes[] fillTypes = null)
+        {
+            return _client.GetTrades(market, limit, fillTypes);
+        }
+
+        /// <summary>
+        /// WARNING!!! This has a fee asociated with it. Make a OffchainFee request of type OffChainRequestType.UpdateAccount to see what the fee is.
+        /// Updates the EDDSA key associated with the specified account, making the previous one invalid in the process.
+        /// </summary>   
+        /// <param name="feeToken">The token in which the fee should be paid for this operation</param>
+        /// <returns>Returns the hash and status of your requested operation</returns>
+        public Task<OperationResult> RequestNewL2PrivateKey(string feeToken)
+        {
+            return _client.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().Result.exchangeAddress);
+        }
+
+        /// <summary>
+        /// WARNING!!! This has a fee asociated with it. Make a OffchainFee request of type OffChainRequestType.UpdateAccount to see what the fee is.
+        /// Updates the EDDSA key associated with the specified account, making the previous one invalid in the process.
+        /// </summary>   
+        /// <param name="req">A UpdateAccountRequest object containing all the needed information for this request</param>
+        /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
+        /// <returns>Returns the hash and status of your requested operation</returns>
+        public Task<OperationResult> RequestNewL2PrivateKey(UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
+        {
+            return _client.UpdateAccount(_loopringPrivateKey, _ethPrivateKey, req, counterFactualInfo);
         }
     }
 }

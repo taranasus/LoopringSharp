@@ -1,7 +1,9 @@
 ﻿using LoopringAPI.Metamask;
+using Nethereum.Signer;
 using PoseidonSharp;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Numerics;
 using System.Security.Cryptography;
 
@@ -15,39 +17,68 @@ namespace LoopringAPI
             return signer.Sign();
         }
 
-        public static (string secretKey, string ethAddress) GetL2PKFromMetaMask(string exchangeAddress, string apiUrl)
+        public static (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) GetL2PKFromMetaMask(string exchangeAddress, string apiUrl)
         {
             var sign = EDDSASignMetamask(exchangeAddress, apiUrl, true);
             // We're only interested in the secret key for signing packages. Which ironically is the simplest one to get...
-            return (sign.secretKey, sign.ethAddress);
+            return (sign.secretKey, sign.ethAddress, sign.publicKeyX, sign.publicKeyY);
         }
 
-        public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) EDDSASignMetamask(string exchangeAddress, string apiUrl, bool skipPublicKeyCalculation = false)
+        public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) EDDSASignMetamask(string exchangeAddress, string apiUrl, bool skipPublicKeyCalculation = false, bool nextNonce = false)
         {
             // Requesting metamask to sign our package so we can tare it apart and get our public and secret keys
-            var rawKey = MetamaskServer.L2Authenticate("We need you to sign this message in Metamask in order to access your Layer 2 wallet", exchangeAddress,apiUrl);
+            var rawKey = MetamaskServer.L2Authenticate("We need you to sign this message in Metamask in order to access your Layer 2 wallet", exchangeAddress,apiUrl, nextNonce);
+            return RipKeyAppart(rawKey,skipPublicKeyCalculation);
+        }
 
+        public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) EDDSASignLocal(string exchangeAddress, int nonce, string l1Pk, string ethAddress, bool skipPublicKeyCalculation = false)
+        {
+            string msg1 = "Sign this message to access Loopring Exchange: "+exchangeAddress+" with key nonce: "+(nonce);
+            var signer1 = new EthereumMessageSigner();
+            var rawKey = signer1.EncodeUTF8AndSign(msg1, new EthECKey(l1Pk));
+
+            // Requesting metamask to sign our package so we can tare it apart and get our public and secret keys
+            
+            return RipKeyAppart((rawKey,ethAddress), skipPublicKeyCalculation);
+        }
+
+        public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) RipKeyAppart((string eddsa,string ethAddress) rawKey, bool skipPublicKeyCalculation = false)
+        {
             BigInteger order = BigInteger.Parse("21888242871839275222246405745257275088614511777268538073601725287587578984328");
             BigInteger p = BigInteger.Parse("21888242871839275222246405745257275088548364400416034343698204186575808495617");
-            BigInteger[] Base8 = new BigInteger[] { 
-                BigInteger.Parse("16540640123574156134436876038791482806971768689494387082833631921987005038935"), 
+            BigInteger[] Base8 = new BigInteger[] {
+                BigInteger.Parse("16540640123574156134436876038791482806971768689494387082833631921987005038935"),
                 BigInteger.Parse("20819045374670962167435360035096875258406992893633759881276124905556507972311") };
             BigInteger suborder = rsh(order, 3);
-            byte[] rawKeyBytes = ToHexBytes(rawKey.Item1.Replace("0x", ""));
-            var number = SecureClient.ParseHexUnsigned(rawKey.Item1);
+            byte[] rawKeyBytes = ToHexBytes(rawKey.eddsa.Replace("0x", ""));
+            var number = Utils.ParseHexUnsigned(rawKey.eddsa);
 
-            var sha256Managed = new SHA256Managed();            
+            var sha256Managed = new SHA256Managed();
             byte[] seed = sha256Managed.ComputeHash(rawKeyBytes);
 
+            var lebuffResult = leBuff2Int(seed);
             var secertKey = leBuff2Int(seed) % suborder;
             BigInteger[] publicKey = new BigInteger[2];
 
             // Have this logic to save on computing resources. No reason to calculate them unless needed
             // The only time we actually need these is if the user wants to export their wallet
-            if(!skipPublicKeyCalculation)
+            if (!skipPublicKeyCalculation)
                 publicKey = mulPointEscalar(Base8, secertKey, p);
 
-            return ("0x"+publicKey[0].ToString("x"), "0x"+publicKey[1].ToString("x"), "0x"+secertKey.ToString("x"), rawKey.ethAddress);
+            return ("0x" + publicKey[0].ToString("x").PadLeft(64,'0'), "0x" + publicKey[1].ToString("x").PadLeft(64, '0'), "0x" + secertKey.ToString("x").PadLeft(64, '0'), rawKey.ethAddress);
+        }
+        
+        public static string EddsaSignUrl(string l2Pk, HttpMethod method, List<(string Key, string Value)> queryParams, string postBody, string apiMethod, string apiUrl)
+        {
+            var message = Utils.CreateSha256Signature(
+                method,
+                queryParams,
+                postBody,
+                apiMethod,
+                apiUrl);
+
+            var signer = new Eddsa(message, l2Pk);
+            return signer.Sign();
         }
 
         #region Public Key calculation methods
@@ -134,7 +165,14 @@ namespace LoopringAPI
 
         static BigInteger leBuff2Int(byte[] buff)
         {
-            return new BigInteger(buff);
+            BigInteger res = 0;
+            for(int i=0;i<buff.Length;i++)
+            {
+                var n = new BigInteger(buff[i]);
+                res = BigInteger.Add(res, n << (i * 8));
+            }
+
+            return res;
         }        
 
         static BigInteger rsh(BigInteger original, int order)
