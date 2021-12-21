@@ -42,12 +42,28 @@ namespace LoopringAPI
             </head>
 
             <body>   
-            <h1><span id=""userMesssage"">Waiting for metamask to load and then start authentication process.</span></h1>
+            <h1><span id=""userMesssage"">Waiting for metamask to become available</span></h1>
             </body>
 
             </html>
             <script>               
-                window.onload = setTimeout(()=> window.location.href = """+MetaMaskWebServerUrl+ @"/l2au.html"" , 5000);
+                function isEthereumConnected()
+                {
+                    if(typeof ethereum === 'undefined')
+                    {
+                        document.getElementById('userMesssage').innerHTML = 'Metamask not detected! Please open this link in the browser with metamask installed';     
+                    }   
+                    else if(ethereum.isConnected())
+                    {
+                        window.location.href = """ + MetaMaskWebServerUrl + @"/l2au.html""
+                    }
+                    else
+                    {
+                        setTimeout(()=> window.location.href = """ + MetaMaskWebServerUrl + @"/start.html"", 500);
+                    }
+                }
+
+                window.onload = setTimeout(()=> isEthereumConnected() , 100);
             </script>";
         public static string MetaMaskAuthTemplate = @"<!DOCTYPE html>
             <html>
@@ -71,8 +87,7 @@ namespace LoopringAPI
                     else
                     {
                         const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-
-                        setTimeout(()=> signPackage2(), 1000);
+                        setTimeout(()=> signPackage2(), 500);
                     }
                 }
                 
@@ -106,8 +121,14 @@ namespace LoopringAPI
                             console.log('TYPED SIGNED:' + JSON.stringify(result.result));
                             fetch(""" + MetaMaskWebServerUrl + @"/api/signatureaddress/""+result.result+""|""+from);
                             document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
+                            setTimeout(()=>windowClose(),3000);
                         }    
                     );                    
+                }
+
+                function windowClose() {
+                    window.open('','_parent','');
+                    window.close();
                 }
 
                 window.onload = setTimeout(()=> signPackage(), 1000);
