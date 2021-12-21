@@ -33,38 +33,7 @@ namespace LoopringAPI
         public static string HttpHeaderAPIKeyName = "X-API-KEY";
         public static string HttpHeaderAPISigName = "X-API-SIG";
 
-        public static string MetaMaskWebServerUrl = "http://localhost:42069";
-        public static string MetaMaskStartTemplate = @"<!DOCTYPE html>
-            <html>
-            <head>
-            <title>Title of the document</title>
-            <script src=""https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js""></script>
-            </head>
-
-            <body>   
-            <h1><span id=""userMesssage"">Waiting for metamask to become available</span></h1>
-            </body>
-
-            </html>
-            <script>               
-                function isEthereumConnected()
-                {
-                    if(typeof ethereum === 'undefined')
-                    {
-                        document.getElementById('userMesssage').innerHTML = 'Metamask not detected! Please open this link in the browser with metamask installed';     
-                    }   
-                    else if(ethereum.isConnected())
-                    {
-                        window.location.href = """ + MetaMaskWebServerUrl + @"/l2au.html""
-                    }
-                    else
-                    {
-                        setTimeout(()=> window.location.href = """ + MetaMaskWebServerUrl + @"/start.html"", 500);
-                    }
-                }
-
-                window.onload = setTimeout(()=> isEthereumConnected() , 100);
-            </script>";
+        public static string MetaMaskWebServerUrl = "http://localhost:42069";      
         public static string MetaMaskAuthTemplate = @"<!DOCTYPE html>
             <html>
             <head>
@@ -84,10 +53,15 @@ namespace LoopringAPI
                     {
                         document.getElementById('userMesssage').innerHTML = 'Metamask not detected! Please open this link in the browser with metamask installed';     
                     }           
+                    else if(!ethereum.isConnected())
+                    {
+                        document.getElementById('userMesssage').innerHTML = 'Waiting for MetaMask to become availalble';
+                        setTimeout(()=>window.location.href = """ + MetaMaskWebServerUrl + @"/l2au.html"", 1000);
+                    }
                     else
                     {
                         const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                        setTimeout(()=> signPackage2(), 500);
+                        setTimeout(()=> signPackage2(), 100);
                     }
                 }
                 
@@ -121,7 +95,7 @@ namespace LoopringAPI
                             console.log('TYPED SIGNED:' + JSON.stringify(result.result));
                             fetch(""" + MetaMaskWebServerUrl + @"/api/signatureaddress/""+result.result+""|""+from);
                             document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
-                            setTimeout(()=>windowClose(),3000);
+                            setTimeout(()=>windowClose(),1000);
                         }    
                     );                    
                 }
@@ -131,7 +105,7 @@ namespace LoopringAPI
                     window.close();
                 }
 
-                window.onload = setTimeout(()=> signPackage(), 1000);
+                window.onload = setTimeout(()=> signPackage(), 100);
             </script>";
         public static string MetaMaskSignatureTemplate = @"<!DOCTYPE html>
             <html>
@@ -152,7 +126,12 @@ namespace LoopringAPI
                     if(typeof ethereum === 'undefined')
                     {
                         document.getElementById('userMesssage').innerHTML = 'Metamask not detected! Please open this link in the browser with metamask installed';     
-                    }           
+                    }     
+                    else if(!ethereum.isConnected())
+                    {   
+                        document.getElementById('userMesssage').innerHTML = 'Waiting for MetaMask to become availalble';
+                        setTimeout(()=>window.location.href = """ + MetaMaskWebServerUrl + @"/sign.html"", 1000);
+                    }
                     else
                     {
                         const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
@@ -179,7 +158,7 @@ namespace LoopringAPI
                                 console.log('TYPED SIGNED:' + JSON.stringify(result.result));
                                 fetch(""" + MetaMaskWebServerUrl + @"/api/sign/""+result.result);
                                 document.getElementById('userMesssage').innerHTML = 'Action Completed! You may close this window.';
-                                setTimeout(()=>windowClose(),5000);
+                                setTimeout(()=>windowClose(),1000);
                             }    
                         );
                     }
@@ -189,7 +168,7 @@ namespace LoopringAPI
                     window.close();
                 }
 
-                window.onload = setTimeout(()=> signPackage(), 1000);
+                window.onload = setTimeout(()=> signPackage(), 100);
             </script>";
     }
 }

@@ -25,9 +25,7 @@ namespace LoopringAPI.Metamask
             string nonceModifier = "- 1";
             if (nextNonce)
                 nonceModifier = "+ 0";
-
-            File.WriteAllText(Directory.GetCurrentDirectory() + "/start.html", 
-                Constants.MetaMaskStartTemplate);
+          
             File.WriteAllText(Directory.GetCurrentDirectory() + "/l2au.html", 
                 Constants.MetaMaskAuthTemplate.Replace("||--||", apiUrl + Constants.AccountUrl + "?owner=")
                                               .Replace("|-|-|-|", exchangeAddress)
@@ -37,7 +35,7 @@ namespace LoopringAPI.Metamask
             eddsa = null;
             ethAddress = null;
 
-            ServerInitiator("/start.html");
+            ServerInitiator("/l2au.html");
 
             // Wait for authentication to finish
             while (eddsa == null)
@@ -46,8 +44,7 @@ namespace LoopringAPI.Metamask
             }
 
             CloseServer();
-
-            File.Delete(Directory.GetCurrentDirectory() + "/start.html");
+            
             File.Delete(Directory.GetCurrentDirectory() + "/l2au.html");
 
             return (eddsa.Replace("\"", ""),ethAddress);
