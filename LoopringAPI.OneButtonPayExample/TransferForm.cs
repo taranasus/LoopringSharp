@@ -16,7 +16,7 @@ namespace LoopringAPI.OneButtonPayExample
             // Since only the URL was provided and no other info, the client will attempt to make contact with the users's MetaMask in order
             // To get the necesairy info
             //                  The url of the exchange you will be interacting with
-            client = new Client(cbEnvironment.SelectedItem.ToString().Split(" | ")[1]);
+            client = new Client(cbEnvironment.SelectedItem.ToString().Split(" | ")[1], OutsideWallet.WalletConnect);
 
             // Clear the textboxes in case this is a reload
             cbPaymentFeeToken.Items.Clear();

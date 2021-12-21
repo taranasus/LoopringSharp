@@ -15,6 +15,11 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.10" />
     <PackageReference Include="SauceControl.Blake2Fast" Version="2.0.0" />
+    <PackageReference Include="Websocket.Client" Version="4.4.43" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletConnectSharp\WalletConnectSharp.Core\WalletConnectSharp.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

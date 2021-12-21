@@ -811,13 +811,17 @@ namespace LoopringAPI
         /// <param name="ethPublicAddress">User's public wallet address</param>
         /// <param name="exchangeAddress">Exchange's public address</param>
         /// <returns>Returns the hash and status of your requested operation</returns>
-        public async Task<OperationResult> UpdateAccount(string apiKey, string l1Pk,string l2Pk, int accountId, string feeToken, string ethPublicAddress, string exchangeAddress)
+        public async Task<OperationResult> UpdateAccount(string apiKey, string l1Pk,string l2Pk, int accountId, string feeToken, string ethPublicAddress, string exchangeAddress, OutsideWallet? walletType)
         {
             var newNonce = (await GetAccountInfo(ethPublicAddress)).nonce;
             (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) keys;
-            if (string.IsNullOrWhiteSpace(l1Pk))
-            {
+            if (walletType.HasValue && walletType.Value == OutsideWallet.MetaMask)
+            {                
                 keys = EDDSAHelper.EDDSASignMetamask(exchangeAddress, _apiUrl, false,true);
+            }
+            if (walletType.HasValue && walletType.Value == OutsideWallet.WalletConnect)
+            {
+                keys = EDDSAHelper.EDDSASignWalletConnect(exchangeAddress, newNonce);
             }
             else
             {
