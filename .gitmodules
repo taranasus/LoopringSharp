@@ -3,4 +3,4 @@
 	url = https://github.com/fudgebucket27/PoseidonSharp
 [submodule "WalletConnectSharp"]
 	path = WalletConnectSharp
-	url = https://github.com/WalletConnect/WalletConnectSharp
+	url = https://github.com/taranasus/WalletConnectSharp
