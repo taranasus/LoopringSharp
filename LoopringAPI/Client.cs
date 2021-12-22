@@ -16,7 +16,7 @@ namespace LoopringAPI
         private string _loopringPublicKeyX;
         private string _loopringPublicKeyY;
         private string _ethAddress;
-        public OutsideWallet? _walletType;
+        public WalletService? _walletType;
         private int _accountId;
         private SecureClient _client;
 
@@ -61,10 +61,10 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiUrl, OutsideWallet wallet)
+        public Client(string apiUrl, WalletService walletService)
         {
-            _walletType = wallet;
-            if (wallet == OutsideWallet.WalletConnect)
+            _walletType = walletService;
+            if (walletService == WalletService.WalletConnect)
             {
                 string connectURi = WalletConnectServer.Connect();
                 Debug.WriteLine("Connection: " + connectURi);
@@ -84,15 +84,15 @@ namespace LoopringAPI
 
             _client = new SecureClient(apiUrl);
             (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) l2Auth = ("", "", "", "");
-            if (wallet == OutsideWallet.MetaMask)
+            if (walletService == WalletService.MetaMask)
             {
                 l2Auth = EDDSAHelper.GetL2PKFromMetaMask(ExchangeInfo().Result.exchangeAddress, apiUrl);
                 _ethAddress = l2Auth.ethAddress;
             }
-            else if (wallet == OutsideWallet.WalletConnect)
+            else if (walletService == WalletService.WalletConnect)
             {
                 var nonce = GetAccountInfo().Result.nonce;
-                l2Auth = EDDSAHelper.GetL2PKFromWalletConnect(ExchangeInfo().Result.exchangeAddress, nonce-1).GetAwaiter().GetResult();
+                l2Auth = EDDSAHelper.GetL2PKFromWalletConnect(ExchangeInfo().Result.exchangeAddress, nonce-1).Result;
             }
             
             _loopringPrivateKey = l2Auth.secretKey;

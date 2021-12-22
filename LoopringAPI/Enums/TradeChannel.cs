@@ -7,7 +7,7 @@
         MIXED
     }
 
-    public enum OutsideWallet
+    public enum WalletService
     {
         MetaMask,
         WalletConnect
