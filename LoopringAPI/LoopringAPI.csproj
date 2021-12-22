@@ -19,10 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WalletConnectSharp\WalletConnectSharp.Core\WalletConnectSharp.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Metamask\MetamaskWebPage.html">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
