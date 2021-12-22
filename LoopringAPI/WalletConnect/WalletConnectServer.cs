@@ -18,7 +18,6 @@ namespace LoopringAPI.WalletConnect
         private static WalletConnectSession walletConnect;
         private static bool isWaitingForConnection = false;
 
-
         public static string Connect()
         {
             var metadata = new ClientMeta()
@@ -64,14 +63,19 @@ namespace LoopringAPI.WalletConnect
                 Thread.Sleep(100);
             }
 
-            return walletConnect.Accounts[0]; 
+            return walletConnect.Accounts[0];
         }
 
-        public static async Task<(string eddsa, string ethAddress)> L2Authenticate(string exchangeAddress,  int nonce)
-        {    
+        public static async Task<(string eddsa, string ethAddress)> L2Authenticate(string exchangeAddress, int nonce)
+        {
             if (walletConnect == null)
             {
                 throw new Exception("You must first run the Connect() method and give the resulting stirng to the user so they can allow the connection");
+            }
+
+            while (isWaitingForConnection)
+            {
+                Thread.Sleep(100);
             }
 
             while (!walletConnect.Connected)
@@ -79,21 +83,22 @@ namespace LoopringAPI.WalletConnect
                 Thread.Sleep(100);
             }
 
-            string hexData = "Sign this message to access Loopring Exchange: "+exchangeAddress+" with key nonce: " + nonce;
+            string hexData = "Sign this message to access Loopring Exchange: " + exchangeAddress + " with key nonce: " + nonce;
             string address = walletConnect.Accounts[0];
 
             var result = await walletConnect.EthSign(address, hexData);
-            //EthPersonalSign message = new EthPersonalSign(hexData, address);
             return (result, address);
-
         }
-    }
-
-    public static class WalletConnectSessionExtra
-    {
-        public static void Start(this WalletConnectSession s)
+        public static async Task<string> Sign(string serializedData, string signatureMethod, string ethAddress)
         {
+            var result = await walletConnect.EthSignTypedDataV4(ethAddress, serializedData);
+            return result;
+        }
 
+        public static async Task<string> Sign(string hexData, string ethAddress)
+        {
+            var result = await walletConnect.EthSign(ethAddress, hexData);
+            return result;
         }
     }
 }

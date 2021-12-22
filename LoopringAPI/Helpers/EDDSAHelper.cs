@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Numerics;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace LoopringAPI
 {
@@ -18,9 +19,9 @@ namespace LoopringAPI
             return signer.Sign();
         }
 
-        public static (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) GetL2PKFromWalletConnect(string exchangeAddress, int nonce)
+        public static async Task<(string secretKey, string ethAddress, string publicKeyX, string publicKeyY)> GetL2PKFromWalletConnect(string exchangeAddress, int nonce)
         {
-            var sign = EDDSASignWalletConnect(exchangeAddress, nonce);
+            var sign = await EDDSASignWalletConnect(exchangeAddress, nonce);
             // We're only interested in the secret key for signing packages. Which ironically is the simplest one to get...
             return (sign.secretKey, sign.ethAddress, sign.publicKeyX, sign.publicKeyY);
         }
@@ -39,11 +40,11 @@ namespace LoopringAPI
             return RipKeyAppart(rawKey,skipPublicKeyCalculation);
         }
 
-        public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) EDDSASignWalletConnect(string exchangeAddress, int nextNonce, bool skipPublicKeyCalculation = false)
+        public static async Task<(string publicKeyX, string publicKeyY, string secretKey, string ethAddress)> EDDSASignWalletConnect(string exchangeAddress, int nextNonce, bool skipPublicKeyCalculation = false)
         {
             // Requesting metamask to sign our package so we can tare it apart and get our public and secret keys
-            var rawKey = WalletConnectServer.L2Authenticate(exchangeAddress, nextNonce);
-            return RipKeyAppart(rawKey.Result, skipPublicKeyCalculation);
+            var rawKey = await WalletConnectServer.L2Authenticate(exchangeAddress, nextNonce);
+            return RipKeyAppart(rawKey, skipPublicKeyCalculation);
         }
 
         public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) EDDSASignLocal(string exchangeAddress, int nonce, string l1Pk, string ethAddress, bool skipPublicKeyCalculation = false)

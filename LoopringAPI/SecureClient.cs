@@ -1,4 +1,5 @@
 ﻿using LoopringAPI.Metamask;
+using LoopringAPI.WalletConnect;
 using Newtonsoft.Json;
 using PoseidonSharp;
 using System;
@@ -669,7 +670,7 @@ namespace LoopringAPI
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public async Task<OperationResult> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
+        public async Task<OperationResult> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo, OutsideWallet? walletType)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
@@ -695,10 +696,17 @@ namespace LoopringAPI
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
             apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
 
-            if (string.IsNullOrWhiteSpace(l1Pk))
+            if (walletType.HasValue && walletType.Value==OutsideWallet.MetaMask)
             {
                 var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().Result.chainId, apiRequest).Item2;
                 apiRequest.ecdsaSignature = MetamaskServer.Sign(JsonConvert.SerializeObject(typedData), "eth_signTypedData_v4", $"Please authorise the sending of {(decimal.Parse(request.token.volume) / 1000000000000000000m)} {request.tokenName} to {request.payeeAddr}. The fee will be {(decimal.Parse(request.maxFee.volume) / 1000000000000000000m)} {request.tokenFeeName}");
+            }
+            else if (walletType.HasValue && walletType.Value == OutsideWallet.WalletConnect)
+            {
+                var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().Result.chainId, apiRequest);
+
+                //apiRequest.ecdsaSignature = MetamaskServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", $"Please authorise the sending of {(decimal.Parse(request.token.volume) / 1000000000000000000m)} {request.tokenName} to {request.payeeAddr}. The fee will be {(decimal.Parse(request.maxFee.volume) / 1000000000000000000m)} {request.tokenFeeName}");                
+                apiRequest.ecdsaSignature = await WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", request.payerAddr)+"02";                
             }
             else
             {
@@ -726,7 +734,7 @@ namespace LoopringAPI
         /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         public async Task<OperationResult> Transfer(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress,
-            string toAddress, string token, decimal value, string feeToken, string memo)
+            string toAddress, string token, decimal value, string feeToken, string memo, OutsideWallet? walletType)
         {
             var amount = (value * 1000000000000000000m).ToString("0");
             var feeamountresult = await OffchainFee(apiKey, accountId, OffChainRequestType.Transfer, feeToken, amount).ConfigureAwait(false);
@@ -754,7 +762,7 @@ namespace LoopringAPI
                 tokenName = token,
                 tokenFeeName = feeToken
             };
-            return await Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null).ConfigureAwait(false);
+            return await Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null, walletType).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -821,7 +829,7 @@ namespace LoopringAPI
             }
             if (walletType.HasValue && walletType.Value == OutsideWallet.WalletConnect)
             {
-                keys = EDDSAHelper.EDDSASignWalletConnect(exchangeAddress, newNonce);
+                keys = await EDDSAHelper.EDDSASignWalletConnect(exchangeAddress, newNonce);
             }
             else
             {

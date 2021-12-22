@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
@@ -219,6 +220,15 @@ namespace LoopringAPI
             var serializedECDRSASignature = EthECDSASignature.CreateStringSignature(ECDRSASignature);
 
             return serializedECDRSASignature + "0" + (int)EthSignType.EIP_712;
+        }
+
+        public static string GenerateSignature(TypedData eip712TypedData)
+        {
+            Eip712TypedDataSigner singer = new Eip712TypedDataSigner();            
+            var encodedTypedData = singer.EncodeTypedData(eip712TypedData);
+            var sha256Managed = new SHA256Managed();            
+            return WalletConnectSharp.Core.Utils.Hex.ToHex(sha256Managed.ComputeHash(encodedTypedData));
+
         }
 
         public static string GetPublicAddress(string privateKey)

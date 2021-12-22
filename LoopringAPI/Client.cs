@@ -85,7 +85,7 @@ namespace LoopringAPI
             else if (wallet == OutsideWallet.WalletConnect)
             {
                 var nonce = GetAccountInfo().Result.nonce;
-                l2Auth = EDDSAHelper.GetL2PKFromWalletConnect(ExchangeInfo().Result.exchangeAddress, nonce-1);
+                l2Auth = EDDSAHelper.GetL2PKFromWalletConnect(ExchangeInfo().Result.exchangeAddress, nonce-1).GetAwaiter().GetResult();
             }
             
             _loopringPrivateKey = l2Auth.secretKey;
@@ -397,7 +397,7 @@ namespace LoopringAPI
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public Task<OperationResult> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
         {
-            return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo);
+            return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo, _walletType);
         }
 
         /// <summary>
@@ -411,7 +411,7 @@ namespace LoopringAPI
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         public async Task<OperationResult> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
         {
-            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo).ConfigureAwait(false);
+            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo, _walletType).ConfigureAwait(false);
         }
 
         /// <summary>
