@@ -300,7 +300,6 @@ namespace WalletConnectSharp.Core
             return resturn;
         }
 
-
         /// <summary>
         /// Create a new WalletConnect session with a Wallet.
         /// </summary>
