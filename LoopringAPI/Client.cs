@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -67,12 +68,18 @@ namespace LoopringAPI
             {
                 string connectURi = WalletConnectServer.Connect();
                 Debug.WriteLine("Connection: " + connectURi);
+                Console.WriteLine("WalletConnect CODE: " + connectURi);
+                File.WriteAllText("walletconnect.html", 
+                    Constants.WalletConnectHTML.Replace("|----|", $"https://api.qrserver.com/v1/create-qr-code/?data={HttpUtility.UrlEncode(connectURi)}!&size=400x400")
+                    .Replace("|--|--|", connectURi));
                 var browser = new System.Diagnostics.Process()
                 {
-                    StartInfo = new System.Diagnostics.ProcessStartInfo($"https://api.qrserver.com/v1/create-qr-code/?data={HttpUtility.UrlEncode(connectURi)}!&size=400x400") { UseShellExecute = true }
+                    StartInfo = new System.Diagnostics.ProcessStartInfo(Directory.GetCurrentDirectory()+ "/walletconnect.html") { UseShellExecute = true }
                 };
                 browser.Start();
                 _ethAddress = WalletConnectServer.GetEthAddress();
+                File.Delete("walletconnect.html");
+                browser.Kill();
             }
 
             _client = new SecureClient(apiUrl);

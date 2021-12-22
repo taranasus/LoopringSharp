@@ -15,9 +15,13 @@ using WalletConnectSharp.Core.Utils;
 
 namespace WalletConnectSharp.Core
 {
+    // Copied from https://github.com/WalletConnect/WalletConnectSharp
+    // DID Not fork due to lack of maintenance on the project and disagreeance with coding standards
+    // All credit for base functionality goes to original authors,
+    // I wanted a bit more granular control over this implementation
+
     public class WalletConnectSession : WalletConnectProtocol
-    {
-        
+    {        
         private string _handshakeTopic;
         
         private long _handshakeId;
@@ -49,22 +53,7 @@ namespace WalletConnectSharp.Core
                 return "wc:" + topicEncode + "@" + versionEncode + "?bridge=" + bridgeUrlEncode + "&key=" + keyEncoded;
             }
         }
-        
-        public WalletConnectSession(SavedSession savedSession, ITransport transport = null, ICipher cipher = null, EventDelegator eventDelegator = null) : base(savedSession, transport, cipher, eventDelegator)
-        {
-            this.DappMetadata = savedSession.DappMeta;
-            this.WalletMetadata = savedSession.WalletMeta;
-            this.ChainId = savedSession.ChainID;
-            
-            clientId = savedSession.ClientID;
-            
-            this.Accounts = savedSession.Accounts;
-                        
-            this.NetworkId = savedSession.NetworkID;
-
-            this.SessionConnected = true;
-        }
-
+      
         public WalletConnectSession(ClientMeta clientMeta, string bridgeUrl = null, ITransport transport = null, ICipher cipher = null, int chainId = 1, EventDelegator eventDelegator = null) : base(transport, cipher, eventDelegator)
         {
             if (clientMeta == null)
@@ -228,16 +217,7 @@ namespace WalletConnectSharp.Core
             var response = await BetterSend(request);
 
             return response.Result;
-        }       
-
-        public async Task<string> EthSignTypedData<T>(string address, T data, EIP712Domain eip712Domain)
-        {
-            var request = new EthSignTypedData<T>(address, data, eip712Domain);
-            ;
-            var response = await BetterSend<T>(request);
-
-            return response.Result;
-        }
+        }   
 
         public async Task<string> EthSignTypedDataV4(string address,string serializedData)
         {
@@ -246,73 +226,7 @@ namespace WalletConnectSharp.Core
             var response = await BetterSend(request);
 
             return response.Result;
-        }
-
-        public async Task<string> EthSendTransaction(params TransactionData[] transaction)
-        {
-            var request = new EthSendTransaction(transaction);
-            
-            var response = await Send<EthSendTransaction, EthResponse>(request);
-
-            return response.Result;
-        }
-
-        public async Task<string> EthSignTransaction(params TransactionData[] transaction)
-        {
-            var request = new EthSignTransaction(transaction);
-            
-            var response = await Send<EthSignTransaction, EthResponse>(request);
-
-            return response.Result;
-        }
-        
-        
-        public async Task<string> EthSendRawTransaction(string data, Encoding messageEncoding = null)
-        {
-            if (!data.IsHex())
-            {
-                var encoding = messageEncoding;
-                if (encoding == null)
-                {
-                    encoding = Encoding.UTF8;
-                }
-                
-                data = "0x" + encoding.GetBytes(data).ToHex();
-            }
-            
-            var request = new EthGenericRequest<string>("eth_sendRawTransaction", data);
-            
-            var response = await Send<EthGenericRequest<string>, EthResponse>(request);
-
-            return response.Result;
-        }
-
-        public async Task<R> Send<T, R>(T data) where T : JsonRpcRequest where R : JsonRpcResponse
-        {
-            TaskCompletionSource<R> eventCompleted = new TaskCompletionSource<R>(TaskCreationOptions.RunContinuationsAsynchronously);
-            
-            Events.ListenForResponse<R>(data.ID, (sender, @event) =>
-            {
-                var response = @event.Response;
-                if (response.IsError)
-                {
-                    eventCompleted.SetException(new IOException(response.Error.Message));
-                }
-                else
-                {
-                    eventCompleted.SetResult(response);
-                }                
-            });
-
-            await SendRequest(data);
-
-            if (OnSend != null)
-            {
-                OnSend(this, this);
-            }
-
-            return await eventCompleted.Task;
-        }
+        }      
 
         public static EthResponse receivedResponse;
 
@@ -386,40 +300,6 @@ namespace WalletConnectSharp.Core
             return resturn;
         }
 
-        public async Task<EthResponse> BetterSend<T>(EthSignTypedData<T> data)
-        {
-            while (receivedResponse != null)
-            {
-                System.Threading.Thread.Sleep(100);
-            }
-
-            TaskCompletionSource<EthResponse> eventCompleted = new TaskCompletionSource<EthResponse>(TaskCreationOptions.None);
-
-            Events.ListenForResponse<EthResponse>(data.ID, (sender, @event) =>
-            {
-                var response = @event.Response;
-                if (response.IsError)
-                {
-                    eventCompleted.SetException(new IOException(response.Error.Message));
-                }
-                else
-                {
-                    receivedResponse = response;
-                    eventCompleted.SetResult(response);
-                }
-
-            });
-
-            await SendRequest(data);
-
-            while (receivedResponse == null)
-            {
-                System.Threading.Thread.Sleep(100);
-            }
-            var resturn = Newtonsoft.Json.JsonConvert.DeserializeObject<EthResponse>(Newtonsoft.Json.JsonConvert.SerializeObject(receivedResponse));
-            receivedResponse = null;
-            return resturn;
-        }
 
         /// <summary>
         /// Create a new WalletConnect session with a Wallet.

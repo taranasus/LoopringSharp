@@ -704,8 +704,6 @@ namespace LoopringAPI
             else if (walletType.HasValue && walletType.Value == OutsideWallet.WalletConnect)
             {
                 var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().Result.chainId, apiRequest);
-
-                //apiRequest.ecdsaSignature = MetamaskServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", $"Please authorise the sending of {(decimal.Parse(request.token.volume) / 1000000000000000000m)} {request.tokenName} to {request.payeeAddr}. The fee will be {(decimal.Parse(request.maxFee.volume) / 1000000000000000000m)} {request.tokenFeeName}");                
                 apiRequest.ecdsaSignature = await WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", request.payerAddr)+"02";                
             }
             else
@@ -790,10 +788,15 @@ namespace LoopringAPI
 
             apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
 
-            if (string.IsNullOrWhiteSpace(l1Pk))
+            if (l1Pk == OutsideWallet.MetaMask.ToString())
             {
                 var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().Result.chainId, apiRequest).Item2;
                 apiRequest.ecdsaSignature = MetamaskServer.Sign(JsonConvert.SerializeObject(typedData), "eth_signTypedData_v4", $"Please authorise the reset of your Loopring private key. The fee will be {(decimal.Parse(apiRequest.maxFee.volume) / 1000000000000000000m)}");
+            }
+            if (l1Pk == OutsideWallet.WalletConnect.ToString())
+            {
+                var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().Result.chainId, apiRequest);
+                apiRequest.ecdsaSignature = await WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", req.owner) + "02";                
             }
             else
             {
@@ -826,10 +829,12 @@ namespace LoopringAPI
             if (walletType.HasValue && walletType.Value == OutsideWallet.MetaMask)
             {                
                 keys = EDDSAHelper.EDDSASignMetamask(exchangeAddress, _apiUrl, false,true);
+                l1Pk = OutsideWallet.MetaMask.ToString();
             }
             if (walletType.HasValue && walletType.Value == OutsideWallet.WalletConnect)
             {
                 keys = await EDDSAHelper.EDDSASignWalletConnect(exchangeAddress, newNonce);
+                l1Pk = OutsideWallet.WalletConnect.ToString();
             }
             else
             {

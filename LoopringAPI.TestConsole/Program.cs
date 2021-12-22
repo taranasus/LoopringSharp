@@ -19,8 +19,8 @@ ApiKeys apiKeys = ReadConfigFile(false);
 
 //Environment.Exit(0);
 
-LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.apiUrl, apiKeys.l1Pk);
-//LoopringAPI.Client client = new LoopringAPI.Client("https://uat2.loopring.io/");
+//LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.apiUrl, apiKeys.l1Pk);
+LoopringAPI.Client client = new LoopringAPI.Client("https://uat2.loopring.io/", OutsideWallet.WalletConnect);
 
 #region UpdateAccountPrivateKey
 Console.WriteLine("Updating your account private key. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");

@@ -29,15 +29,7 @@ namespace WalletConnectSharp.Core.Network
             return string.Join(".", items.Skip(items.Length - 2));
         }
 
-        private static string[] _bridgeCache = null;
-
-        public static string[] AlternateBridges
-        {
-            get
-            {
-                return Bridges;
-            }
-        }
+        private static string[] _bridgeCache = null;   
 
         public static string[] AllBridges
         {

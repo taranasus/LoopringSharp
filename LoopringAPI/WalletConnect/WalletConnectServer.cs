@@ -94,11 +94,5 @@ namespace LoopringAPI.WalletConnect
             var result = await walletConnect.EthSignTypedDataV4(ethAddress, serializedData);
             return result;
         }
-
-        public static async Task<string> Sign(string hexData, string ethAddress)
-        {
-            var result = await walletConnect.EthSign(ethAddress, hexData);
-            return result;
-        }
     }
 }

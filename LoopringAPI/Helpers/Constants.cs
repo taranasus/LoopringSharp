@@ -170,5 +170,19 @@ namespace LoopringAPI
 
                 window.onload = setTimeout(()=> signPackage(), 100);
             </script>";
+
+        public static string WalletConnectHTML = @"<!DOCTYPE html>
+            <html>
+            <head>
+            <title>WalletConnect Details</title>            
+            </head>
+
+            <body>   
+            <h1>For wallet connect, scan this CR code or paste the bellow code into your wallet</h1>
+            <img src=""|----|""/></br>
+            <p>|--|--|</p>
+            </body>
+
+            </html>";
     }
 }
