@@ -208,6 +208,18 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// EXPERIMENTAL.
+        /// </summary>
+        /// <param name="market">The ID of a trading pair.</param>
+        /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
+        /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
+        /// <returns>Returns the order book of a given trading pair.</returns>
+        public Task<Depth> GetMixDepth(string market, int level = 2, int limit = 50)
+        {
+            return _client.GetMixDepth(market, level, limit);
+        }
+
+        /// <summary>
         /// Submit an order to exchange two currencies, but with all the nonsense removed
         /// </summary>
         /// <param name="orderHash">The hash of the order you wish to nuke.</param>
@@ -310,13 +322,26 @@ namespace LoopringAPI
         }
 
         /// <summary>
-        /// Get how much fee you need to pay right now to carry out a transaction of a specified type
-        /// </summary>        
-        /// <param name="requestType">Off-chain request type</param>
-        /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
-        /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
-        /// <returns>Returns the fee amount</returns>
-        public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
+        /// Get the details of an order based on order hash.
+        /// </summary>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="accountId">Wallet Account Id</param>
+        /// <param name="tokens">(Optional) list of the tokens which you want returned</param>
+        /// <returns>OrderDetails object filled with awesome order details</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public Task<List<Balance>> Ballances(string tokens = null)
+        {
+            return _client.Ballances(_apiKey, _accountId, tokens);
+        }
+
+            /// <summary>
+            /// Get how much fee you need to pay right now to carry out a transaction of a specified type
+            /// </summary>        
+            /// <param name="requestType">Off-chain request type</param>
+            /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
+            /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
+            /// <returns>Returns the fee amount</returns>
+            public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
         {
             return _client.OffchainFee(_apiKey, _accountId, requestType, tokenSymbol, amount);
         }

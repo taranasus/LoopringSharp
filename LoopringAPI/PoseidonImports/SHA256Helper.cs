@@ -26,7 +26,7 @@ namespace PoseidonSharp
             BigInteger sha256HashNumber = BigInteger.Parse(sha256HashString, NumberStyles.AllowHexSpecifier);
             if (sha256HashNumber.Sign == -1)
             {
-                string sha256HashAsPositiveHexString = "0" + sha256HashNumber.ToString("x2");
+                string sha256HashAsPositiveHexString = "0" + sha256HashString;
                 sha256HashNumber = BigInteger.Parse(sha256HashAsPositiveHexString, NumberStyles.AllowHexSpecifier);
             }
 

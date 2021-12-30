@@ -119,8 +119,12 @@ namespace LoopringAPI
             return parsResult;
         }
 
+        
+
         public static async Task<string> Http(string url, (string, string)[] parameters = null, (string, string)[] headers = null, string method = "get", string body = null)
         {            
+        
+
             if(_client==null)
             {
                 var httpClientHandler = new HttpClientHandler();

@@ -10,6 +10,7 @@ namespace LoopringAPI
         public static string OffchainFeeUrl = "api/v3/user/offchainFee";
         public static string CreateInfoUrl = "api/v3/user/createInfo";
         public static string UpdateInfoUrl = "api/v3/user/updateInfo";
+        public static string BalancesUrl = "api/v3/user/balances";
         public static string StorageIdUrl = "api/v3/storageId";
         public static string TickerUrl = "api/v3/ticker";
         public static string TimestampUrl = "api/v3/timestamp";
@@ -23,9 +24,11 @@ namespace LoopringAPI
         public static string TokensUrl = "api/v3/exchange/tokens";
         public static string InfoUrl = "api/v3/exchange/info";
         public static string DepthUrl = "api/v3/depth";
+        public static string DepthMixUrl = "api/v3/mix/depth";
         public static string CandlestickUrl = "api/v3/candlestick";
         public static string PriceUrl = "api/v3/price";
         public static string TradeUrl = "api/v3/trade";
+        
 
         public static string EIP721DomainName = "Loopring Protocol";
         public static string EIP721DomainVersion = "3.6.0";

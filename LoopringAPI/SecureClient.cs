@@ -42,6 +42,7 @@ namespace LoopringAPI
             var apiTickersResult = JsonConvert.DeserializeObject<ApiTickersResult>(
                 await Utils.Http(_apiUrl+Constants.TickerUrl, parameters, null).ConfigureAwait(false));
 
+            
             return apiTickersResult.tickers.Select(s => new Ticker()
             {
                 PairId = s[0],
@@ -53,8 +54,8 @@ namespace LoopringAPI
                 LowestPrice = s[6],
                 ClosingPrice = s[7],
                 NumberOfTrades = s[8],
-                HighestBidPrice = s[9],
-                LowestAskPrice = s[10],
+                HighestBidPrice = float.Parse(s[9]),
+                LowestAskPrice = float.Parse(s[10]),
                 BaseFeeAmmount = s[11],
                 QuoteFeeAmount = s[12]
 
@@ -163,13 +164,60 @@ namespace LoopringAPI
                 await Utils.Http(_apiUrl+Constants.DepthUrl, parameters).ConfigureAwait(false));
             return new Depth()
             {
-                asks = apiresult.asks,
+                asks = apiresult.asks.Select(s=>new Depth.Position()
+                {
+                    price = float.Parse(s[0]),
+                    size = decimal.Parse(s[1])/ 1000000000000000000m,
+                    volume = decimal.Parse(s[2]),
+                    numberOfOrdersAgregated = decimal.Parse((s[3]))
+                }).ToList(),
                 market = apiresult.market,
-                bids = apiresult.bids,
+                bids =  apiresult.bids.Select(s => new Depth.Position()
+                {
+                    price = float.Parse(s[0]),
+                    size = decimal.Parse(s[1]) / 1000000000000000000m,
+                    volume = decimal.Parse(s[2]) / 1000000000000000000m,
+                    numberOfOrdersAgregated = decimal.Parse((s[3]))
+                }).ToList(),
                 timestamp = apiresult.timestamp,
                 version = apiresult.version
             };
         }
+
+        /// <summary>
+        /// UNDOCUMENTED. Gets the Depth but for some reason does it better. No idea why
+        /// </summary>
+        /// <param name="market">The ID of a trading pair.</param>
+        /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
+        /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
+        /// <returns>Returns the order book of a given trading pair.</returns>
+        public async Task<Depth> GetMixDepth(string market, int level = 2, int limit = 50)
+        {
+            (string, string)[] parameters = { ("market", market), ("level", level.ToString()), ("limit", limit.ToString()) };
+            var apiresult = JsonConvert.DeserializeObject<ApiDepthResult>(
+                await Utils.Http(_apiUrl + Constants.DepthMixUrl, parameters).ConfigureAwait(false));
+            return new Depth()
+            {
+                asks = apiresult.asks.Select(s => new Depth.Position()
+                {
+                    price = float.Parse(s[0]),
+                    size = decimal.Parse(s[1]) / 1000000000000000000m,
+                    volume = decimal.Parse(s[2]),
+                    numberOfOrdersAgregated = decimal.Parse((s[3]))
+                }).ToList(),
+                market = apiresult.market,
+                bids = apiresult.bids.Select(s => new Depth.Position()
+                {
+                    price = float.Parse(s[0]),
+                    size = decimal.Parse(s[1]) / 1000000000000000000m,
+                    volume = decimal.Parse(s[2]) / 1000000000000000000m,
+                    numberOfOrdersAgregated = decimal.Parse((s[3]))
+                }).ToList(),
+                timestamp = apiresult.timestamp,
+                version = apiresult.version
+            };
+        }
+
 
         /// <summary>
         /// Return the candlestick data of a given trading pair.
@@ -322,20 +370,32 @@ namespace LoopringAPI
             string buyCurrency,
             decimal buyAmmount,
             OrderType orderType,
-            string poolAddress = null)
+            string poolAddress = null,
+            string clientId = null)
         {
             var tradeChannel = TradeChannel.MIXED;
             if (orderType == OrderType.MAKER_ONLY)
                 tradeChannel = TradeChannel.ORDER_BOOK;
 
+            var tokens = await GetTokens();
+            var sellTOkenDecimalCount = tokens.Where(w => w.symbol == sellCurrency).FirstOrDefault().decimals;
+            decimal sellTokenMultiplier = 10;
+            for (int i = 2; i <= sellTOkenDecimalCount; i++)
+                sellTokenMultiplier *= 10;
+
+            var buyTOkenDecimalCount = tokens.Where(w => w.symbol == buyCurrency).FirstOrDefault().decimals;
+            decimal buyTokenMultiplier = 10;
+            for (int i = 2; i <= buyTOkenDecimalCount; i++)
+                buyTokenMultiplier *= 10;
+
             return await SubmitOrder(l2Pk, apiKey, accountId,
-                new Token() { tokenId = await GetTokenId(sellCurrency).ConfigureAwait(false), volume = (sellAmmount * 1000000000000000000m).ToString("0") },
-                new Token() { tokenId = await GetTokenId(buyCurrency).ConfigureAwait(false), volume = (buyAmmount * 1000000000000000000m).ToString("0") },
+                new Token() { tokenId = await GetTokenId(sellCurrency).ConfigureAwait(false), volume = (sellAmmount * sellTokenMultiplier).ToString("0") },
+                new Token() { tokenId = await GetTokenId(buyCurrency).ConfigureAwait(false), volume = (buyAmmount * buyTokenMultiplier).ToString("0") },
                 false,
                 false,
                 Utils.GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds, // one year
                 63,
-                null,
+                clientId,
                 orderType,
                 tradeChannel,
                 null,
@@ -530,7 +590,66 @@ namespace LoopringAPI
             var apiresult = JsonConvert.DeserializeObject<ApiOrderGetResult>(
                 await Utils.Http(_apiUrl+Constants.OrderUrl, parameters, headers).ConfigureAwait(false));
             return new OrderDetails(apiresult);
+        }      
+
+        /// <summary>
+        /// Get the details of an order based on order hash.
+        /// </summary>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="accountId">Wallet Account Id</param>
+        /// <param name="tokens">(Optional) list of the tokens which you want returned</param>
+        /// <returns>OrderDetails object filled with awesome order details</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public async Task<List<Balance>> Ballances(string apiKey, int accountId, string tokens = null)
+        {
+            string[] tokenSplit = new string[0];
+            if (tokens != null)
+                tokenSplit = tokens.Split(',');
+            int[] tokenIds = new int[0];
+            if (tokens!=null && tokens.Length>0)
+                tokenIds = tokenSplit.Select(s => GetTokenId(s).Result).ToArray();
+
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+
+            if (tokenIds.Length == 0)
+                tokenIds = null;
+
+            List<(string, string)> parameters = new List<(string, string)>(){ ("accountId", accountId.ToString()) };
+            if (tokenIds != null && tokenIds.Length > 0)
+                parameters.Add(("tokens", String.Join(",", tokenIds)));
+                
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            var apiresult = JsonConvert.DeserializeObject<List<ApiBalance>>(
+                await Utils.Http(_apiUrl + Constants.BalancesUrl, parameters.ToArray(), headers).ConfigureAwait(false));
+            var result = new List<Balance>();
+
+            var tokenConfigs = await GetTokens();
+
+            foreach(var ballance in apiresult)
+            {
+                var decimals =  tokenConfigs.Where(w => w.tokenId == ballance.tokenId).FirstOrDefault().decimals;
+                decimal devideBy = 10;
+                for(int i = 2;i<=decimals;i++)
+                {
+                    devideBy *= 10;
+                }
+                result.Add(new Balance()
+                {
+                    token = GetTokenId(ballance.tokenId),
+                    locked = decimal.Parse(ballance.locked) / devideBy,
+                    pending = new Balance.BalancePending()
+                    {                        
+                        deposit = decimal.Parse(ballance.pending.deposit)/ devideBy,
+                        widthdraw = decimal.Parse(ballance.pending.withdraw) / devideBy,
+                    },
+                    total = decimal.Parse(ballance.total) / devideBy,
+                });;
+            }
+
+            return result;
         }
+
 
         /// <summary>
         /// Get a list of orders satisfying certain criteria.
@@ -881,6 +1000,11 @@ namespace LoopringAPI
                 }
             }
             return Constants.TokenIDMapper[token];
+        }
+
+        public string GetTokenId(int token)
+        {
+            return Constants.TokenIDMapper.Where(w => w.Value == token).FirstOrDefault().Key;
         }
 
         #endregion
