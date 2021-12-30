@@ -1,6 +1,8 @@
 ﻿using PoseidonSharp;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Numerics;
@@ -10,7 +12,7 @@ using System.Threading.Tasks;
 using System.Web;
 
 namespace LoopringAPI
-{    
+{
     public static class Utils
     {
         static HttpClient _client;
@@ -106,7 +108,7 @@ namespace LoopringAPI
             signatureBase += Utils.UrlEncodeUpperCase(parameterString);
 
             return SHA256Helper.CalculateSHA256HashNumber(signatureBase);
-        }      
+        }
 
         public static int GetUnixTimestamp() => (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
 
@@ -119,13 +121,84 @@ namespace LoopringAPI
             return parsResult;
         }
 
-        
+        static ConcurrentQueue<CustomHttpRequest> httpRequests = new ConcurrentQueue<CustomHttpRequest>();
+        static ConcurrentDictionary<Guid, string> httpResults = new ConcurrentDictionary<Guid, string>();
+
+        static bool HttpProcessorRunning = false;
+        static int thortleRequests = 200;
+
+        public static void StartHttpProcessor(int requestThrottle = 200)
+        {
+            thortleRequests = requestThrottle;
+            if (requestThrottle < 10)
+                thortleRequests = 10;
+            if (!HttpProcessorRunning)
+            {
+                HttpProcessorRunning = true;
+                Task.Run(async () =>
+                {
+                    HttpProcessorRunning = true;
+                    while (true)
+                    {
+                        if (httpRequests.TryDequeue(out CustomHttpRequest request))
+                        {
+                            try
+                            {
+                                var result = await InterlanHttp(request);
+                                httpResults.TryAdd(request.guid, result);
+                            }
+                            catch (Exception ex)
+                            {
+                                httpResults.TryAdd(request.guid, ex.Message);
+                            }
+                            System.Threading.Thread.Sleep(thortleRequests);
+                        }
+                        else
+                        {
+                            System.Threading.Thread.Sleep(10);
+                        }
+                        
+                    }
+                });
+            }
+        }
+
+        static DateTime lastRequest;
 
         public static async Task<string> Http(string url, (string, string)[] parameters = null, (string, string)[] headers = null, string method = "get", string body = null)
-        {            
-        
+        {
+            var reqId = Guid.NewGuid();
 
-            if(_client==null)
+            httpRequests.Enqueue(new CustomHttpRequest()
+            {
+                body = body,
+                method = method,
+                url = url,
+                parameters = parameters,
+                headers = headers,
+                guid = reqId
+            });
+
+            string result = null;
+
+            while (!httpResults.TryRemove(reqId, out result))
+            {
+                await Task.Delay(1);
+            }
+            if(DateTime.UtcNow.Subtract(lastRequest).TotalMilliseconds<1000)
+            {
+                Debug.WriteLine("Waited between calls: " + DateTime.UtcNow.Subtract(lastRequest).TotalMilliseconds + " ms");
+            }
+
+            lastRequest = DateTime.UtcNow;
+            return result;
+
+
+        }
+
+        public static async Task<string> InterlanHttp(CustomHttpRequest request)
+        {
+            if (_client == null)
             {
                 var httpClientHandler = new HttpClientHandler();
                 httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) =>
@@ -135,39 +208,39 @@ namespace LoopringAPI
                 _client = new HttpClient(httpClientHandler);
             }
 
-            if (parameters != null && parameters.Length > 0)
+            if (request.parameters != null && request.parameters.Length > 0)
             {
-                if (parameters.Any(a => !string.IsNullOrWhiteSpace(a.Item2)))
+                if (request.parameters.Any(a => !string.IsNullOrWhiteSpace(a.Item2)))
                 {
-                    url += "?";
-                    foreach (var parameter in parameters)
+                    request.url += "?";
+                    foreach (var parameter in request.parameters)
                     {
                         if (!string.IsNullOrWhiteSpace(parameter.Item2))
                         {
-                            url += parameter.Item1 + "=" + parameter.Item2 + "&";
+                            request.url += parameter.Item1 + "=" + parameter.Item2 + "&";
                         }
                     }
-                    url = url.TrimEnd('&');
+                    request.url = request.url.TrimEnd('&');
                 }
             }
             HttpMethod tmethod = HttpMethod.Get;
-            if (method == "delete")
+            if (request.method == "delete")
                 tmethod = HttpMethod.Delete;
-            if (method == "post")
+            if (request.method == "post")
                 tmethod = HttpMethod.Post;
 
-            using (var httpRequest = new HttpRequestMessage(tmethod, url))
+            using (var httpRequest = new HttpRequestMessage(tmethod, request.url))
             {
-                if (headers != null && headers.Length > 0)
+                if (request.headers != null && request.headers.Length > 0)
                 {
-                    foreach (var header in headers)
+                    foreach (var header in request.headers)
                     {
                         httpRequest.Headers.Add(header.Item1, header.Item2);
                     }
                 }
-                if (!string.IsNullOrWhiteSpace(body))
+                if (!string.IsNullOrWhiteSpace(request.body))
                 {
-                    httpRequest.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                    httpRequest.Content = new StringContent(request.body, Encoding.UTF8, "application/json");
                 }
                 using (var httpResult = await _client.SendAsync(httpRequest).ConfigureAwait(continueOnCapturedContext: false))
                 {
@@ -177,5 +250,14 @@ namespace LoopringAPI
                 }
             }
         }
+    }
+    public class CustomHttpRequest
+    {
+        public string url { get; set; }
+        public (string, string)[] parameters { get; set; }
+        public (string, string)[] headers { get; set; }
+        public string method { get; set; }
+        public string body { get; set; }
+        public Guid guid { get; set; }
     }
 }

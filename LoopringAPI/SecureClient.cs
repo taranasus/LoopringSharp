@@ -23,7 +23,7 @@ namespace LoopringAPI
 
         public SecureClient(string apiUrl)
         {
-            
+            Utils.StartHttpProcessor(200);
             _apiUrl = apiUrl;
             _ = GetTokenId("ETH").Result;            
         }
