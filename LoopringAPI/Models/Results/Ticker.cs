@@ -11,8 +11,8 @@
         public string LowestPrice { get; set; }
         public string ClosingPrice { get; set; }
         public string NumberOfTrades { get; set; }
-        public string HighestBidPrice { get; set; }
-        public string LowestAskPrice { get; set; }
+        public float HighestBidPrice { get; set; }
+        public float LowestAskPrice { get; set; }
         public string BaseFeeAmmount { get; set; }
         public string QuoteFeeAmount { get; set; }
     }

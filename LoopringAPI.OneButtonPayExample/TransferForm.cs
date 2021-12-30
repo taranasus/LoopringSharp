@@ -15,8 +15,8 @@ namespace LoopringAPI.OneButtonPayExample
             // Take their selection, remove the extra text leaving only the url, and send that to the LoopringApi Client
             // Since only the URL was provided and no other info, the client will attempt to make contact with the users's MetaMask in order
             // To get the necesairy info
-            //                  The url of the exchange you will be interacting with
-            client = new Client(cbEnvironment.SelectedItem.ToString().Split(" | ")[1]);
+            //                  The url of the exchange you will be interacting with   Which wallet connecrtion method are we using?
+            client = new Client(cbEnvironment.SelectedItem.ToString().Split(" | ")[1], WalletService.WalletConnect);
 
             // Clear the textboxes in case this is a reload
             cbPaymentFeeToken.Items.Clear();

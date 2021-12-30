@@ -1,6 +1,10 @@
-﻿using System;
+﻿using LoopringAPI.WalletConnect;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace LoopringAPI
 {
@@ -12,6 +16,7 @@ namespace LoopringAPI
         private string _loopringPublicKeyX;
         private string _loopringPublicKeyY;
         private string _ethAddress;
+        public WalletService? _walletType;
         private int _accountId;
         private SecureClient _client;
 
@@ -56,11 +61,40 @@ namespace LoopringAPI
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiUrl)
+        public Client(string apiUrl, WalletService walletService)
         {
+            _walletType = walletService;
+            if (walletService == WalletService.WalletConnect)
+            {
+                string connectURi = WalletConnectServer.Connect();
+                Debug.WriteLine("Connection: " + connectURi);
+                Console.WriteLine("WalletConnect CODE: " + connectURi);
+                File.WriteAllText("walletconnect.html", 
+                    Constants.WalletConnectHTML.Replace("|----|", $"https://api.qrserver.com/v1/create-qr-code/?data={HttpUtility.UrlEncode(connectURi)}!&size=400x400")
+                    .Replace("|--|--|", connectURi));
+                var browser = new System.Diagnostics.Process()
+                {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo(Directory.GetCurrentDirectory()+ "/walletconnect.html") { UseShellExecute = true }
+                };
+                browser.Start();
+                _ethAddress = WalletConnectServer.GetEthAddress();
+                File.Delete("walletconnect.html");
+                browser.Kill();
+            }
+
             _client = new SecureClient(apiUrl);
-            var l2Auth = EDDSAHelper.GetL2PKFromMetaMask(ExchangeInfo().Result.exchangeAddress, apiUrl);
-            _ethAddress = l2Auth.ethAddress;
+            (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) l2Auth = ("", "", "", "");
+            if (walletService == WalletService.MetaMask)
+            {
+                l2Auth = EDDSAHelper.GetL2PKFromMetaMask(ExchangeInfo().Result.exchangeAddress, apiUrl);
+                _ethAddress = l2Auth.ethAddress;
+            }
+            else if (walletService == WalletService.WalletConnect)
+            {
+                var nonce = GetAccountInfo().Result.nonce;
+                l2Auth = EDDSAHelper.GetL2PKFromWalletConnect(ExchangeInfo().Result.exchangeAddress, nonce-1).Result;
+            }
+            
             _loopringPrivateKey = l2Auth.secretKey;
             _loopringPublicKeyX = l2Auth.publicKeyX;
             _loopringPublicKeyY = l2Auth.publicKeyY;
@@ -174,6 +208,18 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// EXPERIMENTAL.
+        /// </summary>
+        /// <param name="market">The ID of a trading pair.</param>
+        /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
+        /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
+        /// <returns>Returns the order book of a given trading pair.</returns>
+        public Task<Depth> GetMixDepth(string market, int level = 2, int limit = 50)
+        {
+            return _client.GetMixDepth(market, level, limit);
+        }
+
+        /// <summary>
         /// Submit an order to exchange two currencies, but with all the nonsense removed
         /// </summary>
         /// <param name="orderHash">The hash of the order you wish to nuke.</param>
@@ -276,13 +322,26 @@ namespace LoopringAPI
         }
 
         /// <summary>
-        /// Get how much fee you need to pay right now to carry out a transaction of a specified type
-        /// </summary>        
-        /// <param name="requestType">Off-chain request type</param>
-        /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
-        /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
-        /// <returns>Returns the fee amount</returns>
-        public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
+        /// Get the details of an order based on order hash.
+        /// </summary>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="accountId">Wallet Account Id</param>
+        /// <param name="tokens">(Optional) list of the tokens which you want returned</param>
+        /// <returns>OrderDetails object filled with awesome order details</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public Task<List<Balance>> Ballances(string tokens = null)
+        {
+            return _client.Ballances(_apiKey, _accountId, tokens);
+        }
+
+            /// <summary>
+            /// Get how much fee you need to pay right now to carry out a transaction of a specified type
+            /// </summary>        
+            /// <param name="requestType">Off-chain request type</param>
+            /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
+            /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
+            /// <returns>Returns the fee amount</returns>
+            public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
         {
             return _client.OffchainFee(_apiKey, _accountId, requestType, tokenSymbol, amount);
         }
@@ -370,7 +429,7 @@ namespace LoopringAPI
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public Task<OperationResult> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
         {
-            return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo);
+            return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo, _walletType);
         }
 
         /// <summary>
@@ -384,7 +443,7 @@ namespace LoopringAPI
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         public async Task<OperationResult> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
         {
-            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo).ConfigureAwait(false);
+            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo, _walletType).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -407,7 +466,7 @@ namespace LoopringAPI
         /// <returns>Returns the hash and status of your requested operation</returns>
         public Task<OperationResult> RequestNewL2PrivateKey(string feeToken)
         {
-            return _client.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().Result.exchangeAddress);
+            return _client.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().Result.exchangeAddress, _walletType);
         }
 
         /// <summary>

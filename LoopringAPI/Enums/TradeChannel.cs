@@ -6,4 +6,10 @@
         AMM_POOL,
         MIXED
     }
+
+    public enum WalletService
+    {
+        MetaMask,
+        WalletConnect
+    }
 }

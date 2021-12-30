@@ -13,4 +13,5 @@
         public string tradeChannel { get; set; }
         public string status { get; set; }
     }
+   
 }

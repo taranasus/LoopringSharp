@@ -34,7 +34,7 @@ Which uses API calls within the constructor to gather the missing information.
 
 The values above are stored in RAM, which means they could be read by specialist software. If you are making a secure app please use the LoopringAPI.SecureClient which doesn't store anything in memory. 
 
-For client applications (like say you want to make a windows charting application or similar), there is a option which allows the client to interact with MetaMask on the user's computer in order to get all the security data. This is very secure since all the critical user information is stored in MetaMask, removing most security concerns from your application.
+For client applications (like say you want to make a windows charting application or similar), there are now two better alternatives: MetaMask and WalletConnect. You can instruct the API to connect to one of those two services in order to get the information it needs. This is very secure since the private wallet information is not stored in-memory but instead lives within a secure third party service that does all the transfer validation and signing.
 ```csharp
 LoopringAPI.Client client = new LoopringAPI.Client("<api url>");
 var storageId = await client.StorageId(1);
@@ -44,8 +44,8 @@ In the future, I'll look into adding WalletConnect support as well
 There are three keys that are needed to use the LoopringAPI endpoints. Some endpoints require none of those keys, some of them require all of them, so let me explain what they are.
 
 - apiKey = Your Loopring Wallet API key. You can get this by exporting your loopring wallet info, it's the "ApiKey" field. You can also get it by using the ApiKey() method in the client
-- l2Pk = Your Loopring Wallet Private Key. You can get this by exportin your loopring wallet info, it's the "PrivateKey" field. If using MetaMask, this is retreived automatically as needed.
-- l1Pk = This is your Etherium Private Key, the one tied to your Loopring wallet. It's not part of the export mentioned above, you'll need to figure out how to get it based on your needs. If using MetaMask, this is retreived automatically as needed.
+- l2Pk = Your Loopring Wallet Private Key. You can get this by exportin your loopring wallet info, it's the "PrivateKey" field. If using MetaMask or WalletConnect, this is filled in automatically as needed.
+- l1Pk = This is your Etherium Private Key, the one tied to your Loopring wallet. It's not part of the export mentioned above, you'll need to figure out how to get it based on your needs. If using MetaMask or WalletConnect, this is filled in automatically as needed.
 
 As for which endpoint requires what, I'll atempt to make a table bellow with all the API calls supported in this package and which keys are needed for which call
 
