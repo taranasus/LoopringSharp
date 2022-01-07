@@ -537,7 +537,8 @@ namespace LoopringAPI
                 exchange = apiresult.exchange,
                 txHash = apiresult.txHash,
                 status = apiresult.status,
-                createdAt = apiresult.createdAt
+                createdAt = apiresult.createdAt,
+                transactions = apiresult.transactions
             };
         }
 
