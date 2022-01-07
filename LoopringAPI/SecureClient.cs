@@ -520,7 +520,7 @@ namespace LoopringAPI
         /// </summary>
         /// <param name="apiKey">Current Loopring API Key</param>
         /// <param name="id">L2 block id</param>
-        /// <returns>The L2 block info as string</returns>
+        /// <returns>The L2 block info</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public async Task<L2BlockInfo> GetL2BlockInfo(string apiKey, int id)
         {
