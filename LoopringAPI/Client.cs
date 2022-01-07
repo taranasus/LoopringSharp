@@ -69,12 +69,12 @@ namespace LoopringAPI
                 string connectURi = WalletConnectServer.Connect();
                 Debug.WriteLine("Connection: " + connectURi);
                 Console.WriteLine("WalletConnect CODE: " + connectURi);
-                File.WriteAllText("walletconnect.html", 
+                File.WriteAllText("walletconnect.html",
                     Constants.WalletConnectHTML.Replace("|----|", $"https://api.qrserver.com/v1/create-qr-code/?data={HttpUtility.UrlEncode(connectURi)}!&size=400x400")
                     .Replace("|--|--|", connectURi));
                 var browser = new System.Diagnostics.Process()
                 {
-                    StartInfo = new System.Diagnostics.ProcessStartInfo(Directory.GetCurrentDirectory()+ "/walletconnect.html") { UseShellExecute = true }
+                    StartInfo = new System.Diagnostics.ProcessStartInfo(Directory.GetCurrentDirectory() + "/walletconnect.html") { UseShellExecute = true }
                 };
                 browser.Start();
                 _ethAddress = WalletConnectServer.GetEthAddress();
@@ -92,9 +92,9 @@ namespace LoopringAPI
             else if (walletService == WalletService.WalletConnect)
             {
                 var nonce = GetAccountInfo().Result.nonce;
-                l2Auth = EDDSAHelper.GetL2PKFromWalletConnect(ExchangeInfo().Result.exchangeAddress, nonce-1).Result;
+                l2Auth = EDDSAHelper.GetL2PKFromWalletConnect(ExchangeInfo().Result.exchangeAddress, nonce - 1).Result;
             }
-            
+
             _loopringPrivateKey = l2Auth.secretKey;
             _loopringPublicKeyX = l2Auth.publicKeyX;
             _loopringPublicKeyY = l2Auth.publicKeyY;
@@ -334,14 +334,14 @@ namespace LoopringAPI
             return _client.Ballances(_apiKey, _accountId, tokens);
         }
 
-            /// <summary>
-            /// Get how much fee you need to pay right now to carry out a transaction of a specified type
-            /// </summary>        
-            /// <param name="requestType">Off-chain request type</param>
-            /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
-            /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
-            /// <returns>Returns the fee amount</returns>
-            public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
+        /// <summary>
+        /// Get how much fee you need to pay right now to carry out a transaction of a specified type
+        /// </summary>        
+        /// <param name="requestType">Off-chain request type</param>
+        /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
+        /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
+        /// <returns>Returns the fee amount</returns>
+        public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
         {
             return _client.OffchainFee(_apiKey, _accountId, requestType, tokenSymbol, amount);
         }
@@ -417,6 +417,21 @@ namespace LoopringAPI
             return _client.UpdateInfo(_apiKey, _accountId, limit, offset, start, end, statuses);
         }
 
+        /// <summary>
+        /// Returns a list of deposit records for the given user.
+        /// </summary>
+        /// <param name="limit">Number of records to return</param>
+        /// <param name="start">Start time in milliseconds - Default : 0L</param>
+        /// <param name="end">End time in milliseconds - Default : 0L</param>
+        /// <param name="statuses">Comma separated status values</param>
+        /// <param name="tokenSymbol">Token to filter. If you want to return deposit records for all tokens, omit this parameter</param>
+        /// <param name="offset">Number of records to skip - Default : 0L</param>
+        /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
+        /// <returns>A list of deposit transactions. Are you paying attention?</returns>
+        public Task<List<Transaction>> GetDeposits(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, string[] hashes = null)
+        {
+            return _client.GetDeposits(_apiKey, _accountId, limit, start, end, statuses, tokenSymbol, offset, hashes);
+        }
 
         /// <summary>
         /// Send some tokens to anyone else on L2

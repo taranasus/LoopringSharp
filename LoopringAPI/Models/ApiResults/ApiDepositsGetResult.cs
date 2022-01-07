@@ -2,9 +2,9 @@
 
 namespace LoopringAPI
 {
-    public class ApiOrdersGetResult
+    public class ApiDepositsGetResult
     {
         public long totalNum { get; set; }
-        public List<ApiOrderGetResult> orders { get; set; }
+        public List<Transaction> transactions { get; set; }
     }
 }

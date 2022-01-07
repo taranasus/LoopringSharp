@@ -543,6 +543,52 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// Returns a list of deposit records for the given user.
+        /// </summary>
+        /// <param name="apiKey">ApiKey</param>
+        /// <param name="accountId">Account ID, some hash query APIs doesnt need it if in hash query mode, check require flag of each API to see if its a must.</param>
+        /// <param name="limit">Number of records to return</param>
+        /// <param name="start">Start time in milliseconds - Default : 0L</param>
+        /// <param name="end">End time in milliseconds - Default : 0L</param>
+        /// <param name="statuses">Comma separated status values</param>
+        /// <param name="tokenSymbol">Token to filter. If you want to return deposit records for all tokens, omit this parameter</param>
+        /// <param name="offset">Number of records to skip - Default : 0L</param>
+        /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
+        /// <returns>A list of deposit transactions. Are you paying attention?</returns>
+        public async Task<List<Transaction>> GetDeposits(string apiKey, int accountId, int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, string[] hashes = null)
+        {
+            List<(string, string)> parameters = new List<(string, string)>(){ 
+                ("accountId", accountId.ToString())
+            };
+            if (start != 0)
+                parameters.Add(("start", start.ToString()));
+            if (end != 0)
+                parameters.Add(("end", end.ToString()));
+            if (statuses != null)
+                parameters.Add(("status", string.Join(",", statuses.Select(s => s.ToString()))));
+            if (hashes != null)
+                parameters.Add(("hashes", string.Join(",", hashes.Select(s => s.ToString()))));
+            if (limit != 50)
+                parameters.Add(("limit", limit.ToString()));
+            if (offset != 0)
+                parameters.Add(("offset", offset.ToString()));
+            if(tokenSymbol != null)
+                parameters.Add(("tokenSymbol", tokenSymbol.ToString()));
+            
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiDepositsGetResult>(
+                await Utils.Http(_apiUrl + Constants.DepositsUrl, parameters.ToArray(), headers).ConfigureAwait(false));
+
+            if (apiresult != null && apiresult.totalNum != 0)
+            {
+                return apiresult.transactions.ToList();
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Fetches the next order id for a given sold token
         /// </summary>
         /// <param name="apiKey">Your Loopring API Key</param>
