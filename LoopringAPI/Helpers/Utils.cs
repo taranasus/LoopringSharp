@@ -191,6 +191,11 @@ namespace LoopringAPI
             }
 
             lastRequest = DateTime.UtcNow;
+
+            if (result.ToLower().StartsWith("error"))
+            {
+                throw new Exception(result);
+            }            
             return result;
 
 
