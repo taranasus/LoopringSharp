@@ -516,41 +516,46 @@ namespace LoopringAPI
         #endregion
         #region apiKey
         /// <summary>
-        /// Get pending transactions to be packed into next block
+        /// Gets pending transactions to be packed into next block
         /// </summary>   
         /// <returns>Returns the pending transactions to be packed into next block</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public async Task<PendingRequests> GetPendingRequests(string apiKey)
+        public async Task<List<PendingRequest>> GetPendingRequests(string apiKey)
         {
             (string, string)[] parameters = {};
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
 
-            var apiresult = JsonConvert.DeserializeObject<ApiPendingRequestsResult>(
+            var apiresult = JsonConvert.DeserializeObject<List<ApiPendingRequestsResult>>(
                 await Utils.Http(_apiUrl + Constants.PendingRequestsUrl, parameters, headers).ConfigureAwait(false));
-
-            return new PendingRequests()
+            var pendingRequests = new List<PendingRequest>();
+            foreach(var apiPendingRequest in apiresult)
             {
-                txType = apiresult.txType,
-                accountId = apiresult.accountId,
-                owner = apiresult.owner,
-                token = apiresult.token,
-                toToken = apiresult.toToken,  
-                fee = apiresult.fee,
-                validUntil = apiresult.validUntil,
-                toAccountId = apiresult.toAccountId,
-                toAccountAddress = apiresult.toAccountAddress,
-                storageId = apiresult.storageId,
-                orderA = apiresult.orderA,
-                orderB = apiresult.orderB,
-                valid = apiresult.valid,
-                nonce = apiresult.nonce,
-                minterAccountId = apiresult.minterAccountId,
-                minter = apiresult.minter,
-                nftToken = apiresult.nftToken,
-                nftType = apiresult.nftType,
-                fromAddress = apiresult.fromAddress,
-                toAddress = apiresult.toAddress,
-            };
+                PendingRequest pendingRequest = new PendingRequest()
+                {
+                    txType = apiPendingRequest.txType,
+                    accountId = apiPendingRequest.accountId,
+                    owner = apiPendingRequest.owner,
+                    token = apiPendingRequest.token,
+                    toToken = apiPendingRequest.toToken,
+                    fee = apiPendingRequest.fee,
+                    validUntil = apiPendingRequest.validUntil,
+                    toAccountId = apiPendingRequest.toAccountId,
+                    toAccountAddress = apiPendingRequest.toAccountAddress,
+                    storageId = apiPendingRequest.storageId,
+                    orderA = apiPendingRequest.orderA,
+                    orderB = apiPendingRequest.orderB,
+                    valid = apiPendingRequest.valid,
+                    nonce = apiPendingRequest.nonce,
+                    minterAccountId = apiPendingRequest.minterAccountId,
+                    minter = apiPendingRequest.minter,
+                    nftToken = apiPendingRequest.nftToken,
+                    nftType = apiPendingRequest.nftType,
+                    fromAddress = apiPendingRequest.fromAddress,
+                    toAddress = apiPendingRequest.toAddress,
+                };
+                pendingRequests.Add(pendingRequest);
+            }
+            return pendingRequests;
         }
 
 

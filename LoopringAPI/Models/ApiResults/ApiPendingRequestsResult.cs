@@ -14,7 +14,7 @@ namespace LoopringAPI
         public TokenBlockInfo toToken { get; set; }
         public TokenBlockInfo fee { get; set; }
         public BigInteger? validUntil { get; set; }
-        public int toAccountId { get; set; }
+        public int? toAccountId { get; set; }
         public string toAccountAddress { get; set; }
         public int? storageId { get; set; }
         public PendingRequestOrderBlockInfo orderA { get; set; }

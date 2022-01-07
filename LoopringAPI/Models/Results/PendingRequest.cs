@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LoopringAPI
 {
-    public class PendingRequests : ApiPendingRequestsResult
+    public class PendingRequest : ApiPendingRequestsResult
     {
     }
 }

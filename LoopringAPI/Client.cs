@@ -507,10 +507,10 @@ namespace LoopringAPI
         }
 
         /// <summary>
-        /// Get pending transactions to be packed into next block
+        /// Gets pending transactions to be packed into next block
         /// </summary>   
         /// <returns>Returns the pending transactions for next block</returns>
-        public Task<PendingRequests> GetPendingRequests()
+        public Task<List<PendingRequest>> GetPendingRequests()
         {
             return _client.GetPendingRequests(_apiKey);
         }
