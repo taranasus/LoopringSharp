@@ -13,6 +13,6 @@ namespace LoopringAPI
         public string txHash { get; set; }
         public string status { get; set; }
         public BigInteger createdAt { get; set; }
-        public List<TransactionBlock> transactions { get; set; }
+        public List<TransactionBlockInfo> transactions { get; set; }
     }
 }
