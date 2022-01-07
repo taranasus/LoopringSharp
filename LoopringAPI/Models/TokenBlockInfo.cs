@@ -1,0 +1,13 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace LoopringAPI
+{
+    public class TokenBlockInfo
+    {
+        public int tokenId { get; set; }
+        public string nftData { get; set; }
+        public string amount { get; set; }
+    }
+}

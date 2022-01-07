@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LoopringAPI
 {
-    public class OrderBlock
+    public class OrderBlockInfo
     {
         public int storageID { get; set; }
         public int accountID { get; set; }
