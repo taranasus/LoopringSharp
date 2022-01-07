@@ -15,6 +15,8 @@ namespace LoopringAPI
         public int? validUntil { get; set; }
         public string taker { get; set; }
         public int? feeBips { get; set; }
+
+        public bool? isAmm { get; set; }
         public string nftData { get; set; }
         public int? fills { get; set; }
     }
