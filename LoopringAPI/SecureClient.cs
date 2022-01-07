@@ -527,10 +527,6 @@ namespace LoopringAPI
             (string, string)[] parameters = { ("id", id.ToString()) };
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
 
-            var apiresultText = 
-             await Utils.Http(_apiUrl + Constants.L2BlockInfoUrl, parameters, headers).ConfigureAwait(false);
-
-
             var apiresult = JsonConvert.DeserializeObject<ApiL2BlockInfoResult>(
                 await Utils.Http(_apiUrl + Constants.L2BlockInfoUrl, parameters, headers).ConfigureAwait(false));
 
