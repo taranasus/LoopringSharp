@@ -29,7 +29,7 @@ namespace LoopringAPI
         public static string PriceUrl = "api/v3/price";
         public static string TradeUrl = "api/v3/trade";
 
-        public static string L2BlockUrl = "api/v3/block/getBlock";
+        public static string L2BlockInfoUrl = "api/v3/block/getBlock";
 
         public static string EIP721DomainName = "Loopring Protocol";
         public static string EIP721DomainVersion = "3.6.0";

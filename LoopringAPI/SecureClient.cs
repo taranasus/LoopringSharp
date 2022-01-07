@@ -513,9 +513,25 @@ namespace LoopringAPI
                 await Utils.Http(_apiUrl+Constants.ApiKeyUrl, null, headers, "post", requestBody).ConfigureAwait(false));
             return apiresult.apiKey;
         }
-
         #endregion
         #region apiKey
+        /// <summary>
+        /// Get L2 block info by block id
+        /// </summary>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="id">Wallet Account Id</param>
+        /// <returns>The L2 block info as string</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public async Task<string> GetL2BlockInfo(string apiKey, int id)
+        {
+            (string, string)[] parameters = { ("id", id.ToString()) };
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            //var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(
+            //await Utils.Http(_apiUrl + Constants.ApiKeyUrl, parameters, headers).ConfigureAwait(false));
+            var apiresult = await Utils.Http(_apiUrl + Constants.L2BlockInfoUrl, parameters, headers).ConfigureAwait(false);
+
+            return apiresult;
+        }
 
         /// <summary>
         /// Fetches the next order id for a given sold token
