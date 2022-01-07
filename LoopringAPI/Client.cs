@@ -482,7 +482,7 @@ namespace LoopringAPI
         }
 
         /// <summary>
-        /// Get's the
+        /// Get's the l2 block info for a requested block id
         /// </summary>   
         /// <param name="id">The l2 block id</param>
         /// <returns>Returns the l2 block info for the requested block id</returns>
