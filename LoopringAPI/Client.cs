@@ -480,5 +480,15 @@ namespace LoopringAPI
         {
             return _client.UpdateAccount(_loopringPrivateKey, _ethPrivateKey, req, counterFactualInfo);
         }
+
+        /// <summary>
+        /// Get's the l2 block info for a requested block id
+        /// </summary>   
+        /// <param name="id">The l2 block id</param>
+        /// <returns>Returns the l2 block info for the requested block id</returns>
+        public Task<L2BlockInfo> Get2BlockInfo(int id)
+        {
+            return _client.GetL2BlockInfo(_apiKey, id);
+        }
     }
 }

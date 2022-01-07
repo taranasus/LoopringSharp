@@ -47,6 +47,25 @@ else
 Console.WriteLine();
 #endregion
 
+#region TestGetL2BlockInfo
+Console.WriteLine("Do you want to see the current L2 Block Info? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING L2 BLOCK INFO!");
+    var l2BlockInfoResult = await client.Get2BlockInfo(15623);
+    Console.WriteLine("L2 BLOCK INFO RETRIEVED!");
+    Console.WriteLine(JsonConvert.SerializeObject(l2BlockInfoResult, Formatting.Indented, 
+    new JsonSerializerSettings
+    {
+        NullValueHandling = NullValueHandling.Ignore
+    }));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving L2 Block Info test!");
+}
+#endregion
 
 #region TestTransfer
 Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
