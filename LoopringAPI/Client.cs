@@ -487,7 +487,7 @@ namespace LoopringAPI
         /// <param name="req">A UpdateAccountRequest object containing all the needed information for this request</param>
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>Returns the hash and status of your requested operation</returns>
-        public Task<string> Get2BlockInfo(int id)
+        public Task<L2BlockInfo> Get2BlockInfo(int id)
         {
             return _client.GetL2BlockInfo(_apiKey, id);
         }

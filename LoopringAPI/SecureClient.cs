@@ -522,15 +522,23 @@ namespace LoopringAPI
         /// <param name="id">Wallet Account Id</param>
         /// <returns>The L2 block info as string</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public async Task<string> GetL2BlockInfo(string apiKey, int id)
+        public async Task<L2BlockInfo> GetL2BlockInfo(string apiKey, int id)
         {
             (string, string)[] parameters = { ("id", id.ToString()) };
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
             //var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(
             //await Utils.Http(_apiUrl + Constants.ApiKeyUrl, parameters, headers).ConfigureAwait(false));
-            var apiresult = await Utils.Http(_apiUrl + Constants.L2BlockInfoUrl, parameters, headers).ConfigureAwait(false);
-
-            return apiresult;
+            var apiresult = JsonConvert.DeserializeObject<ApiL2BlockInfoResult>(
+                await Utils.Http(_apiUrl + Constants.L2BlockInfoUrl, parameters, headers).ConfigureAwait(false));
+            return new L2BlockInfo()
+            {
+                blockId = apiresult.blockId,
+                blockSize = apiresult.blockSize,
+                exchange = apiresult.exchange,
+                txHash = apiresult.txHash,
+                status = apiresult.status,
+                createdAt = apiresult.createdAt
+            };
         }
 
         /// <summary>

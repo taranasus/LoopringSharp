@@ -53,9 +53,9 @@ choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
 {
     Console.WriteLine("GETTING L2 BLOCK INFO!");
-    var transferResult = await client.Get2BlockInfo(15736);
+    var l2BlockInfoResult = await client.Get2BlockInfo(15736);
     Console.WriteLine("L2 BLOCK INFO RETRIEVED!");
-    Console.WriteLine(transferResult);
+    Console.WriteLine(JsonConvert.SerializeObject(l2BlockInfoResult, Formatting.Indented));
 }
 else
 {
