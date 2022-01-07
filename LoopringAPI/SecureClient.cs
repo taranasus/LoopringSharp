@@ -516,6 +516,45 @@ namespace LoopringAPI
         #endregion
         #region apiKey
         /// <summary>
+        /// Get pending transactions to be packed into next block
+        /// </summary>   
+        /// <returns>Returns the pending transactions to be packed into next block</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public async Task<PendingRequests> GetPendingRequests(string apiKey)
+        {
+            (string, string)[] parameters = {};
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiPendingRequestsResult>(
+                await Utils.Http(_apiUrl + Constants.PendingRequestsUrl, parameters, headers).ConfigureAwait(false));
+
+            return new PendingRequests()
+            {
+                txType = apiresult.txType,
+                accountId = apiresult.accountId,
+                owner = apiresult.owner,
+                token = apiresult.token,
+                toToken = apiresult.toToken,  
+                fee = apiresult.fee,
+                validUntil = apiresult.validUntil,
+                toAccountId = apiresult.toAccountId,
+                toAccountAddress = apiresult.toAccountAddress,
+                storageId = apiresult.storageId,
+                orderA = apiresult.orderA,
+                orderB = apiresult.orderB,
+                valid = apiresult.valid,
+                nonce = apiresult.nonce,
+                minterAccountId = apiresult.minterAccountId,
+                minter = apiresult.minter,
+                nftToken = apiresult.nftToken,
+                nftType = apiresult.nftType,
+                fromAddress = apiresult.fromAddress,
+                toAddress = apiresult.toAddress,
+            };
+        }
+
+
+        /// <summary>
         /// Get L2 block info by block id
         /// </summary>
         /// <param name="apiKey">Current Loopring API Key</param>

@@ -13,12 +13,12 @@ namespace LoopringAPI
         public TokenBlockInfo token { get; set; }
         public TokenBlockInfo toToken { get; set; }
         public TokenBlockInfo fee { get; set; }
-        public BigInteger? validUnti { get; set; }
+        public BigInteger? validUntil { get; set; }
         public int toAccountId { get; set; }
         public string toAccountAddress { get; set; }
         public int? storageId { get; set; }
-        public OrderBlockInfo orderA { get; set; }
-        public OrderBlockInfo orderB { get; set; }
+        public PendingRequestOrderBlockInfo orderA { get; set; }
+        public PendingRequestOrderBlockInfo orderB { get; set; }
         public bool? valid { get; set; }
         public int? nonce { get; set; }
         public int? minterAccountId { get; set; }
