@@ -485,7 +485,7 @@ namespace LoopringAPI
         /// Get's the
         /// </summary>   
         /// <param name="id">The l2 block id</param>
-        /// <returns>Returns the hash and status of your requested operation</returns>
+        /// <returns>Returns the l2 block info for the requested block id</returns>
         public Task<L2BlockInfo> Get2BlockInfo(int id)
         {
             return _client.GetL2BlockInfo(_apiKey, id);
