@@ -21,9 +21,9 @@ namespace LoopringAPI
         string _apiUrl;        
         
 
-        public SecureClient(string apiUrl)
+        public SecureClient(string apiUrl, int throttleRequests = 200)
         {
-            Utils.StartHttpProcessor(200);
+            Utils.StartHttpProcessor(throttleRequests);
             _apiUrl = apiUrl;
             _ = GetTokenId("ETH").Result;            
         }
