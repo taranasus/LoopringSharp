@@ -67,6 +67,26 @@ else
 }
 #endregion
 
+#region TestGetPendingRequests
+Console.WriteLine("Do you want to see pending requests for the next block? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING PENDING REQUESTS");
+    var pendingRequestsResult = await client.GetPendingRequests();
+    Console.WriteLine("PENDING REQUESTS RETRIEVED!");
+    Console.WriteLine(JsonConvert.SerializeObject(pendingRequestsResult, Formatting.Indented,
+    new JsonSerializerSettings
+    {
+        NullValueHandling = NullValueHandling.Ignore
+    }));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving pending requests test!");
+}
+#endregion
+
 #region TestTransfer
 Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 choice = Console.ReadLine();

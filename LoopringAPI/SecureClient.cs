@@ -516,6 +516,50 @@ namespace LoopringAPI
         #endregion
         #region apiKey
         /// <summary>
+        /// Gets pending transactions to be packed into next block
+        /// </summary>   
+        /// <returns>Returns the pending transactions to be packed into next block</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public async Task<List<PendingRequest>> GetPendingRequests(string apiKey)
+        {
+            (string, string)[] parameters = {};
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<List<ApiPendingRequestsResult>>(
+                await Utils.Http(_apiUrl + Constants.PendingRequestsUrl, parameters, headers).ConfigureAwait(false));
+            var pendingRequests = new List<PendingRequest>();
+            foreach(var apiPendingRequest in apiresult)
+            {
+                PendingRequest pendingRequest = new PendingRequest()
+                {
+                    txType = apiPendingRequest.txType,
+                    accountId = apiPendingRequest.accountId,
+                    owner = apiPendingRequest.owner,
+                    token = apiPendingRequest.token,
+                    toToken = apiPendingRequest.toToken,
+                    fee = apiPendingRequest.fee,
+                    validUntil = apiPendingRequest.validUntil,
+                    toAccountId = apiPendingRequest.toAccountId,
+                    toAccountAddress = apiPendingRequest.toAccountAddress,
+                    storageId = apiPendingRequest.storageId,
+                    orderA = apiPendingRequest.orderA,
+                    orderB = apiPendingRequest.orderB,
+                    valid = apiPendingRequest.valid,
+                    nonce = apiPendingRequest.nonce,
+                    minterAccountId = apiPendingRequest.minterAccountId,
+                    minter = apiPendingRequest.minter,
+                    nftToken = apiPendingRequest.nftToken,
+                    nftType = apiPendingRequest.nftType,
+                    fromAddress = apiPendingRequest.fromAddress,
+                    toAddress = apiPendingRequest.toAddress,
+                };
+                pendingRequests.Add(pendingRequest);
+            }
+            return pendingRequests;
+        }
+
+
+        /// <summary>
         /// Get L2 block info by block id
         /// </summary>
         /// <param name="apiKey">Current Loopring API Key</param>

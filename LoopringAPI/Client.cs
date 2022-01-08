@@ -505,5 +505,14 @@ namespace LoopringAPI
         {
             return _client.GetL2BlockInfo(_apiKey, id);
         }
+
+        /// <summary>
+        /// Gets pending transactions to be packed into next block
+        /// </summary>   
+        /// <returns>Returns the pending transactions for next block</returns>
+        public Task<List<PendingRequest>> GetPendingRequests()
+        {
+            return _client.GetPendingRequests(_apiKey);
+        }
     }
 }
