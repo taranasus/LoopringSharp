@@ -52,9 +52,8 @@ namespace LoopringAPI
             string msg1 = "Sign this message to access Loopring Exchange: "+exchangeAddress+" with key nonce: "+(nonce);
             var signer1 = new EthereumMessageSigner();
             var rawKey = signer1.EncodeUTF8AndSign(msg1, new EthECKey(l1Pk));
-
             // Requesting metamask to sign our package so we can tare it apart and get our public and secret keys
-            
+
             return RipKeyAppart((rawKey,ethAddress), skipPublicKeyCalculation);
         }
 

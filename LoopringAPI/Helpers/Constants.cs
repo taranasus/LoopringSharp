@@ -12,6 +12,7 @@ namespace LoopringAPI
         public static string UpdateInfoUrl = "api/v3/user/updateInfo";
         public static string BalancesUrl = "api/v3/user/balances";
         public static string DepositsUrl = "/api/v3/user/deposits";
+        public static string WithdrawlsUrl = "/api/v3/user/withdrawals";
         public static string StorageIdUrl = "api/v3/storageId";
         public static string TickerUrl = "api/v3/ticker";
         public static string TimestampUrl = "api/v3/timestamp";

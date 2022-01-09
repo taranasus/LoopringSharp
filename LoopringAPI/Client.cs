@@ -56,6 +56,25 @@ namespace LoopringAPI
         }
 
         /// <summary>
+        /// Get user onchain withdrawal history.
+        /// </summary>
+        /// <param name="apiKey">ApiKey</param>
+        /// <param name="accountId">Account ID, some hash query APIs doesnt need it if in hash query mode, check require flag of each API to see if its a must.</param>
+        /// <param name="limit">Number of records to return</param>
+        /// <param name="start">Start time in milliseconds - Default : 0L</param>
+        /// <param name="end">End time in milliseconds - Default : 0L</param>
+        /// <param name="statuses">Comma separated status values</param>
+        /// <param name="tokenSymbol">Token to filter. If you want to return deposit records for all tokens, omit this parameter</param>
+        /// <param name="offset">Number of records to skip - Default : 0L</param>
+        /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
+        /// <param name="withdrawlTypes">The type of withdrawls you want returned</param>        
+        /// <returns></returns>
+        public Task<List<ApiWithdrawlTransaction>> GetWithdrawls(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, WithdrawalTypes? withdrawlTypes = null, string[] hashes = null)
+        {
+            return _client.GetWithdrawls(_apiKey, _accountId, limit, start, end, statuses, tokenSymbol, offset, withdrawlTypes, hashes);
+        }
+
+        /// <summary>
         /// The Object you need in order to communicate with the Loopring API. Recommended to use as a signleton. Automatically gets the API Key using your Loopring Private Key
         /// </summary>        
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
@@ -396,7 +415,7 @@ namespace LoopringAPI
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <param name="statuses">Statuses which you would like to filter by</param>
         /// <returns>List of Ethereum transactions from users for exchange account registration.</returns>
-        public Task<List<Transaction>> CreateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        public Task<List<ApiTransaction>> CreateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
         {
             return _client.CreateInfo(_apiKey, _accountId, limit, offset, start, end, statuses);
         }
@@ -412,7 +431,7 @@ namespace LoopringAPI
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <param name="statuses">Statuses which you would like to filter by</param>
         /// <returns>List of Ethereum transactions from users for resetting exchange passwords.</returns>
-        public Task<List<Transaction>> UpdateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        public Task<List<ApiTransaction>> UpdateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
         {
             return _client.UpdateInfo(_apiKey, _accountId, limit, offset, start, end, statuses);
         }
@@ -428,7 +447,7 @@ namespace LoopringAPI
         /// <param name="offset">Number of records to skip - Default : 0L</param>
         /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
         /// <returns>A list of deposit transactions. Are you paying attention?</returns>
-        public Task<List<Transaction>> GetDeposits(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, string[] hashes = null)
+        public Task<List<ApiDepositTransaction>> GetDeposits(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, string[] hashes = null)
         {
             return _client.GetDeposits(_apiKey, _accountId, limit, start, end, statuses, tokenSymbol, offset, hashes);
         }

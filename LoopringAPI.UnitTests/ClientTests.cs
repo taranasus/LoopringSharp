@@ -86,6 +86,20 @@ namespace LoopringAPI.UnitTests
             Assert.IsTrue(result.Count > 0);
         }
 
+        [TestMethod]
+        public void GetWithdrawlsSuccess()
+        {
+            //arrange
+            Client client = new Client(url, privateKey);
+
+            //act
+            var result = client.GetWithdrawls().Result;
+
+            //assert
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result.Count > 0);
+        }
+
         static ApiKeys ReadConfigFile(bool prod)
         {
             ApiKeys result;

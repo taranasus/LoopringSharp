@@ -599,7 +599,7 @@ namespace LoopringAPI
         /// <param name="offset">Number of records to skip - Default : 0L</param>
         /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
         /// <returns>A list of deposit transactions. Are you paying attention?</returns>
-        public async Task<List<Transaction>> GetDeposits(string apiKey, int accountId, int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, string[] hashes = null)
+        public async Task<List<ApiDepositTransaction>> GetDeposits(string apiKey, int accountId, int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, string[] hashes = null)
         {
             List<(string, string)> parameters = new List<(string, string)>(){ 
                 ("accountId", accountId.ToString())
@@ -624,6 +624,54 @@ namespace LoopringAPI
 
             var apiresult = JsonConvert.DeserializeObject<ApiDepositsGetResult>(
                 await Utils.Http(_apiUrl + Constants.DepositsUrl, parameters.ToArray(), headers).ConfigureAwait(false));
+
+            if (apiresult != null && apiresult.totalNum != 0)
+            {
+                return apiresult.transactions.ToList();
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Get user onchain withdrawal history.
+        /// </summary>
+        /// <param name="apiKey">ApiKey</param>
+        /// <param name="accountId">Account ID, some hash query APIs doesnt need it if in hash query mode, check require flag of each API to see if its a must.</param>
+        /// <param name="limit">Number of records to return</param>
+        /// <param name="start">Start time in milliseconds - Default : 0L</param>
+        /// <param name="end">End time in milliseconds - Default : 0L</param>
+        /// <param name="statuses">Comma separated status values</param>
+        /// <param name="tokenSymbol">Token to filter. If you want to return deposit records for all tokens, omit this parameter</param>
+        /// <param name="offset">Number of records to skip - Default : 0L</param>
+        /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
+        /// <param name="withdrawlTypes">The type of withdrawls you want returned</param>        
+        /// <returns></returns>
+        public async Task<List<ApiWithdrawlTransaction>> GetWithdrawls(string apiKey, int accountId, int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, WithdrawalTypes? withdrawlTypes = null, string[] hashes = null)
+        {
+            List<(string, string)> parameters = new List<(string, string)>(){
+                ("accountId", accountId.ToString())
+            };
+            if (start != 0)
+                parameters.Add(("start", start.ToString()));
+            if (end != 0)
+                parameters.Add(("end", end.ToString()));
+            if (statuses != null)
+                parameters.Add(("status", string.Join(",", statuses.Select(s => s.ToString()))));
+            if (hashes != null)
+                parameters.Add(("hashes", string.Join(",", hashes.Select(s => s.ToString()))));
+            if (limit != 50)
+                parameters.Add(("limit", limit.ToString()));
+            if (offset != 0)
+                parameters.Add(("offset", offset.ToString()));
+            if (tokenSymbol != null)
+                parameters.Add(("tokenSymbol", tokenSymbol.ToString()));
+            if (withdrawlTypes.HasValue)
+                parameters.Add(("withdrawalTypes", withdrawlTypes.Value.ToString()));
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiWithdrawlsGetResult>(
+                await Utils.Http(_apiUrl + Constants.WithdrawlsUrl, parameters.ToArray(), headers).ConfigureAwait(false));
 
             if (apiresult != null && apiresult.totalNum != 0)
             {
@@ -827,7 +875,7 @@ namespace LoopringAPI
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <param name="statuses">Statuses which you would like to filter by</param>
         /// <returns>List of Ethereum transactions from users for exchange account registration.</returns>
-        public async Task<List<Transaction>> CreateInfo(string apiKey, int accountId, int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        public async Task<List<ApiTransaction>> CreateInfo(string apiKey, int accountId, int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
         {
             List<(string, string)> parameters = new List<(string, string)>();
             parameters.Add(("accountId", accountId.ToString()));
@@ -865,7 +913,7 @@ namespace LoopringAPI
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <param name="statuses">Statuses which you would like to filter by</param>
         /// <returns>List of Ethereum transactions from users for resetting exchange passwords.</returns>
-        public async Task<List<Transaction>> UpdateInfo(string apiKey, int accountId, int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        public async Task<List<ApiTransaction>> UpdateInfo(string apiKey, int accountId, int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
         {
             List<(string, string)> parameters = new List<(string, string)>();
             parameters.Add(("accountId", accountId.ToString()));

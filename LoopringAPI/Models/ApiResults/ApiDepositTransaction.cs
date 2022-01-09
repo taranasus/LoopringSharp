@@ -1,14 +1,15 @@
-﻿namespace LoopringAPI
+﻿using System.Numerics;
+
+namespace LoopringAPI
 {
-    public class Transaction
+    public class ApiDepositTransaction
     {
         public long id { get; set; }
         public string hash { get; set; }
-        public string owner { get; set; }
+        public string symbol { get; set; }
+        public BigInteger amount { get; set; }
         public string txHash { get; set; }
-        public string feeTokenSymbol { get; set; }
-        public decimal feeAmount { get; set; } 
-        public Status status { get; set; }  
+        public string status { get; set; }
         public string progress { get; set; }
         public long timestamp { get; set; }
         public long blockNum { get; set; }
