@@ -3,13 +3,31 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyVersion>0.0.6</AssemblyVersion>
-    <FileVersion>0.0.6</FileVersion>
-    <Version>0.0.6</Version>
+    <AssemblyVersion>0.0.7</AssemblyVersion>
+    <FileVersion>0.0.7</FileVersion>
+    <Version>0.0.7</Version>
     <Authors>Taranasus</Authors>
     <Company>Taranasus</Company>
     <Description>A library to help you connect with the Loopring API https://docs.loopring.io/</Description>
+    <PackageProjectUrl>https://github.com/taranasus/LoopringSharp</PackageProjectUrl>
+    <PackageIcon>loopringsharp.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/taranasus/LoopringSharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>loopring;loopringsharp;csharp;c#;loopring c#;loopring#;loopringapi;loopring api;layer2;l2</PackageTags>
+    <PackageReleaseNotes>Initial super alpha pre-release to see if it works with a unity project</PackageReleaseNotes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\..\Downloads\loopringsharp.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="EmbedIO" Version="3.4.3" />
