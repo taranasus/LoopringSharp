@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyVersion>0.0.7</AssemblyVersion>
-    <FileVersion>0.0.7</FileVersion>
-    <Version>0.0.7</Version>
+    <AssemblyVersion>0.0.9</AssemblyVersion>
+    <FileVersion>0.0.9</FileVersion>
+    <Version>0.0.9</Version>
     <Authors>Taranasus</Authors>
     <Company>Taranasus</Company>
     <Description>A library to help you connect with the Loopring API https://docs.loopring.io/</Description>
@@ -16,7 +16,19 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>loopring;loopringsharp;csharp;c#;loopring c#;loopring#;loopringapi;loopring api;layer2;l2</PackageTags>
     <PackageReleaseNotes>Initial super alpha pre-release to see if it works with a unity project</PackageReleaseNotes>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="LICENSE.txt" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="..\..\..\..\Downloads\loopringsharp.png">
