@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public class ApiExchangeInfoResult
     {

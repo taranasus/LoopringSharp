@@ -1,4 +1,4 @@
-namespace LoopringAPI.OneButtonPayExample
+namespace LoopringSharp.OneButtonPayExample
 {
     internal static class Program
     {

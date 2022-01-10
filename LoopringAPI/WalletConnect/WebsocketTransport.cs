@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using WalletConnectSharp.Core.Events.Request;
 using WalletConnectSharp.Core.Events.Response;
 
-namespace LoopringAPI.WalletConnect
+namespace LoopringSharp.WalletConnect
 {
     public class WebsocketTransport : ITransport
     {

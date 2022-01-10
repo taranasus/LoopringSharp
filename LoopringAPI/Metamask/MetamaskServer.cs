@@ -12,7 +12,7 @@ using System.Net.Http;
 using System.Text;
 
 
-namespace LoopringAPI.Metamask
+namespace LoopringSharp.Metamask
 {
     public static class MetamaskServer
     {

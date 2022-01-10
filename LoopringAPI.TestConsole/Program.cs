@@ -1,6 +1,6 @@
-﻿using LoopringAPI;
-using LoopringAPI.Metamask;
-using LoopringAPI.TestConsole;
+﻿using LoopringSharp;
+using LoopringSharp.Metamask;
+using LoopringSharp.TestConsole;
 using Newtonsoft.Json;
 using PoseidonSharp;
 using System.Net;
@@ -19,8 +19,8 @@ ApiKeys apiKeys = ReadConfigFile(false);
 
 //Environment.Exit(0);
 
-LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.apiUrl, apiKeys.l1Pk);
-//LoopringAPI.Client client = new LoopringAPI.Client("https://uat2.loopring.io/", WalletService.WalletConnect);
+LoopringSharp.Client client = new LoopringSharp.Client(apiKeys.apiUrl, apiKeys.l1Pk);
+//LoopringSharp.Client client = new LoopringSharp.Client("https://uat2.loopring.io/", WalletService.WalletConnect);
 
 Console.WriteLine("PRINT BALLANCES!");
 var balanceResult = await client.Ballances();
@@ -192,10 +192,10 @@ Console.Clear();
 
 #region OffChainFee
 Console.WriteLine("Testing OffChainFee - Transfer");
-var fee = await client.OffchainFee(LoopringAPI.OffChainRequestType.Transfer, null, null);
+var fee = await client.OffchainFee(LoopringSharp.OffChainRequestType.Transfer, null, null);
 Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee, Formatting.Indented));
 Console.WriteLine("Testing OffChainFee - OffchainWithdrawl");
-fee = await client.OffchainFee(LoopringAPI.OffChainRequestType.OffchainWithdrawl, "LRC", "10000000000");
+fee = await client.OffchainFee(LoopringSharp.OffChainRequestType.OffchainWithdrawl, "LRC", "10000000000");
 Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee, Formatting.Indented));
 Console.WriteLine("");
 
@@ -210,15 +210,15 @@ Console.Clear();
 Console.WriteLine("-------- TESTING ORDERS ---------");
 Console.WriteLine("Testing order submit! 0.3 ETH -> 1000 LRC");
 var tradeResult = await client.SubmitOrder(
-        sellToken: new LoopringAPI.Token() { tokenId = 0, /*ETH*/ volume = "30000000000000000" /* 0.03 ETH */  },
-        buyToken: new LoopringAPI.Token() { tokenId = 1, /*LRC*/ volume = "1000000000000000000000" /* 1000 LRC */ },
+        sellToken: new LoopringSharp.Token() { tokenId = 0, /*ETH*/ volume = "30000000000000000" /* 0.03 ETH */  },
+        buyToken: new LoopringSharp.Token() { tokenId = 1, /*LRC*/ volume = "1000000000000000000000" /* 1000 LRC */ },
         allOrNone: false,
         fillAmountBOrS: false,
         validUntil: 1700000000, // Will expire eventually...
         maxFeeBips: 63,
         clientOrderId: null,
-        orderType: LoopringAPI.OrderType.TAKER_ONLY,
-        tradeChannel: LoopringAPI.TradeChannel.MIXED
+        orderType: LoopringSharp.OrderType.TAKER_ONLY,
+        tradeChannel: LoopringSharp.TradeChannel.MIXED
     );
 
 Console.WriteLine("Testing simple order submit! 0.04 ETH -> 150 LRC");
@@ -227,7 +227,7 @@ var simpleTradeResult = await client.SubmitOrder(
         sellAmmount: 0.04m,
         buyCurrency: "LRC",
         buyAmmount: 150,
-        orderType: LoopringAPI.OrderType.MAKER_ONLY
+        orderType: LoopringSharp.OrderType.MAKER_ONLY
     );
 Console.WriteLine("Trade result:");
 Console.WriteLine(JsonConvert.SerializeObject(tradeResult, Formatting.Indented));
@@ -257,7 +257,7 @@ Console.ReadLine();
 Console.Clear();
 
 Console.WriteLine("Cancel both trades if they are still active: ");
-if (normalTradeDetails.status == LoopringAPI.OrderStatus.processing)
+if (normalTradeDetails.status == LoopringSharp.OrderStatus.processing)
 {
     var normalDeleteResult = await client.CancelOrder(normalTradeDetails.hash, simpleTradeDetails.clientOrderId);
     Console.WriteLine("CANCELED normal trade");
@@ -266,7 +266,7 @@ if (normalTradeDetails.status == LoopringAPI.OrderStatus.processing)
 else
     Console.WriteLine("Normal trade no longer active anyway...");
 
-if (simpleTradeDetails.status == LoopringAPI.OrderStatus.processing)
+if (simpleTradeDetails.status == LoopringSharp.OrderStatus.processing)
 {
     var simpleDeleteResult = await client.CancelOrder(simpleTradeDetails.hash, simpleTradeDetails.clientOrderId);
     Console.WriteLine("CANCELED simple trade:");

@@ -1,4 +1,4 @@
-﻿namespace LoopringAPI.OneButtonPayExample
+﻿namespace LoopringSharp.OneButtonPayExample
 {
     partial class TransferForm
     {

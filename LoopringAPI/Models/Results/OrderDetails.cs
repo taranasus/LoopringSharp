@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public class OrderDetails
     {

@@ -5,7 +5,7 @@ using EmbedIO.WebApi;
 using System.Threading.Tasks;
 
 
-namespace LoopringAPI.Metamask
+namespace LoopringSharp.Metamask
 {
     public sealed class MetamaskApiController : WebApiController
     {

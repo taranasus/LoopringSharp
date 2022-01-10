@@ -1,6 +1,6 @@
-﻿using static LoopringAPI.ApiTransferRequest;
+﻿using static LoopringSharp.ApiTransferRequest;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public class TransferRequest
     {

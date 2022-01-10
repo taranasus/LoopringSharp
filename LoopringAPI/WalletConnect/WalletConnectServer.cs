@@ -11,7 +11,7 @@ using System.Threading;
 using Nethereum.Web3;
 using WalletConnectSharp.Core.Models.Ethereum;
 
-namespace LoopringAPI.WalletConnect
+namespace LoopringSharp.WalletConnect
 {
     public static class WalletConnectServer
     {

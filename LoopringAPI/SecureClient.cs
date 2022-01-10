@@ -1,5 +1,5 @@
-﻿using LoopringAPI.Metamask;
-using LoopringAPI.WalletConnect;
+﻿using LoopringSharp.Metamask;
+using LoopringSharp.WalletConnect;
 using Newtonsoft.Json;
 using PoseidonSharp;
 using System;
@@ -12,9 +12,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using static LoopringAPI.ApiTransferRequest;
+using static LoopringSharp.ApiTransferRequest;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public class SecureClient
     {

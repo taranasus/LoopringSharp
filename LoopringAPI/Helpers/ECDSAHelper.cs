@@ -10,7 +10,7 @@ using Nethereum.Signer.EIP712;
 using Nethereum.Util;
 using Nethereum.Web3;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public static class ECDSAHelper
     {

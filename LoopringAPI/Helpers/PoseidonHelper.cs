@@ -1,7 +1,7 @@
 ﻿using PoseidonSharp;
 using System.Numerics;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public static class PoseidonHelper
     {

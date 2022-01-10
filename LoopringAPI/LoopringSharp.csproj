@@ -6,6 +6,9 @@
     <AssemblyVersion>0.0.6</AssemblyVersion>
     <FileVersion>0.0.6</FileVersion>
     <Version>0.0.6</Version>
+    <Authors>Taranasus</Authors>
+    <Company>Taranasus</Company>
+    <Description>A library to help you connect with the Loopring API https://docs.loopring.io/</Description>
   </PropertyGroup>
 
   <ItemGroup>

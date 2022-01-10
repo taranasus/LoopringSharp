@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public class TransferTypedData
     {

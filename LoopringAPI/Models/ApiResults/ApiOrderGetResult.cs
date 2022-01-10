@@ -1,4 +1,4 @@
-﻿namespace LoopringAPI
+﻿namespace LoopringSharp
 {
     public class ApiOrderGetResult
     {

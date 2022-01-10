@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 
-namespace LoopringAPI.UnitTests
+namespace LoopringSharp.UnitTests
 {
     [TestClass]
     public class ClientTests

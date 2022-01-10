@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public class ApiTransaction
     {

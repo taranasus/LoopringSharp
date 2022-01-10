@@ -1,4 +1,4 @@
-namespace LoopringAPI.OneButtonPayExample
+namespace LoopringSharp.OneButtonPayExample
 {
     public partial class TransferForm : Form
     {
@@ -7,12 +7,12 @@ namespace LoopringAPI.OneButtonPayExample
             InitializeComponent();
         }
 
-        LoopringAPI.Client client;
+        LoopringSharp.Client client;
 
         // When user selects a network to connect to
         private void cbEnvironment_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Take their selection, remove the extra text leaving only the url, and send that to the LoopringApi Client
+            // Take their selection, remove the extra text leaving only the url, and send that to the LoopringSharp Client
             // Since only the URL was provided and no other info, the client will attempt to make contact with the users's MetaMask in order
             // To get the necesairy info
             //                  The url of the exchange you will be interacting with   Which wallet connecrtion method are we using?
@@ -25,7 +25,7 @@ namespace LoopringAPI.OneButtonPayExample
             // Change the connection lable to show which network we are connected to
             connectionStatus.Text = "Connected: " + cbEnvironment.SelectedItem.ToString();
 
-            // Use the LoopringAPI to get all the available tokens that can be transfered
+            // Use the LoopringSharp to get all the available tokens that can be transfered
             var tokenOptions = client.GetTokens().Result;
             // Get the tokens from above and add them as payment options
             cbPaymentToken.Items.AddRange(tokenOptions.Select(s => s.symbol).ToArray());
@@ -51,7 +51,7 @@ namespace LoopringAPI.OneButtonPayExample
             // A different payment token was selected!
             if (cbPaymentFeeToken.Items.Count == 0)
             {
-                // Use the LoopringApi to get all the tokens that we're allowed to pay transaction fees in
+                // Use the LoopringSharp to get all the tokens that we're allowed to pay transaction fees in
                 //                                 Type of action you'll do      // Token you'll be doing it in          // The ammount for that token
                 var feeTokens = client.OffchainFee(OffChainRequestType.Transfer, cbPaymentToken.SelectedItem.ToString(), nudPaymentAmmount.Value.ToString()).Result;
                 // Add those tokens to the payment token combobox

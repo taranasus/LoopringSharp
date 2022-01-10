@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Security.Cryptography;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public static class Constants
     {

@@ -1,5 +1,5 @@
-﻿using LoopringAPI.Metamask;
-using LoopringAPI.WalletConnect;
+﻿using LoopringSharp.Metamask;
+using LoopringSharp.WalletConnect;
 using Nethereum.Signer;
 using PoseidonSharp;
 using System;
@@ -9,7 +9,7 @@ using System.Numerics;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
-namespace LoopringAPI
+namespace LoopringSharp
 {
     public static class EDDSAHelper
     {
