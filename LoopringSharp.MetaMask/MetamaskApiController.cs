@@ -1,18 +1,16 @@
-﻿
-using EmbedIO;
+﻿using EmbedIO;
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
 using System.Threading.Tasks;
 
-
-namespace LoopringSharp.Metamask
+namespace LoopringSharp.MetaMask
 {
     public sealed class MetamaskApiController : WebApiController
     {
         [Route(HttpVerbs.Get, "/sign/{id?}")]
         public async Task<string> GetSign(string id)
             => (await Sign(id).ConfigureAwait(false))
-            ?? throw HttpException.NotFound();     
+            ?? throw HttpException.NotFound();
 
         public async Task<string> Sign(string id)
         {
@@ -31,6 +29,5 @@ namespace LoopringSharp.Metamask
             MetamaskServer.ethAddress = address.Split('|')[1];
             return address;
         }
-
     }
 }

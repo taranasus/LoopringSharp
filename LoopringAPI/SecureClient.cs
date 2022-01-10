@@ -1,6 +1,4 @@
-﻿using LoopringSharp.Metamask;
-using LoopringSharp.WalletConnect;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using PoseidonSharp;
 using System;
 using System.Collections.Generic;
@@ -18,14 +16,14 @@ namespace LoopringSharp
 {
     public class SecureClient
     {
-        string _apiUrl;        
-        
+        string _apiUrl;
+
 
         public SecureClient(string apiUrl, int throttleRequests = 200)
         {
             Utils.StartHttpProcessor(throttleRequests);
             _apiUrl = apiUrl;
-            _ = GetTokenId("ETH").Result;            
+            _ = GetTokenId("ETH").Result;
         }
 
         #region NoAuthentication
@@ -40,9 +38,9 @@ namespace LoopringSharp
             (string, string)[] parameters = { ("market", string.Join(",", pairs)) };
 
             var apiTickersResult = JsonConvert.DeserializeObject<ApiTickersResult>(
-                await Utils.Http(_apiUrl+Constants.TickerUrl, parameters, null).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.TickerUrl, parameters, null).ConfigureAwait(false));
 
-            
+
             return apiTickersResult.tickers.Select(s => new Ticker()
             {
                 PairId = s[0],
@@ -68,9 +66,9 @@ namespace LoopringSharp
         /// <returns>Current time in milliseconds</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public async Task<long> Timestamp()
-        {           
+        {
             var apiresult = JsonConvert.DeserializeObject<ApiTimestampResult>(
-                await Utils.Http(_apiUrl+Constants.TimestampUrl).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.TimestampUrl).ConfigureAwait(false));
             return apiresult.timestamp;
         }
 
@@ -83,7 +81,7 @@ namespace LoopringSharp
         {
             (string, string)[] parameters = { ("owner", address) };
             var apiresult = JsonConvert.DeserializeObject<ApiAccountResult>(
-                await Utils.Http(_apiUrl+Constants.AccountUrl, parameters).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.AccountUrl, parameters).ConfigureAwait(false));
 
             return new Account()
             {
@@ -111,7 +109,7 @@ namespace LoopringSharp
             {
                 ExchangeInfoShorTermCacheTime = DateTime.UtcNow;
                 EchangeInfoShorTermCache = JsonConvert.DeserializeObject<ApiExchangeInfoResult>(
-                await Utils.Http(_apiUrl+Constants.InfoUrl).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.InfoUrl).ConfigureAwait(false));
             }
 
             return new ExchangeInfo()
@@ -127,7 +125,7 @@ namespace LoopringSharp
                 updateFees = EchangeInfoShorTermCache.updateFees,
                 withdrawalFees = EchangeInfoShorTermCache.withdrawalFees
             };
-        }
+        }        
 
         /// <summary>
         /// Get a list of all the markets available on the exchange
@@ -136,7 +134,7 @@ namespace LoopringSharp
         public async Task<List<Market>> GetMarkets()
         {
             var apiresult = JsonConvert.DeserializeObject<ApiMarketsGetResult>(
-                await Utils.Http(_apiUrl+Constants.MarketsUrl).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.MarketsUrl).ConfigureAwait(false));
             return apiresult.markets;
         }
 
@@ -147,7 +145,7 @@ namespace LoopringSharp
         public async Task<List<TokenConfig>> GetTokens()
         {
             return JsonConvert.DeserializeObject<List<TokenConfig>>(
-                await Utils.Http(_apiUrl+Constants.TokensUrl).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.TokensUrl).ConfigureAwait(false));
         }
 
         /// <summary>
@@ -161,18 +159,18 @@ namespace LoopringSharp
         {
             (string, string)[] parameters = { ("market", market), ("level", level.ToString()), ("limit", limit.ToString()) };
             var apiresult = JsonConvert.DeserializeObject<ApiDepthResult>(
-                await Utils.Http(_apiUrl+Constants.DepthUrl, parameters).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.DepthUrl, parameters).ConfigureAwait(false));
             return new Depth()
             {
-                asks = apiresult.asks.Select(s=>new Depth.Position()
+                asks = apiresult.asks.Select(s => new Depth.Position()
                 {
                     price = float.Parse(s[0]),
-                    size = decimal.Parse(s[1])/ 1000000000000000000m,
+                    size = decimal.Parse(s[1]) / 1000000000000000000m,
                     volume = decimal.Parse(s[2]),
                     numberOfOrdersAgregated = decimal.Parse((s[3]))
                 }).ToList(),
                 market = apiresult.market,
-                bids =  apiresult.bids.Select(s => new Depth.Position()
+                bids = apiresult.bids.Select(s => new Depth.Position()
                 {
                     price = float.Parse(s[0]),
                     size = decimal.Parse(s[1]) / 1000000000000000000m,
@@ -239,7 +237,7 @@ namespace LoopringSharp
                 ("limit", limit.ToString())
             };
             return JsonConvert.DeserializeObject<ApiCandlestickResult>(
-                await Utils.Http(_apiUrl+Constants.CandlestickUrl, parameters).ConfigureAwait(false)).candlesticks.Select(s => new Candlestick()
+                await Utils.Http(_apiUrl + Constants.CandlestickUrl, parameters).ConfigureAwait(false)).candlesticks.Select(s => new Candlestick()
                 {
                     startTime = s[0],
                     numberOfTransactions = long.Parse(s[1]),
@@ -262,7 +260,7 @@ namespace LoopringSharp
         {
             (string, string)[] parameters = { ("legal", legal.ToString()) };
             var apiresult = JsonConvert.DeserializeObject<ApiPriceResult>(
-                await Utils.Http(_apiUrl+Constants.PriceUrl, parameters).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.PriceUrl, parameters).ConfigureAwait(false));
             return apiresult.prices;
         }
 
@@ -275,13 +273,13 @@ namespace LoopringSharp
         /// <returns>List of Trades</returns>
         public async Task<List<Trade>> GetTrades(string market, int? limit = null, FillTypes[] fillTypes = null)
         {
-            List<(string, string)> parameters = new List<(string, string)>(){ ("market", market) };
+            List<(string, string)> parameters = new List<(string, string)>() { ("market", market) };
             if (limit.HasValue)
                 parameters.Add(("limit", limit.Value.ToString()));
             if (fillTypes != null && fillTypes.Length > 0)
                 parameters.Add(("fillTypes", string.Join(",", fillTypes.Select(s => s.ToString()))));
             var apiresult = JsonConvert.DeserializeObject<ApiTradesResult>(
-                await Utils.Http(_apiUrl+Constants.TradeUrl, parameters.ToArray()).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.TradeUrl, parameters.ToArray()).ConfigureAwait(false));
             return apiresult.trades.Select(s => new Trade()
             {
                 TradeTimestamp = long.Parse(s[0]),
@@ -317,7 +315,7 @@ namespace LoopringSharp
             (string, string)[] parameters = { ("accountId", accountId.ToString()) };
             (string, string)[] headers = { (Constants.HttpHeaderAPISigName, signedMessage) };
             var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(
-                await Utils.Http(_apiUrl+Constants.ApiKeyUrl, parameters, headers).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.ApiKeyUrl, parameters, headers).ConfigureAwait(false));
             return apiresult.apiKey;
         }
 
@@ -346,7 +344,7 @@ namespace LoopringSharp
             (string, string)[] parameters = { ("accountId", accountId.ToString()), ("clientOrderId", clientOrderId), ("orderHash", orderHash) };
             (string, string)[] headers = { (Constants.HttpHeaderAPISigName, signedMessage), (Constants.HttpHeaderAPIKeyName, apiKey) };
             var apiresult = JsonConvert.DeserializeObject<ApiOrderSubmitResult>(
-                await Utils.Http(_apiUrl+Constants.OrderUrl, parameters, headers, "delete").ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.OrderUrl, parameters, headers, "delete").ConfigureAwait(false));
             return new OrderResult(apiresult);
         }
 
@@ -486,7 +484,7 @@ namespace LoopringSharp
 
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
             var apiresult = JsonConvert.DeserializeObject<ApiOrderSubmitResult>(
-                await Utils.Http(_apiUrl+Constants.OrderUrl, null, headers, "post", JsonConvert.SerializeObject(request)).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.OrderUrl, null, headers, "post", JsonConvert.SerializeObject(request)).ConfigureAwait(false));
             return new OrderResult(apiresult);
         }
 
@@ -510,7 +508,7 @@ namespace LoopringSharp
                 _apiUrl);
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey), (Constants.HttpHeaderAPISigName, signedMessage) };
             var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(
-                await Utils.Http(_apiUrl+Constants.ApiKeyUrl, null, headers, "post", requestBody).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.ApiKeyUrl, null, headers, "post", requestBody).ConfigureAwait(false));
             return apiresult.apiKey;
         }
         #endregion
@@ -522,13 +520,13 @@ namespace LoopringSharp
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public async Task<List<PendingRequest>> GetPendingRequests(string apiKey)
         {
-            (string, string)[] parameters = {};
+            (string, string)[] parameters = { };
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
 
             var apiresult = JsonConvert.DeserializeObject<List<ApiPendingRequestsResult>>(
                 await Utils.Http(_apiUrl + Constants.PendingRequestsUrl, parameters, headers).ConfigureAwait(false));
             var pendingRequests = new List<PendingRequest>();
-            foreach(var apiPendingRequest in apiresult)
+            foreach (var apiPendingRequest in apiresult)
             {
                 PendingRequest pendingRequest = new PendingRequest()
                 {
@@ -601,7 +599,7 @@ namespace LoopringSharp
         /// <returns>A list of deposit transactions. Are you paying attention?</returns>
         public async Task<List<ApiDepositTransaction>> GetDeposits(string apiKey, int accountId, int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, string[] hashes = null)
         {
-            List<(string, string)> parameters = new List<(string, string)>(){ 
+            List<(string, string)> parameters = new List<(string, string)>(){
                 ("accountId", accountId.ToString())
             };
             if (start != 0)
@@ -616,9 +614,9 @@ namespace LoopringSharp
                 parameters.Add(("limit", limit.ToString()));
             if (offset != 0)
                 parameters.Add(("offset", offset.ToString()));
-            if(tokenSymbol != null)
+            if (tokenSymbol != null)
                 parameters.Add(("tokenSymbol", tokenSymbol.ToString()));
-            
+
 
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
 
@@ -698,7 +696,7 @@ namespace LoopringSharp
             (string, string)[] parameters = { ("accountId", accountId.ToString()), ("sellTokenId", sellTokenId.ToString()), ("maxNext", maxNext.ToString()) };
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
             var apiresult = JsonConvert.DeserializeObject<ApiStorageIdResult>(
-                await Utils.Http(_apiUrl+Constants.StorageIdUrl, parameters, headers).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.StorageIdUrl, parameters, headers).ConfigureAwait(false));
             return new StorageId()
             {
                 offchainId = apiresult.offchainId,
@@ -724,7 +722,7 @@ namespace LoopringSharp
             (string, string)[] parameters = { ("accountId", accountId.ToString()), ("requestType", ((int)requestType).ToString()), ("tokenSymbol", tokenSymbol), ("amount", amount) };
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
             var apiresult = JsonConvert.DeserializeObject<ApiOffchainFeeResult>(
-                await Utils.Http(_apiUrl+Constants.OffchainFeeUrl, parameters, headers).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.OffchainFeeUrl, parameters, headers).ConfigureAwait(false));
             return new OffchainFee()
             {
                 fees = apiresult.fees,
@@ -751,9 +749,9 @@ namespace LoopringSharp
             (string, string)[] parameters = { ("accountId", accountId.ToString()), ("orderHash", orderHash) };
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
             var apiresult = JsonConvert.DeserializeObject<ApiOrderGetResult>(
-                await Utils.Http(_apiUrl+Constants.OrderUrl, parameters, headers).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.OrderUrl, parameters, headers).ConfigureAwait(false));
             return new OrderDetails(apiresult);
-        }      
+        }
 
         /// <summary>
         /// Get the details of an order based on order hash.
@@ -769,7 +767,7 @@ namespace LoopringSharp
             if (tokens != null)
                 tokenSplit = tokens.Split(',');
             int[] tokenIds = new int[0];
-            if (tokens!=null && tokens.Length>0)
+            if (tokens != null && tokens.Length > 0)
                 tokenIds = tokenSplit.Select(s => GetTokenId(s).Result).ToArray();
 
             if (string.IsNullOrWhiteSpace(apiKey))
@@ -778,10 +776,10 @@ namespace LoopringSharp
             if (tokenIds.Length == 0)
                 tokenIds = null;
 
-            List<(string, string)> parameters = new List<(string, string)>(){ ("accountId", accountId.ToString()) };
+            List<(string, string)> parameters = new List<(string, string)>() { ("accountId", accountId.ToString()) };
             if (tokenIds != null && tokenIds.Length > 0)
                 parameters.Add(("tokens", String.Join(",", tokenIds)));
-                
+
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
             var apiresult = JsonConvert.DeserializeObject<List<ApiBalance>>(
                 await Utils.Http(_apiUrl + Constants.BalancesUrl, parameters.ToArray(), headers).ConfigureAwait(false));
@@ -789,11 +787,11 @@ namespace LoopringSharp
 
             var tokenConfigs = await GetTokens();
 
-            foreach(var ballance in apiresult)
+            foreach (var ballance in apiresult)
             {
-                var decimals =  tokenConfigs.Where(w => w.tokenId == ballance.tokenId).FirstOrDefault().decimals;
+                var decimals = tokenConfigs.Where(w => w.tokenId == ballance.tokenId).FirstOrDefault().decimals;
                 decimal devideBy = 10;
-                for(int i = 2;i<=decimals;i++)
+                for (int i = 2; i <= decimals; i++)
                 {
                     devideBy *= 10;
                 }
@@ -802,12 +800,12 @@ namespace LoopringSharp
                     token = GetTokenId(ballance.tokenId),
                     locked = decimal.Parse(ballance.locked) / devideBy,
                     pending = new Balance.BalancePending()
-                    {                        
-                        deposit = decimal.Parse(ballance.pending.deposit)/ devideBy,
+                    {
+                        deposit = decimal.Parse(ballance.pending.deposit) / devideBy,
                         widthdraw = decimal.Parse(ballance.pending.withdraw) / devideBy,
                     },
                     total = decimal.Parse(ballance.total) / devideBy,
-                });;
+                }); ;
             }
 
             return result;
@@ -854,7 +852,7 @@ namespace LoopringSharp
 
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
             var apiresult = JsonConvert.DeserializeObject<ApiOrdersGetResult>(
-                await Utils.Http(_apiUrl+Constants.OrdersUrl, parameters.ToArray(), headers).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.OrdersUrl, parameters.ToArray(), headers).ConfigureAwait(false));
             if (apiresult != null && apiresult.totalNum != 0)
             {
                 return apiresult.orders.Select(s => new OrderDetails(s)).ToList();
@@ -882,13 +880,13 @@ namespace LoopringSharp
             if (start != 0)
                 parameters.Add(("start", start.ToString()));
             if (end != 0)
-                parameters.Add(("end", end.ToString()));            
+                parameters.Add(("end", end.ToString()));
             if (statuses != null)
                 parameters.Add(("status", string.Join(",", statuses.Select(s => s.ToString()))));
             if (limit != 50)
                 parameters.Add(("limit", limit.ToString()));
             if (offset != 0)
-                parameters.Add(("offset", offset.ToString()));           
+                parameters.Add(("offset", offset.ToString()));
 
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
             var apiresult = JsonConvert.DeserializeObject<ApiInfoGetResult>(
@@ -952,7 +950,7 @@ namespace LoopringSharp
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public async Task<OperationResult> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo, WalletService? walletType)
+        public virtual async Task<OperationResult> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
@@ -978,24 +976,12 @@ namespace LoopringSharp
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
             apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
 
-            if (walletType.HasValue && walletType.Value==WalletService.MetaMask)
-            {
-                var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().Result.chainId, apiRequest).Item2;
-                apiRequest.ecdsaSignature = MetamaskServer.Sign(JsonConvert.SerializeObject(typedData), "eth_signTypedData_v4", $"Please authorise the sending of {(decimal.Parse(request.token.volume) / 1000000000000000000m)} {request.tokenName} to {request.payeeAddr}. The fee will be {(decimal.Parse(request.maxFee.volume) / 1000000000000000000m)} {request.tokenFeeName}");
-            }
-            else if (walletType.HasValue && walletType.Value == WalletService.WalletConnect)
-            {
-                var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().Result.chainId, apiRequest);
-                apiRequest.ecdsaSignature = await WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", request.payerAddr)+"02";                
-            }
-            else
-            {
-                var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().Result.chainId, apiRequest).Item1;
-                apiRequest.ecdsaSignature = ECDSAHelper.GenerateSignature(typedData, l1Pk);
-            }
+            var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().Result.chainId, apiRequest).Item1;
+            apiRequest.ecdsaSignature = ECDSAHelper.GenerateSignature(typedData, l1Pk);
+
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey), (Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
             var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
-                await Utils.Http(_apiUrl+Constants.TransferUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.TransferUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)).ConfigureAwait(false));
             return new OperationResult(apiresult);
         }
 
@@ -1014,7 +1000,7 @@ namespace LoopringSharp
         /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         public async Task<OperationResult> Transfer(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress,
-            string toAddress, string token, decimal value, string feeToken, string memo, WalletService? walletType)
+            string toAddress, string token, decimal value, string feeToken, string memo)
         {
             var amount = (value * 1000000000000000000m).ToString("0");
             var feeamountresult = await OffchainFee(apiKey, accountId, OffChainRequestType.Transfer, feeToken, amount).ConfigureAwait(false);
@@ -1042,7 +1028,7 @@ namespace LoopringSharp
                 tokenName = token,
                 tokenFeeName = feeToken
             };
-            return await Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null, walletType).ConfigureAwait(false);
+            return await Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -1053,42 +1039,29 @@ namespace LoopringSharp
         /// <param name="req">A UpdateAccountRequest object containing all the needed information for this request</param>
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns></returns>
-        public async Task<OperationResult> UpdateAccount(string l2Pk, string l1Pk, UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
+        public virtual async Task<OperationResult> UpdateAccount(string l2Pk, string l1Pk, UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
         {
             var apiRequest = req.GetUpdateEDDSARequest(counterFactualInfo);
-            
+
             BigInteger[] inputs = {
                 Utils.ParseHexUnsigned(apiRequest.exchange),
                 (BigInteger)apiRequest.accountId,
                 (BigInteger)apiRequest.maxFee.tokenId ,
                 BigInteger.Parse(apiRequest.maxFee.volume),
                 Utils.ParseHexUnsigned(apiRequest.publicKey.x),
-                Utils.ParseHexUnsigned(apiRequest.publicKey.y),                
+                Utils.ParseHexUnsigned(apiRequest.publicKey.y),
                 (BigInteger)apiRequest.validUntil,
                 (BigInteger)apiRequest.nonce
             };
 
-            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
+            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);          
 
-            if (l1Pk == WalletService.MetaMask.ToString())
-            {
-                var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().Result.chainId, apiRequest).Item2;
-                apiRequest.ecdsaSignature = MetamaskServer.Sign(JsonConvert.SerializeObject(typedData), "eth_signTypedData_v4", $"Please authorise the reset of your Loopring private key. The fee will be {(decimal.Parse(apiRequest.maxFee.volume) / 1000000000000000000m)}");
-            }
-            if (l1Pk == WalletService.WalletConnect.ToString())
-            {
-                var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().Result.chainId, apiRequest);
-                apiRequest.ecdsaSignature = await WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", req.owner) + "02";                
-            }
-            else
-            {
-                var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().Result.chainId, apiRequest).Item1;
-                apiRequest.ecdsaSignature = ECDSAHelper.GenerateSignature(typedData, l1Pk);
-            }
+            var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().Result.chainId, apiRequest).Item1;
+            apiRequest.ecdsaSignature = ECDSAHelper.GenerateSignature(typedData, l1Pk);
 
             (string, string)[] headers = { (Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
             var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
-                await Utils.Http(_apiUrl+Constants.AccountUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)).ConfigureAwait(false));
+                await Utils.Http(_apiUrl + Constants.AccountUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)).ConfigureAwait(false));
             return new OperationResult(apiresult);
         }
 
@@ -1104,24 +1077,12 @@ namespace LoopringSharp
         /// <param name="ethPublicAddress">User's public wallet address</param>
         /// <param name="exchangeAddress">Exchange's public address</param>
         /// <returns>Returns the hash and status of your requested operation</returns>
-        public async Task<OperationResult> UpdateAccount(string apiKey, string l1Pk,string l2Pk, int accountId, string feeToken, string ethPublicAddress, string exchangeAddress, WalletService? walletType)
+        public virtual async Task<OperationResult> UpdateAccount(string apiKey, string l1Pk, string l2Pk, int accountId, string feeToken, string ethPublicAddress, string exchangeAddress)
         {
             var newNonce = (await GetAccountInfo(ethPublicAddress)).nonce;
-            (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) keys;
-            if (walletType.HasValue && walletType.Value == WalletService.MetaMask)
-            {                
-                keys = EDDSAHelper.EDDSASignMetamask(exchangeAddress, _apiUrl, false,true);
-                l1Pk = WalletService.MetaMask.ToString();
-            }
-            if (walletType.HasValue && walletType.Value == WalletService.WalletConnect)
-            {
-                keys = await EDDSAHelper.EDDSASignWalletConnect(exchangeAddress, newNonce);
-                l1Pk = WalletService.WalletConnect.ToString();
-            }
-            else
-            {
-                keys = EDDSAHelper.EDDSASignLocal(exchangeAddress, newNonce, l1Pk, ethPublicAddress);
-            }
+            (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) keys;        
+
+            keys = EDDSAHelper.EDDSASignLocal(exchangeAddress, newNonce, l1Pk, ethPublicAddress);
 
             var feeamountresult = await OffchainFee(apiKey, accountId, OffChainRequestType.UpdateAccount, feeToken, "0").ConfigureAwait(false);
             var feeamount = feeamountresult.fees.Where(w => w.token == feeToken).First().fee;
@@ -1134,7 +1095,7 @@ namespace LoopringSharp
                 {
                     tokenId = await GetTokenId(feeToken).ConfigureAwait(false),
                     volume = feeamount
-                },                
+                },
                 nonce = newNonce,
                 owner = ethPublicAddress,
                 validUntil = 1700000000,
@@ -1171,6 +1132,28 @@ namespace LoopringSharp
         }
 
         #endregion
+
+        public static async Task<ExchangeInfo> ExchangeInfo(string apiUrl)
+        {
+
+            var EchangeInfoShorTermCache = JsonConvert.DeserializeObject<ApiExchangeInfoResult>(
+                 await Utils.Http(apiUrl + Constants.InfoUrl).ConfigureAwait(false));
+
+
+            return new ExchangeInfo()
+            {
+                ammExitFees = EchangeInfoShorTermCache.ammExitFees,
+                chainId = EchangeInfoShorTermCache.chainId,
+                depositAddress = EchangeInfoShorTermCache.depositAddress,
+                exchangeAddress = EchangeInfoShorTermCache.exchangeAddress,
+                fastWithdrawalFees = EchangeInfoShorTermCache.fastWithdrawalFees,
+                onchainFees = EchangeInfoShorTermCache.onchainFees,
+                openAccountFees = EchangeInfoShorTermCache.openAccountFees,
+                transferFees = EchangeInfoShorTermCache.transferFees,
+                updateFees = EchangeInfoShorTermCache.updateFees,
+                withdrawalFees = EchangeInfoShorTermCache.withdrawalFees
+            };
+        }
     }
 
 }

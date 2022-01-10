@@ -1,5 +1,4 @@
-﻿
-using EmbedIO;
+﻿using EmbedIO;
 using EmbedIO.Actions;
 using EmbedIO.Files;
 using EmbedIO.Security;
@@ -11,26 +10,25 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 
-
-namespace LoopringSharp.Metamask
+namespace LoopringSharp.MetaMask
 {
     public static class MetamaskServer
     {
         private static WebServer server;
         public static string eddsa;
-        public static string ethAddress;        
+        public static string ethAddress;
 
-        public static (string eddsa,string ethAddress) L2Authenticate(string userMessage, string exchangeAddress, string apiUrl, bool nextNonce)
+        public static (string eddsa, string ethAddress) L2Authenticate(string userMessage, string exchangeAddress, string apiUrl, bool nextNonce)
         {
             string nonceModifier = "- 1";
             if (nextNonce)
                 nonceModifier = "+ 0";
-          
-            File.WriteAllText(Directory.GetCurrentDirectory() + "/l2au.html", 
-                Constants.MetaMaskAuthTemplate.Replace("||--||", apiUrl + Constants.AccountUrl + "?owner=")
+
+            File.WriteAllText(Directory.GetCurrentDirectory() + "/l2au.html",
+                Constants.MetaMaskAuthTemplate.Replace("||--||", apiUrl + LoopringSharp.Constants.AccountUrl + "?owner=")
                                               .Replace("|-|-|-|", exchangeAddress)
                                               .Replace("|---------|", userMessage)
-                                              .Replace("|--|--|--|", nonceModifier));
+                                              .Replace("|--|--|--|", nonceModifier)); ;
 
             eddsa = null;
             ethAddress = null;
@@ -44,18 +42,18 @@ namespace LoopringSharp.Metamask
             }
 
             CloseServer();
-            
+
             File.Delete(Directory.GetCurrentDirectory() + "/l2au.html");
 
-            return (eddsa.Replace("\"", ""),ethAddress);
+            return (eddsa.Replace("\"", ""), ethAddress);
         }
 
         public static string Sign(string dataGram, string signatureMethod, string userMessage)
         {
-            string htmlPage = Constants.MetaMaskSignatureTemplate.Replace("||||||","\""+dataGram.Replace("\"","\\\"")+"\"");
+            string htmlPage = Constants.MetaMaskSignatureTemplate.Replace("||||||", "\"" + dataGram.Replace("\"", "\\\"") + "\"");
             htmlPage = htmlPage.Replace("|-----|", signatureMethod);
             htmlPage = htmlPage.Replace("|---------|", userMessage);
-            File.WriteAllText(Directory.GetCurrentDirectory() + "/sign.html",htmlPage);
+            File.WriteAllText(Directory.GetCurrentDirectory() + "/sign.html", htmlPage);
 
             eddsa = null;
 
@@ -72,7 +70,7 @@ namespace LoopringSharp.Metamask
             File.Delete(Directory.GetCurrentDirectory() + "/sign.html");
 
             if (signatureMethod == "eth_signTypedData_v4")
-                return eddsa.Replace("\"","")+"02";
+                return eddsa.Replace("\"", "") + "02";
             else
                 return eddsa.Replace("\"", "");
         }

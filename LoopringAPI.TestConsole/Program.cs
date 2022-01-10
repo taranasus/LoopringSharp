@@ -1,5 +1,4 @@
 ﻿using LoopringSharp;
-using LoopringSharp.Metamask;
 using LoopringSharp.TestConsole;
 using Newtonsoft.Json;
 using PoseidonSharp;

@@ -1,5 +1,4 @@
-﻿using LoopringSharp.WalletConnect;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -10,14 +9,14 @@ namespace LoopringSharp
 {
     public class Client
     {
-        private string _apiKey;
-        private string _ethPrivateKey;
-        private string _loopringPrivateKey;
-        private string _loopringPublicKeyX;
-        private string _loopringPublicKeyY;
-        private string _ethAddress;
+        public string _apiKey;
+        public string _ethPrivateKey;
+        public string _loopringPrivateKey;
+        public string _loopringPublicKeyX;
+        public string _loopringPublicKeyY;
+        public string _ethAddress;
         public WalletService? _walletType;
-        private int _accountId;
+        public int _accountId;
         private SecureClient _client;
 
         /// <summary>
@@ -80,40 +79,11 @@ namespace LoopringSharp
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiUrl, WalletService walletService)
-        {
-            _walletType = walletService;
-            if (walletService == WalletService.WalletConnect)
-            {
-                string connectURi = WalletConnectServer.Connect();
-                Debug.WriteLine("Connection: " + connectURi);
-                Console.WriteLine("WalletConnect CODE: " + connectURi);
-                File.WriteAllText("walletconnect.html",
-                    Constants.WalletConnectHTML.Replace("|----|", $"https://api.qrserver.com/v1/create-qr-code/?data={HttpUtility.UrlEncode(connectURi)}!&size=400x400")
-                    .Replace("|--|--|", connectURi));
-                var browser = new System.Diagnostics.Process()
-                {
-                    StartInfo = new System.Diagnostics.ProcessStartInfo(Directory.GetCurrentDirectory() + "/walletconnect.html") { UseShellExecute = true }
-                };
-                browser.Start();
-                _ethAddress = WalletConnectServer.GetEthAddress();
-                File.Delete("walletconnect.html");
-                browser.Kill();
-            }
-
+        public Client(string apiUrl, string ethAddress, bool thirdPartyWallet)
+        {          
+            _ethAddress = ethAddress;
             _client = new SecureClient(apiUrl);
-            (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) l2Auth = ("", "", "", "");
-            if (walletService == WalletService.MetaMask)
-            {
-                l2Auth = EDDSAHelper.GetL2PKFromMetaMask(ExchangeInfo().Result.exchangeAddress, apiUrl);
-                _ethAddress = l2Auth.ethAddress;
-            }
-            else if (walletService == WalletService.WalletConnect)
-            {
-                var nonce = GetAccountInfo().Result.nonce;
-                l2Auth = EDDSAHelper.GetL2PKFromWalletConnect(ExchangeInfo().Result.exchangeAddress, nonce - 1).Result;
-            }
-
+            (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) l2Auth = ("", "", "", "");                   
             _loopringPrivateKey = l2Auth.secretKey;
             _loopringPublicKeyX = l2Auth.publicKeyX;
             _loopringPublicKeyY = l2Auth.publicKeyY;
@@ -461,9 +431,9 @@ namespace LoopringSharp
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public Task<OperationResult> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
+        public virtual Task<OperationResult> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
         {
-            return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo, _walletType);
+            return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo);
         }
 
         /// <summary>
@@ -475,9 +445,9 @@ namespace LoopringSharp
         /// <param name="feeToken">In what token are we paying the fee</param>
         /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
-        public async Task<OperationResult> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
+        public virtual async Task<OperationResult> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
         {
-            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo, _walletType).ConfigureAwait(false);
+            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -498,9 +468,9 @@ namespace LoopringSharp
         /// </summary>   
         /// <param name="feeToken">The token in which the fee should be paid for this operation</param>
         /// <returns>Returns the hash and status of your requested operation</returns>
-        public Task<OperationResult> RequestNewL2PrivateKey(string feeToken)
+        public virtual Task<OperationResult> RequestNewL2PrivateKey(string feeToken)
         {
-            return _client.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().Result.exchangeAddress, _walletType);
+            return _client.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().Result.exchangeAddress);
         }
 
         /// <summary>
