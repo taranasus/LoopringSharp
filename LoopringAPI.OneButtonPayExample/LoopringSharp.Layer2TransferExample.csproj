@@ -11,7 +11,7 @@
   
 
   <ItemGroup>
-    <ProjectReference Include="..\LoopringAPI\LoopringAPI.csproj" />
+    <ProjectReference Include="..\LoopringAPI\LoopringSharp.csproj" />
   </ItemGroup>
 
 </Project>

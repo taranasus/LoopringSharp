@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32002.185
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringAPI", "LoopringAPI\LoopringAPI.csproj", "{47C53B0C-ACDA-4DF8-B835-70F2FCC5DF62}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringSharp", "LoopringAPI\LoopringSharp.csproj", "{47C53B0C-ACDA-4DF8-B835-70F2FCC5DF62}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringAPI.TestConsole", "LoopringAPI.TestConsole\LoopringAPI.TestConsole.csproj", "{F3B0E70B-3D69-42A1-AB86-55B0BE4FC5F8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringSharp.TestConsole", "LoopringAPI.TestConsole\LoopringSharp.TestConsole.csproj", "{F3B0E70B-3D69-42A1-AB86-55B0BE4FC5F8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringAPI.Layer2TransferExample", "LoopringAPI.OneButtonPayExample\LoopringAPI.Layer2TransferExample.csproj", "{F82E405D-D04E-430C-9100-9F899B9B1954}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringSharp.Layer2TransferExample", "LoopringAPI.OneButtonPayExample\LoopringSharp.Layer2TransferExample.csproj", "{F82E405D-D04E-430C-9100-9F899B9B1954}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringAPI.UnitTests", "LoopringAPI.UnitTests\LoopringAPI.UnitTests.csproj", "{0AD5A558-B81E-448D-B588-744A5AF814F6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoopringSharp.UnitTests", "LoopringAPI.UnitTests\LoopringSharp.UnitTests.csproj", "{0AD5A558-B81E-448D-B588-744A5AF814F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
