@@ -1,4 +1,4 @@
-# LoopringAPI
+# LoopringSharp
 
 
 ## WARNING! The API Is currently under construction and not ready for use
@@ -16,23 +16,23 @@ The Loopring API https://docs.loopring.io/
 Basically it's just
 
 ```csharp
-LoopringAPI.Client client = new LoopringAPI.Client("<apiKey>","<loopring private key>","<ethereum private key>",<account id>, "<ethreum public address>", "<api url>");
+LoopringSharp.Client client = new LoopringSharp.Client("<apiKey>","<loopring private key>","<ethereum private key>",<account id>, "<ethreum public address>", "<api url>");
 ```
 
 More explicitly:
 
 ```csharp
-LoopringAPI.Client client = new LoopringAPI.Client("pJ3sU5kJ489fLmrewslkreownsbTunMK9fcusikhK6tn5nEDY4vvkWg8PgV2R","0x444444444444444444444444444444444444444444444444444444444444444","0x5555555555555555555555555555555555555555555555555555555555555555", 1, "0x6666666666666666666666666666666666666666", "https://uat2.loopring.io/");
+LoopringSharp.Client client = new LoopringSharp.Client("pJ3sU5kJ489fLmrewslkreownsbTunMK9fcusikhK6tn5nEDY4vvkWg8PgV2R","0x444444444444444444444444444444444444444444444444444444444444444","0x5555555555555555555555555555555555555555555555555555555555555555", 1, "0x6666666666666666666666666666666666666666", "https://uat2.loopring.io/");
 var storageId = await client.StorageId(1);
 ```
 
 The is also the simplified version:
 ```csharp
-LoopringAPI.Client client = new LoopringAPI.Client("<loopring private key>","<ethereum private key>","<api url>");
+LoopringSharp.Client client = new LoopringSharp.Client("<loopring private key>","<ethereum private key>","<api url>");
 ```
 Which uses API calls within the constructor to gather the missing information. 
 
-The values above are stored in RAM, which means they could be read by specialist software. If you are making a secure app please use the LoopringAPI.SecureClient which doesn't store anything in memory. 
+The values above are stored in RAM, which means they could be read by specialist software. If you are making a secure app please use the LoopringSharp.SecureClient which doesn't store anything in memory. 
 
 For client applications (like say you want to make a windows charting application or similar), there are now two better alternatives: MetaMask and WalletConnect. You can instruct the API to connect to one of those two services in order to get the information it needs. This is very secure since the private wallet information is not stored in-memory but instead lives within a secure third party service that does all the transfer validation and signing.
 ```csharp
@@ -78,9 +78,9 @@ As for which endpoint requires what, I'll atempt to make a table bellow with all
 
 There is a test console in the project that shows off how to use some of the parts within the API. I was also using it for testing. The console is in .net 6 so be prepared for that (VS 2022 and C# 10)
 
-The most important thing about the test console is that you need to run it for the first time and fill in the file as instructed in the error that gets thrown. LoopringApi needs those Api Keys in order to run.
+The most important thing about the test console is that you need to run it for the first time and fill in the file as instructed in the error that gets thrown. LoopringSharp needs those Api Keys in order to run.
 
-## LoopringAPI.Layer2TransferExample
+## LoopringSharp.Layer2TransferExample
 
 This is a windows forms app that basically sends crypto from your wallet to a destination of your choosing. The code is explained in detail in the comments so I encourage you to read through it and understand how it works. Be careful if selecting the real network (not the test net) as you will end up sending your own crypto to someone by mistake (hopefully to me :D)
 
@@ -91,7 +91,7 @@ The regular client has a security flaw in it, in that it stores the apiKey, l2Pk
 However, if creating a client application which runs on the users's hardware or on the web, it is recommended to use the secure client
 
 ```csharp
-LoopringAPI.SecureClient client = new LoopringAPI.SecureClient("https://uat2.loopring.io/");
+LoopringSharp.SecureClient client = new LoopringSharp.SecureClient("https://uat2.loopring.io/");
 var storageId = await client.StorageId("<YOUR API KEY HERE>","<YOUR ACCOUNT ID HERE>", 1);
 ```
 The secure client does not accept the apiKey, l2Pk, l1Pk as properties, but rather requires them as parameters on every method that needs them. This means that the keys are not stored in memory within the API class and it is up to the developer to decide how they want to secure this very sensitive infomation.
