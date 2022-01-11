@@ -1,3 +1,5 @@
+using LoopringSharp;
+
 namespace LoopringSharp.OneButtonPayExample
 {
     public partial class TransferForm : Form
