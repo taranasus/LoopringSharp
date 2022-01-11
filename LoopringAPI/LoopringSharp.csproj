@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyVersion>0.0.9</AssemblyVersion>
-    <FileVersion>0.0.9</FileVersion>
-    <Version>0.0.9</Version>
+    <AssemblyVersion>0.1.0</AssemblyVersion>
+    <FileVersion>0.1.0</FileVersion>
+    <Version>0.1.0</Version>
     <Authors>Taranasus</Authors>
     <Company>Taranasus</Company>
     <Description>A library to help you connect with the Loopring API https://docs.loopring.io/</Description>
@@ -15,7 +15,7 @@
     <RepositoryUrl>https://github.com/taranasus/LoopringSharp</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>loopring;loopringsharp;csharp;c#;loopring c#;loopring#;loopringapi;loopring api;layer2;l2</PackageTags>
-    <PackageReleaseNotes>Initial super alpha pre-release to see if it works with a unity project</PackageReleaseNotes>
+    <PackageReleaseNotes>Removed the metamask and wallet connect stuff from the base package as it's not relevant here</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
