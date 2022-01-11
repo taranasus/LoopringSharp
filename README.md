@@ -102,4 +102,4 @@ The regular client also makes use of the SecureClient internally, just that it s
 fudgey.eth - Creator of PoseidonSharp, without which it would be impossible to actually do transfers within this api. https://github.com/fudgebucket27/PoseidonSharp
 
 ## Donations
-![Donations](donations.png 'donations')
+![Donations](https://raw.githubusercontent.com/taranasus/LoopringSharp/main/donations.png 'donations')
