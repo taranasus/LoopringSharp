@@ -24,7 +24,7 @@ namespace LoopringSharp.UnitTests
             Client client = new Client(url, privateKey);
             
             //act
-            var result = client.GetTrades("LRC-ETH",20,new FillTypes[] {FillTypes.dex, FillTypes.amm }).Result;
+            var result = client.GetTrades("LRC-ETH",20,new FillTypes[] {FillTypes.dex, FillTypes.amm });
 
             //assert
             Assert.IsNotNull(result);
@@ -38,7 +38,7 @@ namespace LoopringSharp.UnitTests
             Client client = new Client(url, privateKey);
 
             //act
-            var result = client.GetTrades("CPP-RCS").Result;
+            var result = client.GetTrades("CPP-RCS");
 
             Assert.IsNotNull(result);
             Assert.AreEqual(0, result.Count);
@@ -51,7 +51,7 @@ namespace LoopringSharp.UnitTests
             Client client = new Client(url, privateKey);
 
             //act
-            var result = client.CreateInfo().Result;
+            var result = client.CreateInfo();
 
             //assert
             Assert.IsNotNull(result);
@@ -65,7 +65,7 @@ namespace LoopringSharp.UnitTests
             Client client = new Client(url, privateKey);
 
             //act
-            var result = client.UpdateInfo().Result;
+            var result = client.UpdateInfo();
 
             //assert
             Assert.IsNotNull(result);
@@ -79,7 +79,7 @@ namespace LoopringSharp.UnitTests
             Client client = new Client(url, privateKey);
 
             //act
-            var result = client.GetDeposits().Result;
+            var result = client.GetDeposits();
 
             //assert
             Assert.IsNotNull(result);
@@ -93,7 +93,7 @@ namespace LoopringSharp.UnitTests
             Client client = new Client(url, privateKey);
 
             //act
-            var result = client.GetWithdrawls().Result;
+            var result = client.GetWithdrawls();
 
             //assert
             Assert.IsNotNull(result);

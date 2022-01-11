@@ -45,13 +45,13 @@ namespace LoopringSharp
             _client = new SecureClient(apiUrl);
             _ethPrivateKey = ethPrivateKey;
             _ethAddress = ECDSAHelper.GetPublicAddress(ethPrivateKey);
-            var accountInfo = GetAccountInfo().Result;
+            var accountInfo = GetAccountInfo();
             _accountId = accountInfo.accountId;
-            var l2Auth = EDDSAHelper.EDDSASignLocal(ExchangeInfo().Result.exchangeAddress, accountInfo.nonce - 1, _ethPrivateKey, _ethAddress);
+            var l2Auth = EDDSAHelper.EDDSASignLocal(ExchangeInfo().exchangeAddress, accountInfo.nonce - 1, _ethPrivateKey, _ethAddress);
             _loopringPrivateKey = l2Auth.secretKey;
             _loopringPublicKeyX = l2Auth.publicKeyX;
             _loopringPublicKeyY = l2Auth.publicKeyY;
-            _apiKey = ApiKey().Result;
+            _apiKey = ApiKey();
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace LoopringSharp
         /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
         /// <param name="withdrawlTypes">The type of withdrawls you want returned</param>        
         /// <returns></returns>
-        public Task<List<ApiWithdrawlTransaction>> GetWithdrawls(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, WithdrawalTypes? withdrawlTypes = null, string[] hashes = null)
+        public List<ApiWithdrawlTransaction> GetWithdrawls(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, WithdrawalTypes? withdrawlTypes = null, string[] hashes = null)
         {
             return _client.GetWithdrawls(_apiKey, _accountId, limit, start, end, statuses, tokenSymbol, offset, withdrawlTypes, hashes);
         }
@@ -87,15 +87,15 @@ namespace LoopringSharp
             _loopringPrivateKey = l2Auth.secretKey;
             _loopringPublicKeyX = l2Auth.publicKeyX;
             _loopringPublicKeyY = l2Auth.publicKeyY;
-            _accountId = GetAccountInfo().Result.accountId;
-            _apiKey = ApiKey().Result;
+            _accountId = GetAccountInfo().accountId;
+            _apiKey = ApiKey();
         }
 
         /// <summary>
         /// Returns the relayer's current time in millisecond
         /// </summary>
         /// <returns>Current time in milliseconds</returns>        
-        public Task<long> Timestamp()
+        public long Timestamp()
         {
             return _client.Timestamp();
         }
@@ -105,7 +105,7 @@ namespace LoopringSharp
         /// </summary>
         /// <param name="address">(optional) Ethereum / Loopring public address. If let null it will get your own account info</param>
         /// <returns>A lot of data about the account</returns>
-        public Task<Account> GetAccountInfo(string address = null)
+        public Account GetAccountInfo(string address = null)
         {
             if (address == null)
                 return _client.GetAccountInfo(_ethAddress);
@@ -117,7 +117,7 @@ namespace LoopringSharp
         /// </summary>        
         /// <param name="pairs">The tickers to retreive. (Ex. LRC-USDT, LRC-ETH)</param>
         /// <returns>Returns a list of all the ticker details for your requested tickers</returns>
-        public Task<List<Ticker>> Ticker(params string[] pairs)
+        public List<Ticker> Ticker(params string[] pairs)
         {
             return _client.Ticker(pairs);
         }
@@ -126,7 +126,7 @@ namespace LoopringSharp
         /// Return various configurations of Loopring.io
         /// </summary>
         /// <returns>Fees, exchange address, all sort of useful stuff</returns>
-        public Task<ExchangeInfo> ExchangeInfo()
+        public ExchangeInfo ExchangeInfo()
         {
             return _client.ExchangeInfo();
         }
@@ -136,7 +136,7 @@ namespace LoopringSharp
         /// </summary>
         /// <returns>The api key</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public Task<string> ApiKey()
+        public string ApiKey()
         {
             return _client.ApiKey(_loopringPrivateKey, _accountId);
         }
@@ -145,7 +145,7 @@ namespace LoopringSharp
         /// Get a list of all the markets available on the exchange
         /// </summary>
         /// <returns>List of all the markets available on the exchange and their configurations</returns>
-        public Task<List<Market>> GetMarkets()
+        public List<Market> GetMarkets()
         {
             return _client.GetMarkets();
 
@@ -160,7 +160,7 @@ namespace LoopringSharp
         /// <param name="end">(Optional)End time in milliseconds</param>
         /// <param name="limit">(Optional)Number of data points. If more data points are available, the API will only return the first 'limit' data points.</param>
         /// <returns>List of candlesticks... what else?</returns>
-        public Task<List<Candlestick>> GetCandlesticks(string market, Intervals intervals, string start = null, string end = null, int? limit = null)
+        public List<Candlestick> GetCandlesticks(string market, Intervals intervals, string start = null, string end = null, int? limit = null)
         {
             return _client.GetCandlesticks(market, intervals, start, end, limit);
         }
@@ -169,7 +169,7 @@ namespace LoopringSharp
         /// </summary>
         /// <param name="legal">The fiat currency to uses. Currently the following values are supported: USD,CNY,JPY,EUR,GBP,HKD</param>
         /// <returns>Fiat price of all the tokens in the system</returns>
-        public Task<List<Price>> GetPrice(LegalCurrencies legal)
+        public List<Price> GetPrice(LegalCurrencies legal)
         {
             return _client.GetPrice(legal);
         }
@@ -179,7 +179,7 @@ namespace LoopringSharp
         /// Returns the configurations of all supported tokens, including Ether.
         /// </summary>
         /// <returns>List of all the supported tokens and their configurations</returns>
-        public Task<List<TokenConfig>> GetTokens()
+        public List<TokenConfig> GetTokens()
         {
             return _client.GetTokens();
         }
@@ -191,7 +191,7 @@ namespace LoopringSharp
         /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
         /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
         /// <returns>Returns the order book of a given trading pair.</returns>
-        public Task<Depth> GetDepth(string market, int level = 2, int limit = 50)
+        public Depth GetDepth(string market, int level = 2, int limit = 50)
         {
             return _client.GetDepth(market, level, limit);
         }
@@ -203,7 +203,7 @@ namespace LoopringSharp
         /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
         /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
         /// <returns>Returns the order book of a given trading pair.</returns>
-        public Task<Depth> GetMixDepth(string market, int level = 2, int limit = 50)
+        public Depth GetMixDepth(string market, int level = 2, int limit = 50)
         {
             return _client.GetMixDepth(market, level, limit);
         }
@@ -214,7 +214,7 @@ namespace LoopringSharp
         /// <param name="orderHash">The hash of the order you wish to nuke.</param>
         /// <param name="clientOrderId">The unique order ID of the client</param>
         /// <returns>Returns OrderResult which basically contains the status of your transaction after the cancel was succesfully requested</returns>
-        public Task<OrderResult> CancelOrder(string orderHash, string clientOrderId)
+        public OrderResult CancelOrder(string orderHash, string clientOrderId)
         {
             return _client.DeleteOrder(_loopringPrivateKey, _apiKey, _accountId, orderHash, clientOrderId);
         }
@@ -229,7 +229,7 @@ namespace LoopringSharp
         /// <param name="orderType">Order types, can be AMM, LIMIT_ORDER, MAKER_ONLY, TAKER_ONLY</param>
         /// <param name="poolAddress">The AMM pool address if order type is AMM</param>
         /// <returns>Returns OrderResult which basically contains the status of your transaction after it was succesfully requested</returns>
-        public Task<OrderResult> SubmitOrder(
+        public OrderResult SubmitOrder(
         string sellCurrency,
         decimal sellAmmount,
         string buyCurrency,
@@ -256,7 +256,7 @@ namespace LoopringSharp
         /// <param name="poolAddress">The AMM pool address if order type is AMM</param>
         /// <param name="affiliate">An accountID who will recieve a share of the fee of this order</param>
         /// <returns>Returns OrderResult which basically contains the status of your transaction after it was succesfully requested</returns>
-        public Task<OrderResult> SubmitOrder(
+        public OrderResult SubmitOrder(
         Token sellToken,
         Token buyToken,
         bool allOrNone,
@@ -281,9 +281,9 @@ namespace LoopringSharp
         /// <param name="apiKey"></param>
         /// <param name="accountId"></param>
         /// <returns>The new API Key</returns>
-        public async Task<string> UpdateApiKey()
+        public string UpdateApiKey()
         {
-            _apiKey = await _client.UpdateApiKey(_loopringPrivateKey, _apiKey, _accountId).ConfigureAwait(false);
+            _apiKey = _client.UpdateApiKey(_loopringPrivateKey, _apiKey, _accountId);
             return _apiKey;
         }
 
@@ -294,7 +294,7 @@ namespace LoopringSharp
         /// <param name="sellTokenId">The unique identifier of the token which the user wants to sell in the next order.</param>
         /// <param name="maxNext">Return the max of the next available storageId, so any storageId > returned value is avaliable, to help user manage storageId by themselves. for example, if [20, 60, 100] is avaliable, all other ids < 100 is used before, user gets 20 if flag is false (and 60 in next run), but gets 100 if flag is true, so he can use 102, 104 freely</param>
         /// <returns>Returns an object instance of StorageId which contains the next offchainId and orderId</returns>
-        public Task<StorageId> StorageId(int sellTokenId, int maxNext = 0)
+        public StorageId StorageId(int sellTokenId, int maxNext = 0)
         {
             return _client.StorageId(_apiKey, _accountId, sellTokenId, maxNext);
         }
@@ -305,7 +305,7 @@ namespace LoopringSharp
         /// <param name="orderHash">The hash of the worder for which you want details</param>
         /// <returns>OrderDetails object filled with awesome order details</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public Task<OrderDetails> OrderDetails(string orderHash)
+        public OrderDetails OrderDetails(string orderHash)
         {
             return _client.OrderDetails(_apiKey, _accountId, orderHash);
         }
@@ -318,7 +318,7 @@ namespace LoopringSharp
         /// <param name="tokens">(Optional) list of the tokens which you want returned</param>
         /// <returns>OrderDetails object filled with awesome order details</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public Task<List<Balance>> Ballances(string tokens = null)
+        public List<Balance> Ballances(string tokens = null)
         {
             return _client.Ballances(_apiKey, _accountId, tokens);
         }
@@ -330,7 +330,7 @@ namespace LoopringSharp
         /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
         /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
         /// <returns>Returns the fee amount</returns>
-        public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
+        public OffchainFee OffchainFee(OffChainRequestType requestType, string tokenSymbol, string amount)
         {
             return _client.OffchainFee(_apiKey, _accountId, requestType, tokenSymbol, amount);
         }
@@ -342,7 +342,7 @@ namespace LoopringSharp
         /// <param name="tokenSymbol">Required only for withdrawls - The token you wish to withdraw</param>
         /// <param name="amount">Required only for withdrawls - how much of that token you wish to withdraw</param>
         /// <returns>Returns the fee amount</returns>
-        public Task<OffchainFee> OffchainFee(OffChainRequestType requestType, string tokenSymbol, decimal amount)
+        public OffchainFee OffchainFee(OffChainRequestType requestType, string tokenSymbol, decimal amount)
         {
             return _client.OffchainFee(_apiKey, _accountId, requestType, tokenSymbol, (amount * 1000000000000000000m).ToString());
         }
@@ -360,7 +360,7 @@ namespace LoopringSharp
         /// <param name="limit">How many results per call? Default 50</param>
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <returns>List of OrderDetails objects containing the searched-for items</returns>
-        public Task<List<OrderDetails>> OrdersDetails(
+        public List<OrderDetails> OrdersDetails(
             int limit = 50,
             int offset = 0,
             string market = null,
@@ -385,7 +385,7 @@ namespace LoopringSharp
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <param name="statuses">Statuses which you would like to filter by</param>
         /// <returns>List of Ethereum transactions from users for exchange account registration.</returns>
-        public Task<List<ApiTransaction>> CreateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        public List<ApiTransaction> CreateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
         {
             return _client.CreateInfo(_apiKey, _accountId, limit, offset, start, end, statuses);
         }
@@ -401,7 +401,7 @@ namespace LoopringSharp
         /// <param name="offset">How many results to skip? Default 0 </param>
         /// <param name="statuses">Statuses which you would like to filter by</param>
         /// <returns>List of Ethereum transactions from users for resetting exchange passwords.</returns>
-        public Task<List<ApiTransaction>> UpdateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        public List<ApiTransaction> UpdateInfo(int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
         {
             return _client.UpdateInfo(_apiKey, _accountId, limit, offset, start, end, statuses);
         }
@@ -417,7 +417,7 @@ namespace LoopringSharp
         /// <param name="offset">Number of records to skip - Default : 0L</param>
         /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
         /// <returns>A list of deposit transactions. Are you paying attention?</returns>
-        public Task<List<ApiDepositTransaction>> GetDeposits(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, string[] hashes = null)
+        public List<ApiDepositTransaction> GetDeposits(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, string[] hashes = null)
         {
             return _client.GetDeposits(_apiKey, _accountId, limit, start, end, statuses, tokenSymbol, offset, hashes);
         }
@@ -431,7 +431,7 @@ namespace LoopringSharp
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public virtual Task<OperationResult> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
+        public virtual OperationResult Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
         {
             return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo);
         }
@@ -445,9 +445,9 @@ namespace LoopringSharp
         /// <param name="feeToken">In what token are we paying the fee</param>
         /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
-        public virtual async Task<OperationResult> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
+        public virtual OperationResult Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
         {
-            return await _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo).ConfigureAwait(false);
+            return _client.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo);
         }
 
         /// <summary>
@@ -457,7 +457,7 @@ namespace LoopringSharp
         /// <param name="limit">Number of queries</param>
         /// <param name="fillTypes">Filter by types of fills for the trade</param>
         /// <returns>List of Trades</returns>
-        public Task<List<Trade>> GetTrades(string market, int? limit = null, FillTypes[] fillTypes = null)
+        public List<Trade> GetTrades(string market, int? limit = null, FillTypes[] fillTypes = null)
         {
             return _client.GetTrades(market, limit, fillTypes);
         }
@@ -468,9 +468,9 @@ namespace LoopringSharp
         /// </summary>   
         /// <param name="feeToken">The token in which the fee should be paid for this operation</param>
         /// <returns>Returns the hash and status of your requested operation</returns>
-        public virtual Task<OperationResult> RequestNewL2PrivateKey(string feeToken)
+        public virtual OperationResult RequestNewL2PrivateKey(string feeToken)
         {
-            return _client.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().Result.exchangeAddress);
+            return _client.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().exchangeAddress);
         }
 
         /// <summary>
@@ -480,7 +480,7 @@ namespace LoopringSharp
         /// <param name="req">A UpdateAccountRequest object containing all the needed information for this request</param>
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>Returns the hash and status of your requested operation</returns>
-        public Task<OperationResult> RequestNewL2PrivateKey(UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
+        public OperationResult RequestNewL2PrivateKey(UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
         {
             return _client.UpdateAccount(_loopringPrivateKey, _ethPrivateKey, req, counterFactualInfo);
         }
@@ -490,7 +490,7 @@ namespace LoopringSharp
         /// </summary>   
         /// <param name="id">The l2 block id</param>
         /// <returns>Returns the l2 block info for the requested block id</returns>
-        public Task<L2BlockInfo> Get2BlockInfo(int id)
+        public L2BlockInfo Get2BlockInfo(int id)
         {
             return _client.GetL2BlockInfo(_apiKey, id);
         }
@@ -499,7 +499,7 @@ namespace LoopringSharp
         /// Gets pending transactions to be packed into next block
         /// </summary>   
         /// <returns>Returns the pending transactions for next block</returns>
-        public Task<List<PendingRequest>> GetPendingRequests()
+        public List<PendingRequest> GetPendingRequests()
         {
             return _client.GetPendingRequests(_apiKey);
         }

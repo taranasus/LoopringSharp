@@ -8,7 +8,7 @@ namespace LoopringSharp.WalletConnect
     public class WalletConnectSecretClient : LoopringSharp.SecureClient
     {
         string _apiUrl;
-        public WalletConnectSecretClient(string apiUrl, int throttleRequests = 200) : base(apiUrl, throttleRequests)
+        public WalletConnectSecretClient(string apiUrl) : base(apiUrl)
         {
 
         }
@@ -25,14 +25,14 @@ namespace LoopringSharp.WalletConnect
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public async override Task<OperationResult> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
+        public override OperationResult Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
             if (string.IsNullOrWhiteSpace(l2Pk))
                 throw new System.Exception("Transfer REQUIRES a valid Loopring Wallet Layer 2 Private key");
 
-            var account = await GetAccountInfo(request.payerAddr).ConfigureAwait(false);
+            var account = GetAccountInfo(request.payerAddr);
 
             BigInteger[] inputs = {
                 Utils.ParseHexUnsigned(request.exchange),
@@ -51,12 +51,12 @@ namespace LoopringSharp.WalletConnect
             var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
             apiRequest.eddsaSignature = LoopringSharp.EDDSAHelper.EDDSASign(inputs, l2Pk);
 
-            var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().Result.chainId, apiRequest);
-            apiRequest.ecdsaSignature = await WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", request.payerAddr) + "02";
+            var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().chainId, apiRequest);
+            apiRequest.ecdsaSignature = WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", request.payerAddr) + "02";
 
             (string, string)[] headers = { (LoopringSharp.Constants.HttpHeaderAPIKeyName, apiKey), (LoopringSharp.Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
             var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
-                await Utils.Http(_apiUrl + LoopringSharp.Constants.TransferUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)).ConfigureAwait(false));
+                Utils.Http(_apiUrl + LoopringSharp.Constants.TransferUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
             return new OperationResult(apiresult);
         }
 
@@ -85,12 +85,12 @@ namespace LoopringSharp.WalletConnect
 
             apiRequest.eddsaSignature = LoopringSharp.EDDSAHelper.EDDSASign(inputs, l2Pk);
 
-            var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().Result.chainId, apiRequest);
+            var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().chainId, apiRequest);
             apiRequest.ecdsaSignature = await WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", req.owner) + "02";
 
             (string, string)[] headers = { (LoopringSharp.Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
             var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
-                await Utils.Http(_apiUrl + LoopringSharp.Constants.AccountUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)).ConfigureAwait(false));
+                Utils.Http(_apiUrl + LoopringSharp.Constants.AccountUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
             return new OperationResult(apiresult);
         }
 
@@ -106,24 +106,24 @@ namespace LoopringSharp.WalletConnect
         /// <param name="ethPublicAddress">User's public wallet address</param>
         /// <param name="exchangeAddress">Exchange's public address</param>
         /// <returns>Returns the hash and status of your requested operation</returns>
-        public virtual async Task<OperationResult> UpdateAccount(string apiKey, string l1Pk, string l2Pk, int accountId, string feeToken, string ethPublicAddress, string exchangeAddress)
+        public virtual OperationResult UpdateAccount(string apiKey, string l1Pk, string l2Pk, int accountId, string feeToken, string ethPublicAddress, string exchangeAddress)
         {
-            var newNonce = (await GetAccountInfo(ethPublicAddress)).nonce;
+            var newNonce = (GetAccountInfo(ethPublicAddress)).nonce;
             (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) keys;
 
-            keys = await EDDSAHelper.EDDSASignWalletConnect(exchangeAddress, newNonce);
+            keys = EDDSAHelper.EDDSASignWalletConnect(exchangeAddress, newNonce);
             l1Pk = WalletService.WalletConnect.ToString();
 
-            var feeamountresult = await OffchainFee(apiKey, accountId, OffChainRequestType.UpdateAccount, feeToken, "0").ConfigureAwait(false);
+            var feeamountresult =  OffchainFee(apiKey, accountId, OffChainRequestType.UpdateAccount, feeToken, "0");
             var feeamount = feeamountresult.fees.Where(w => w.token == feeToken).First().fee;
 
             UpdateAccountRequest req = new UpdateAccountRequest()
             {
                 accountId = accountId,
-                exchange = ExchangeInfo().Result.exchangeAddress,
+                exchange = ExchangeInfo().exchangeAddress,
                 maxFee = new Token()
                 {
-                    tokenId = await GetTokenId(feeToken).ConfigureAwait(false),
+                    tokenId = GetTokenId(feeToken),
                     volume = feeamount
                 },
                 nonce = newNonce,
@@ -133,7 +133,7 @@ namespace LoopringSharp.WalletConnect
                 PublicKeyY = keys.publicKeyY
             };
 
-            return await UpdateAccount(l2Pk, l1Pk, req, null);
+            return UpdateAccount(l2Pk, l1Pk, req, null);
         }
     }
 }

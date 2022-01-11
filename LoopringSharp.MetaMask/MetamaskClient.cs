@@ -19,7 +19,7 @@ namespace LoopringSharp.MetaMask
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public virtual Task<OperationResult> Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
+        public virtual OperationResult Transfer(TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo = null)
         {
             return _metamaskClient.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, request, memo, clientId, counterFactualInfo);
         }
@@ -33,9 +33,9 @@ namespace LoopringSharp.MetaMask
         /// <param name="feeToken">In what token are we paying the fee</param>
         /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
-        public virtual async Task<OperationResult> Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
+        public virtual  OperationResult Transfer(string toAddress, string token, decimal value, string feeToken, string memo)
         {
-            return await _metamaskClient.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo).ConfigureAwait(false);
+            return _metamaskClient.Transfer(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, toAddress, token, value, feeToken, memo);
         }
 
         /// <summary>
@@ -44,14 +44,14 @@ namespace LoopringSharp.MetaMask
         /// </summary>   
         /// <param name="feeToken">The token in which the fee should be paid for this operation</param>
         /// <returns>Returns the hash and status of your requested operation</returns>
-        public virtual Task<OperationResult> RequestNewL2PrivateKey(string feeToken)
+        public virtual OperationResult RequestNewL2PrivateKey(string feeToken)
         {
-            return _metamaskClient.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().Result.exchangeAddress);
+            return _metamaskClient.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().exchangeAddress);
         }
 
         private static string GetEthereumAddress(string apiUrl)
         {
-            var l2Auth = EDDSAHelper.GetL2PKFromMetaMask(LoopringSharp.SecureClient.ExchangeInfo(apiUrl).Result.exchangeAddress, apiUrl);
+            var l2Auth = EDDSAHelper.GetL2PKFromMetaMask(LoopringSharp.SecureClient.ExchangeInfo(apiUrl).exchangeAddress, apiUrl);
             return l2Auth.ethAddress;
         }
     }

@@ -8,7 +8,7 @@ namespace LoopringSharp.MetaMask
     public class MetamaskSecureClient : LoopringSharp.SecureClient
     {
         string _apiUrl;
-        public MetamaskSecureClient(string apiUrl, int throttleRequests = 200) : base(apiUrl, throttleRequests)
+        public MetamaskSecureClient(string apiUrl) : base(apiUrl)
         {
 
         }
@@ -25,14 +25,14 @@ namespace LoopringSharp.MetaMask
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns>An object containing the status of the transfer at the end of the request</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public async override Task<OperationResult> Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
+        public override OperationResult Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
             if (string.IsNullOrWhiteSpace(l2Pk))
                 throw new System.Exception("Transfer REQUIRES a valid Loopring Wallet Layer 2 Private key");
 
-            var account = await GetAccountInfo(request.payerAddr).ConfigureAwait(false);
+            var account = GetAccountInfo(request.payerAddr);
 
             BigInteger[] inputs = {
                 Utils.ParseHexUnsigned(request.exchange),
@@ -52,12 +52,12 @@ namespace LoopringSharp.MetaMask
             apiRequest.eddsaSignature = LoopringSharp.EDDSAHelper.EDDSASign(inputs, l2Pk);
 
 
-            var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().Result.chainId, apiRequest).Item2;
+            var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().chainId, apiRequest).Item2;
             apiRequest.ecdsaSignature = MetamaskServer.Sign(JsonConvert.SerializeObject(typedData), "eth_signTypedData_v4", $"Please authorise the sending of {(decimal.Parse(request.token.volume) / 1000000000000000000m)} {request.tokenName} to {request.payeeAddr}. The fee will be {(decimal.Parse(request.maxFee.volume) / 1000000000000000000m)} {request.tokenFeeName}");
 
             (string, string)[] headers = { (LoopringSharp.Constants.HttpHeaderAPIKeyName, apiKey), (LoopringSharp.Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
             var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
-                await Utils.Http(_apiUrl + LoopringSharp.Constants.TransferUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)).ConfigureAwait(false));
+                Utils.Http(_apiUrl + LoopringSharp.Constants.TransferUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
             return new OperationResult(apiresult);
         }
 
@@ -69,7 +69,7 @@ namespace LoopringSharp.MetaMask
         /// <param name="req">A UpdateAccountRequest object containing all the needed information for this request</param>
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns></returns>
-        public virtual async Task<OperationResult> UpdateAccount(string l2Pk, string l1Pk, UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
+        public virtual OperationResult UpdateAccount(string l2Pk, string l1Pk, UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
         {
             var apiRequest = req.GetUpdateEDDSARequest(counterFactualInfo);
 
@@ -86,12 +86,12 @@ namespace LoopringSharp.MetaMask
 
             apiRequest.eddsaSignature = LoopringSharp.EDDSAHelper.EDDSASign(inputs, l2Pk);
 
-            var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().Result.chainId, apiRequest).Item2;
+            var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().chainId, apiRequest).Item2;
             apiRequest.ecdsaSignature = MetamaskServer.Sign(JsonConvert.SerializeObject(typedData), "eth_signTypedData_v4", $"Please authorise the reset of your Loopring private key. The fee will be {(decimal.Parse(apiRequest.maxFee.volume) / 1000000000000000000m)}");
 
             (string, string)[] headers = { (LoopringSharp.Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
             var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
-                await Utils.Http(_apiUrl + LoopringSharp.Constants.AccountUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)).ConfigureAwait(false));
+                Utils.Http(_apiUrl + LoopringSharp.Constants.AccountUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
             return new OperationResult(apiresult);
         }
 
@@ -107,24 +107,24 @@ namespace LoopringSharp.MetaMask
         /// <param name="ethPublicAddress">User's public wallet address</param>
         /// <param name="exchangeAddress">Exchange's public address</param>
         /// <returns>Returns the hash and status of your requested operation</returns>
-        public virtual async Task<OperationResult> UpdateAccount(string apiKey, string l1Pk, string l2Pk, int accountId, string feeToken, string ethPublicAddress, string exchangeAddress)
+        public virtual OperationResult UpdateAccount(string apiKey, string l1Pk, string l2Pk, int accountId, string feeToken, string ethPublicAddress, string exchangeAddress)
         {
-            var newNonce = (await GetAccountInfo(ethPublicAddress)).nonce;
+            var newNonce = (GetAccountInfo(ethPublicAddress)).nonce;
             (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) keys;
 
             keys = EDDSAHelper.EDDSASignMetamask(exchangeAddress, _apiUrl, false, true);
             l1Pk = WalletService.MetaMask.ToString();
 
-            var feeamountresult = await OffchainFee(apiKey, accountId, OffChainRequestType.UpdateAccount, feeToken, "0").ConfigureAwait(false);
+            var feeamountresult = OffchainFee(apiKey, accountId, OffChainRequestType.UpdateAccount, feeToken, "0");
             var feeamount = feeamountresult.fees.Where(w => w.token == feeToken).First().fee;
 
             UpdateAccountRequest req = new UpdateAccountRequest()
             {
                 accountId = accountId,
-                exchange = ExchangeInfo().Result.exchangeAddress,
+                exchange = ExchangeInfo().exchangeAddress,
                 maxFee = new Token()
                 {
-                    tokenId = await GetTokenId(feeToken).ConfigureAwait(false),
+                    tokenId = GetTokenId(feeToken),
                     volume = feeamount
                 },
                 nonce = newNonce,
@@ -134,7 +134,7 @@ namespace LoopringSharp.MetaMask
                 PublicKeyY = keys.publicKeyY
             };
 
-            return await UpdateAccount(l2Pk, l1Pk, req, null);
+            return UpdateAccount(l2Pk, l1Pk, req, null);
         }
     }
 }
