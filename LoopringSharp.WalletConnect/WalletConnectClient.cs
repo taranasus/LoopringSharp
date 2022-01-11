@@ -9,7 +9,7 @@ namespace LoopringSharp.WalletConnect
     public class WalletConnectClient : LoopringSharp.Client
     {
         WalletConnectSecretClient _walletConnectClient;
-        public WalletConnectClient(string apiUrl) : base(apiUrl, GetEthereumAddress(), true)
+        public WalletConnectClient(string apiUrl) : base(apiUrl, GetEthereumAddress())
         {
             _walletConnectClient = new WalletConnectSecretClient(apiUrl);
         }
@@ -53,8 +53,10 @@ namespace LoopringSharp.WalletConnect
             return _walletConnectClient.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().exchangeAddress);
         }
 
-        private static string GetEthereumAddress()
+        private static (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) GetEthereumAddress()
         {
+            // TODO: THIS NEEDS REFACTORING INTO RETURNING ALL THAT INFO NOT JUST ETH ADDRESS
+
             string connectURi = WalletConnectServer.Connect();
             Debug.WriteLine("Connection: " + connectURi);
             Console.WriteLine("WalletConnect CODE: " + connectURi);

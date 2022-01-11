@@ -66,7 +66,7 @@ namespace LoopringSharp.WalletConnect
             return walletConnect.Accounts[0];
         }
 
-        public static async Task<(string eddsa, string ethAddress)> L2Authenticate(string exchangeAddress, int nonce)
+        public static (string eddsa, string ethAddress) L2Authenticate(string exchangeAddress, int nonce)
         {
             if (walletConnect == null)
             {
@@ -86,7 +86,7 @@ namespace LoopringSharp.WalletConnect
             string hexData = "Sign this message to access Loopring Exchange: " + exchangeAddress + " with key nonce: " + nonce;
             string address = walletConnect.Accounts[0];
 
-            var result = await walletConnect.EthSign(address, hexData);
+            var result = walletConnect.EthSign(address, hexData).Result;
             return (result, address);
         }
         public static async Task<string> Sign(string serializedData, string signatureMethod, string ethAddress)

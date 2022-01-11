@@ -7,7 +7,7 @@ namespace LoopringSharp.OneButtonPayExample
             InitializeComponent();
         }
 
-        LoopringSharp.Client client;
+        MetaMask.MetamaskClient client;
 
         // When user selects a network to connect to
         private void cbEnvironment_SelectedIndexChanged(object sender, EventArgs e)
@@ -16,7 +16,7 @@ namespace LoopringSharp.OneButtonPayExample
             // Since only the URL was provided and no other info, the client will attempt to make contact with the users's MetaMask in order
             // To get the necesairy info
             //                  The url of the exchange you will be interacting with   Which wallet connecrtion method are we using?
-            client = new Client(cbEnvironment.SelectedItem.ToString().Split(" | ")[1],"<PRIVATE KEY>");
+            client = new MetaMask.MetamaskClient(cbEnvironment.SelectedItem.ToString().Split(" | ")[1]);
 
             // Clear the textboxes in case this is a reload
             cbPaymentFeeToken.Items.Clear();
@@ -101,6 +101,11 @@ namespace LoopringSharp.OneButtonPayExample
             this.WindowState = FormWindowState.Normal; 
             this.Focus();
             MessageBox.Show("Thanks for the monye honey! I will use it to buy skittles!");
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

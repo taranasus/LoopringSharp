@@ -5,7 +5,7 @@ namespace LoopringSharp.MetaMask
     public class MetamaskClient : LoopringSharp.Client
     {
         MetamaskSecureClient _metamaskClient;
-        public MetamaskClient(string apiUrl) : base(apiUrl, GetEthereumAddress(apiUrl), true)
+        public MetamaskClient(string apiUrl) : base(apiUrl, GetL2Details(apiUrl))
         {
             _metamaskClient = new MetamaskSecureClient(apiUrl);
         }        
@@ -49,10 +49,10 @@ namespace LoopringSharp.MetaMask
             return _metamaskClient.UpdateAccount(_apiKey, _ethPrivateKey, _loopringPrivateKey, _accountId, feeToken, _ethAddress, ExchangeInfo().exchangeAddress);
         }
 
-        private static string GetEthereumAddress(string apiUrl)
+        private static (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) GetL2Details(string apiUrl)
         {
             var l2Auth = EDDSAHelper.GetL2PKFromMetaMask(LoopringSharp.SecureClient.ExchangeInfo(apiUrl).exchangeAddress, apiUrl);
-            return l2Auth.ethAddress;
+            return l2Auth;
         }
     }
 }

@@ -68,7 +68,7 @@ namespace LoopringSharp.WalletConnect
         /// <param name="req">A UpdateAccountRequest object containing all the needed information for this request</param>
         /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
         /// <returns></returns>
-        public virtual async Task<OperationResult> UpdateAccount(string l2Pk, string l1Pk, UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
+        public virtual OperationResult UpdateAccount(string l2Pk, string l1Pk, UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
         {
             var apiRequest = req.GetUpdateEDDSARequest(counterFactualInfo);
 
@@ -86,7 +86,7 @@ namespace LoopringSharp.WalletConnect
             apiRequest.eddsaSignature = LoopringSharp.EDDSAHelper.EDDSASign(inputs, l2Pk);
 
             var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().chainId, apiRequest);
-            apiRequest.ecdsaSignature = await WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", req.owner) + "02";
+            apiRequest.ecdsaSignature = WalletConnectServer.Sign(JsonConvert.SerializeObject(typedData.Item2), "eth_signTypedData_v4", req.owner).Result + "02";
 
             (string, string)[] headers = { (LoopringSharp.Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
             var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(

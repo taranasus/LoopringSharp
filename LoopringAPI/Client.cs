@@ -79,11 +79,10 @@ namespace LoopringSharp
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
-        public Client(string apiUrl, string ethAddress, bool thirdPartyWallet)
+        public Client(string apiUrl, (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) l2Auth)
         {          
-            _ethAddress = ethAddress;
-            _client = new SecureClient(apiUrl);
-            (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) l2Auth = ("", "", "", "");                   
+            _ethAddress = l2Auth.ethAddress;
+            _client = new SecureClient(apiUrl);            
             _loopringPrivateKey = l2Auth.secretKey;
             _loopringPublicKeyX = l2Auth.publicKeyX;
             _loopringPublicKeyY = l2Auth.publicKeyY;

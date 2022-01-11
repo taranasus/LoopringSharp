@@ -10,7 +10,7 @@ namespace LoopringSharp.MetaMask
         string _apiUrl;
         public MetamaskSecureClient(string apiUrl) : base(apiUrl)
         {
-
+            _apiUrl = apiUrl;
         }
 
         /// <summary>

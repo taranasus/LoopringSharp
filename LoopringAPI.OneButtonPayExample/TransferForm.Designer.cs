@@ -65,6 +65,7 @@
             this.label2.TabIndex = 2;
             this.label2.Text = "This is a quick demo on how to do a transfer of coin using the API. The code in t" +
     "he form is explained in detail so enjoy using it";
+            this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // cbEnvironment
             // 
