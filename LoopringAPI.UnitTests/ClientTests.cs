@@ -100,6 +100,20 @@ namespace LoopringSharp.UnitTests
             Assert.IsTrue(result.Count > 0);
         }
 
+        [TestMethod]
+        public void GetTransfersSuccess()
+        {
+            //arrange
+            Client client = new Client(url, privateKey);
+
+            //act
+            var result = client.GetTransfers();
+
+            //assert
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result.Count > 0);
+        }
+
         static ApiKeys ReadConfigFile(bool prod)
         {
             ApiKeys result;

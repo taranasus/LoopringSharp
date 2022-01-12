@@ -74,6 +74,23 @@ namespace LoopringSharp
         }
 
         /// <summary>
+        /// Get user transfer list.
+        /// </summary>
+        /// <param name="limit">Number of records to return</param>
+        /// <param name="start">Start time in milliseconds - Default : 0L</param>
+        /// <param name="end">End time in milliseconds - Default : 0L</param>
+        /// <param name="statuses">Comma separated status values</param>
+        /// <param name="tokenSymbol">Token to filter. If you want to return deposit records for all tokens, omit this parameter</param>
+        /// <param name="offset">Number of records to skip - Default : 0L</param>
+        /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
+        /// <param name="transferTypes">The type of withdrawls you want returned</param>        
+        /// <returns></returns>
+        public List<ApiTransferData> GetTransfers(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, TransferTypes? transferTypes = null, string[] hashes = null)
+        {
+            return _client.GetTransfers(_apiKey,_accountId, limit, start, end, statuses, tokenSymbol , offset, transferTypes, hashes);
+        }
+
+        /// <summary>
         /// The Object you need in order to communicate with the Loopring API. Recommended to use as a signleton. Automatically gets the API Key using your Loopring Private Key
         /// </summary>        
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
