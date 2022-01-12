@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LoopringAPI.TestConsole
+namespace LoopringSharp.TestConsole
 {
     public class ApiKeys
     {        

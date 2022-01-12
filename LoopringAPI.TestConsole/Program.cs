@@ -1,24 +1,97 @@
-﻿using LoopringAPI;
-using LoopringAPI.TestConsole;
+﻿using LoopringSharp;
+using LoopringSharp.TestConsole;
 using Newtonsoft.Json;
 using PoseidonSharp;
 using System.Net;
 using System.Net.Security;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 Console.WriteLine("Hello, Loops!");
 
-ApiKeys apiKeys = ReadConfigFile(false) ;
+ApiKeys apiKeys = ReadConfigFile(false);
 
-LoopringAPI.Client client = new LoopringAPI.Client(apiKeys.l2Pk, apiKeys.l1Pk, apiKeys.apiUrl);
+//var keys = EDDSAHelper.EDDSASignMetamask("0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e", "https://uat2.loopring.io/");
+//var keys2 = EDDSAHelper.EDDSASignLocal("0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e",2, "0x5ce27884b99146b4d67a3d3c5ea9566401bdc11f1f561b54d62c0e4a516d7aa0", "0x452386e0516cc1600e9f43c719d0c80c6abc51f9", false);
 
-#region TestTransfer
-Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ontinue / [S]kip");
+//Environment.Exit(0);
+
+LoopringSharp.Client client = new LoopringSharp.Client(apiKeys.apiUrl, apiKeys.l1Pk);
+//LoopringSharp.Client client = new LoopringSharp.Client("https://uat2.loopring.io/", WalletService.WalletConnect);
+
+Console.WriteLine("PRINT BALLANCES!");
+var balanceResult = client.Ballances();
+Console.WriteLine(JsonConvert.SerializeObject(balanceResult, Formatting.Indented));
+
+Console.WriteLine();
+Console.WriteLine();
+
+#region UpdateAccountPrivateKey
+Console.WriteLine("Updating your account private key. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 var choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
 {
-    string transfertoAddress = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e";    
+    Console.WriteLine("BEGINNING UPDATE!");
+    var transferResult = client.RequestNewL2PrivateKey("ETH");
+    Console.WriteLine("Update COMPLETE:");
+    Console.WriteLine(JsonConvert.SerializeObject(transferResult, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping Transfer test as it costs MONEY!");
+}
+
+Console.WriteLine();
+#endregion
+
+#region TestGetL2BlockInfo
+Console.WriteLine("Do you want to see the current L2 Block Info? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING L2 BLOCK INFO!");
+    var l2BlockInfoResult = client.Get2BlockInfo(15623);
+    Console.WriteLine("L2 BLOCK INFO RETRIEVED!");
+    Console.WriteLine(JsonConvert.SerializeObject(l2BlockInfoResult, Formatting.Indented, 
+    new JsonSerializerSettings
+    {
+        NullValueHandling = NullValueHandling.Ignore
+    }));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving L2 Block Info test!");
+}
+#endregion
+
+#region TestGetPendingRequests
+Console.WriteLine("Do you want to see pending requests for the next block? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING PENDING REQUESTS");
+    var pendingRequestsResult = client.GetPendingRequests();
+    Console.WriteLine("PENDING REQUESTS RETRIEVED!");
+    Console.WriteLine(JsonConvert.SerializeObject(pendingRequestsResult, Formatting.Indented,
+    new JsonSerializerSettings
+    {
+        NullValueHandling = NullValueHandling.Ignore
+    }));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving pending requests test!");
+}
+#endregion
+
+#region TestTransfer
+Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    string transfertoAddress = "0x2e76ebd1c7c0c8e7c2b875b6d505a260c525d25e";
     Console.WriteLine("TYPE RECEPIENT ADDRESS BELLOW:");
     Console.Write("[DEFAULT: " + transfertoAddress + "] ");
     string potentialNewAddress = Console.ReadLine();
@@ -28,7 +101,7 @@ if (choice.ToLower().StartsWith("y"))
         Console.WriteLine("Destination address changed to: " + transfertoAddress);
     }
     Console.WriteLine("BEGINNING TRANSFER!");
-    var transferResult = await client.Transfer(transfertoAddress, "LRC", 1m, "LRC", "aaaa");
+    var transferResult = client.Transfer(transfertoAddress, "LRC", 1m, "LRC", "aaaa");
     Console.WriteLine("TRANSFER COMPLETE:");
     Console.WriteLine(JsonConvert.SerializeObject(transferResult, Formatting.Indented));
 }
@@ -48,14 +121,14 @@ Console.Clear();
 
 #region Exchange info
 Console.WriteLine("Exchange Info: ");
-var exchangeInfo = await client.ExchangeInfo();
+var exchangeInfo = client.ExchangeInfo();
 Console.WriteLine(JsonConvert.SerializeObject(exchangeInfo, Formatting.Indented));
 Console.WriteLine("");
 #endregion
 
 #region Ticker
 Console.WriteLine("Testing TICKER: ");
-var tickers = await client.Ticker("LRC-ETH");
+var tickers = client.Ticker("LRC-ETH");
 foreach (var ticker in tickers)
 {
     Console.WriteLine(ticker.PairId + " - ASK: " + ticker.LowestAskPrice);
@@ -64,7 +137,7 @@ Console.WriteLine("");
 #endregion
 
 #region Timestamp
-var timestamp = await client.Timestamp();
+var timestamp = client.Timestamp();
 Console.WriteLine("Testing timestamp: " + timestamp);
 Console.WriteLine("");
 #endregion
@@ -72,17 +145,17 @@ Console.WriteLine("");
 #region StorageId
 Console.WriteLine("Testing StorageId");
 
-var storageId = await client.StorageId(1);
+var storageId = client.StorageId(1);
 Console.WriteLine("Normal: " + JsonConvert.SerializeObject(storageId));
 
-storageId = await client.StorageId(1, 1);
+storageId = client.StorageId(1, 1);
 Console.WriteLine("MaxNext: " + JsonConvert.SerializeObject(storageId));
 #endregion
 
 #region GetApiKey
 Console.WriteLine("Testing APIKEY GET");
 
-var apikey = await client.ApiKey();
+var apikey = client.ApiKey();
 Console.WriteLine("Key: " + apikey);
 
 Console.WriteLine();
@@ -99,7 +172,7 @@ Console.Write("Are you sure you want to continue with this test? [Y]es / [S]kip:
 choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
 {
-    apikey = await client.UpdateApiKey();
+    apikey = client.UpdateApiKey();
     Console.WriteLine("New Key: " + apikey);
     Console.WriteLine("Please make a note of the key above before continuing, as you will need it going forward. Press enter to continue...");
     Console.ReadLine();
@@ -118,10 +191,10 @@ Console.Clear();
 
 #region OffChainFee
 Console.WriteLine("Testing OffChainFee - Transfer");
-var fee = await client.OffchainFee(LoopringAPI.OffChainRequestType.Transfer, null, null);
+var fee = client.OffchainFee(LoopringSharp.OffChainRequestType.Transfer, null, null);
 Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee, Formatting.Indented));
 Console.WriteLine("Testing OffChainFee - OffchainWithdrawl");
-fee = await client.OffchainFee(LoopringAPI.OffChainRequestType.OffchainWithdrawl, "LRC", "10000000000");
+fee = client.OffchainFee(LoopringSharp.OffChainRequestType.OffchainWithdrawl, "LRC", "10000000000");
 Console.WriteLine("Fee: " + JsonConvert.SerializeObject(fee, Formatting.Indented));
 Console.WriteLine("");
 
@@ -135,25 +208,25 @@ Console.Clear();
 
 Console.WriteLine("-------- TESTING ORDERS ---------");
 Console.WriteLine("Testing order submit! 0.3 ETH -> 1000 LRC");
-var tradeResult = await client.SubmitOrder(
-        sellToken: new LoopringAPI.Token() { tokenId = 0, /*ETH*/ volume = "30000000000000000" /* 0.03 ETH */  },
-        buyToken: new LoopringAPI.Token() { tokenId = 1, /*LRC*/ volume = "1000000000000000000000" /* 1000 LRC */ },
+var tradeResult = client.SubmitOrder(
+        sellToken: new LoopringSharp.Token() { tokenId = 0, /*ETH*/ volume = "30000000000000000" /* 0.03 ETH */  },
+        buyToken: new LoopringSharp.Token() { tokenId = 1, /*LRC*/ volume = "1000000000000000000000" /* 1000 LRC */ },
         allOrNone: false,
         fillAmountBOrS: false,
         validUntil: 1700000000, // Will expire eventually...
         maxFeeBips: 63,
         clientOrderId: null,
-        orderType: LoopringAPI.OrderType.TAKER_ONLY,
-        tradeChannel: LoopringAPI.TradeChannel.MIXED
+        orderType: LoopringSharp.OrderType.TAKER_ONLY,
+        tradeChannel: LoopringSharp.TradeChannel.MIXED
     );
 
 Console.WriteLine("Testing simple order submit! 0.04 ETH -> 150 LRC");
-var simpleTradeResult = await client.SubmitOrder(
+var simpleTradeResult = client.SubmitOrder(
         sellCurrency: "ETH",
         sellAmmount: 0.04m,
         buyCurrency: "LRC",
         buyAmmount: 150,
-        orderType: LoopringAPI.OrderType.MAKER_ONLY
+        orderType: LoopringSharp.OrderType.MAKER_ONLY
     );
 Console.WriteLine("Trade result:");
 Console.WriteLine(JsonConvert.SerializeObject(tradeResult, Formatting.Indented));
@@ -172,10 +245,10 @@ Console.WriteLine("");
 
 Console.WriteLine("Let's get the details around those trades: ");
 Console.WriteLine("Normal Order:");
-var normalTradeDetails = await client.OrderDetails(tradeResult.hash);
+var normalTradeDetails = client.OrderDetails(tradeResult.hash);
 Console.WriteLine(JsonConvert.SerializeObject(normalTradeDetails, Formatting.Indented));
 Console.WriteLine("Simple Order:");
-var simpleTradeDetails = await client.OrderDetails(simpleTradeResult.hash);
+var simpleTradeDetails = client.OrderDetails(simpleTradeResult.hash);
 Console.WriteLine(JsonConvert.SerializeObject(simpleTradeDetails, Formatting.Indented));
 
 Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
@@ -183,18 +256,18 @@ Console.ReadLine();
 Console.Clear();
 
 Console.WriteLine("Cancel both trades if they are still active: ");
-if (normalTradeDetails.status == LoopringAPI.OrderStatus.processing)
+if (normalTradeDetails.status == LoopringSharp.OrderStatus.processing)
 {
-    var normalDeleteResult = await client.CancelOrder(normalTradeDetails.hash, simpleTradeDetails.clientOrderId);
+    var normalDeleteResult = client.CancelOrder(normalTradeDetails.hash, simpleTradeDetails.clientOrderId);
     Console.WriteLine("CANCELED normal trade");
     Console.WriteLine(JsonConvert.SerializeObject(normalDeleteResult, Formatting.Indented));
 }
 else
     Console.WriteLine("Normal trade no longer active anyway...");
 
-if (simpleTradeDetails.status == LoopringAPI.OrderStatus.processing)
+if (simpleTradeDetails.status == LoopringSharp.OrderStatus.processing)
 {
-    var simpleDeleteResult = await client.CancelOrder(simpleTradeDetails.hash, simpleTradeDetails.clientOrderId);
+    var simpleDeleteResult = client.CancelOrder(simpleTradeDetails.hash, simpleTradeDetails.clientOrderId);
     Console.WriteLine("CANCELED simple trade:");
     Console.WriteLine(JsonConvert.SerializeObject(simpleDeleteResult, Formatting.Indented));
 }
@@ -207,7 +280,56 @@ if (choice.ToLower().StartsWith("y"))
 {
     Console.Clear();
 
-    var results = await client.OrdersDetails(5);
+    var results = client.OrdersDetails(5);
+    Console.WriteLine("You asked for it: ");
+    Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
+}
+
+#endregion
+
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
+#region market
+
+Console.WriteLine("Wanna see the order book for ETH-USDT [Y]es / [S]kip: ");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.Clear();
+
+    var results = client.GetDepth("ETH-USDT");
+    Console.WriteLine("You asked for it: ");
+    Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
+}
+
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
+Console.WriteLine("Wanna see some candlesticks? Yeah? [Y]es / [S]kip: ");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.Clear();
+
+    var results = client.GetCandlesticks("ETH-USDT", Intervals.d1);
+    Console.WriteLine("You asked for it: ");
+    Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
+}
+
+Console.WriteLine("REVIEW RESULTS AND PRESS ENTER TO CONTINUE!");
+Console.ReadLine();
+Console.Clear();
+
+Console.WriteLine("Wanna see some token prices? Yeah? [Y]es / [S]kip: ");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.Clear();
+
+    var results = client.GetPrice(LegalCurrencies.GBP);
     Console.WriteLine("You asked for it: ");
     Console.WriteLine(JsonConvert.SerializeObject(results, Formatting.Indented));
 }
@@ -220,7 +342,7 @@ static ApiKeys ReadConfigFile(bool prod)
 {
     ApiKeys result;
     string filename = "apiKeys.json";
-    if(prod)
+    if (prod)
     {
         filename = "apiKeysProd.json";
     }
@@ -241,8 +363,8 @@ static ApiKeys ReadConfigFile(bool prod)
 
     if (string.IsNullOrWhiteSpace(result.l2Pk))
     {
-        Console.WriteLine("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\"+ filename);
-        throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\"+ filename);
+        Console.WriteLine("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\" + filename);
+        throw new Exception("WARNING! You need to fill in the details in the appKeys.json file, otherwise this application will not work. FILE IS HERE: " + Directory.GetCurrentDirectory() + "\\" + filename);
     }
     return result;
 }
