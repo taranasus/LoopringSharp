@@ -22,6 +22,8 @@ namespace LoopringSharp
         public SecureClient(string apiUrl)
         {         
             _apiUrl = apiUrl;
+            if(!_apiUrl.EndsWith("/"))
+                _apiUrl = _apiUrl + "/";
             _ = GetTokenId("ETH");
         }
 
