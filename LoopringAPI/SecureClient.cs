@@ -20,44 +20,11 @@ namespace LoopringSharp
 
 
         public SecureClient(string apiUrl)
-        {         
+        {
             _apiUrl = apiUrl;
-            if(!_apiUrl.EndsWith("/"))
+            if (!_apiUrl.EndsWith("/"))
                 _apiUrl = _apiUrl + "/";
             _ = GetTokenId("ETH");
-        }
-
-        #region NoAuthentication
-        /// <summary>
-        /// Gets the current exchange prices between varius cryptos on the Loopring Protocol
-        /// </summary>        
-        /// <param name="pairs">The tickers to retreive. (Ex. LRC-USDT, LRC-ETH)</param>
-        /// <returns>Returns a list of all the ticker details for your requested tickers</returns>
-        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public List<Ticker> Ticker(params string[] pairs)
-        {
-            (string, string)[] parameters = { ("market", string.Join(",", pairs)) };
-
-            var apiTickersResult = JsonConvert.DeserializeObject<ApiTickersResult>(
-                Utils.Http(_apiUrl + Constants.TickerUrl, parameters, null));
-
-            return apiTickersResult.tickers.Select(s => new Ticker()
-            {
-                PairId = s[0],
-                TimeStamp = s[1],
-                BaseTokenVolume = s[2],
-                QuoteTokenVolume = s[3],
-                OpenPrice = s[4],
-                HeighestPrice = s[5],
-                LowestPrice = s[6],
-                ClosingPrice = s[7],
-                NumberOfTrades = s[8],
-                HighestBidPrice = float.Parse(s[9]),
-                LowestAskPrice = float.Parse(s[10]),
-                BaseFeeAmmount = s[11],
-                QuoteFeeAmount = s[12]
-
-            }).ToList();
         }
 
         /// <summary>
@@ -73,32 +40,271 @@ namespace LoopringSharp
         }
 
         /// <summary>
-        /// Returns data associated with the user's exchange account.
+        /// Get the ApiKey associated with the user's account.
         /// </summary>
-        /// <param name="address">Ethereum / Loopring public address</param>
-        /// <returns>A lot of data about the account</returns>
-        public Account GetAccountInfo(string address)
+        /// <param name="l2Pk">Wallet Layer 2 Private Key</param>
+        /// <param name="accountId">The user's account Id</param>
+        /// <returns>The api key</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public string GetApiKey(string l2Pk, int accountId)
         {
-            (string, string)[] parameters = { ("owner", address) };
-            var apiresult = JsonConvert.DeserializeObject<ApiAccountResult>(
-                Utils.Http(_apiUrl + Constants.AccountUrl, parameters));
+            var signedMessage = EDDSAHelper.EddsaSignUrl(
+                l2Pk,
+                HttpMethod.Get,
+                new List<(string Key, string Value)>() { ("accountId", accountId.ToString()) },
+                null,
+                Constants.ApiKeyUrl,
+                _apiUrl);
 
-            return new Account()
+            (string, string)[] parameters = { ("accountId", accountId.ToString()) };
+            (string, string)[] headers = { (Constants.HttpHeaderAPISigName, signedMessage) };
+            var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(
+                Utils.Http(_apiUrl + Constants.ApiKeyUrl, parameters, headers));
+            return apiresult.apiKey;
+        }
+
+        /// <summary>
+        /// Change the ApiKey associated with the user's account
+        /// </summary>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="accountId">Wallet Account Id</param>
+        /// <returns>The new apiKey as string</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public string UpdateApiKey(string l2Pk, string apiKey, int accountId)
+        {
+            string requestBody = "{\"accountId\":" + accountId + "}";
+            var signedMessage = EDDSAHelper.EddsaSignUrl(
+                l2Pk,
+                HttpMethod.Post,
+                null,
+                requestBody,
+                Constants.ApiKeyUrl,
+                _apiUrl);
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey), (Constants.HttpHeaderAPISigName, signedMessage) };
+            var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(
+                Utils.Http(_apiUrl + Constants.ApiKeyUrl, null, headers, "post", requestBody));
+            return apiresult.apiKey;
+        }
+
+        /// <summary>
+        /// Fetches the next order id for a given sold token
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="accountId">Loopring account identifier</param>
+        /// <param name="sellTokenId">The unique identifier of the token which the user wants to sell in the next order.</param>
+        /// <param name="maxNext">Return the max of the next available storageId, so any storageId > returned value is avaliable, to help user manage storageId by themselves. for example, if [20, 60, 100] is avaliable, all other ids < 100 is used before, user gets 20 if flag is false (and 60 in next run), but gets 100 if flag is true, so he can use 102, 104 freely</param>
+        /// <returns>Returns an object instance of StorageId which contains the next offchainId and orderId</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public StorageId StorageId(string apiKey, int accountId, int sellTokenId, int maxNext = 0)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+
+
+            (string, string)[] parameters = { ("accountId", accountId.ToString()), ("sellTokenId", sellTokenId.ToString()), ("maxNext", maxNext.ToString()) };
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            var apiresult = JsonConvert.DeserializeObject<ApiStorageIdResult>(
+                Utils.Http(_apiUrl + Constants.StorageIdUrl, parameters, headers));
+            return new StorageId()
             {
-                accountId = apiresult.accountId,
-                frozen = apiresult.frozen,
-                keyNonce = apiresult.keyNonce,
-                keySeed = apiresult.keySeed,
-                nonce = apiresult.nonce,
-                owner = apiresult.owner,
-                publicKey = apiresult.publicKey,
-                tags = apiresult.tags
+                offchainId = apiresult.offchainId,
+                orderId = apiresult.orderId
             };
         }
 
+        /// <summary>
+        /// Get the details of an order based on order hash.
+        /// </summary>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="accountId">Wallet Account Id</param>
+        /// <param name="orderHash">The hash of the worder for which you want details</param>
+        /// <returns>OrderDetails object filled with awesome order details</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public OrderDetails OrderDetails(string apiKey, int accountId, string orderHash)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+            if (string.IsNullOrWhiteSpace(orderHash))
+                throw new System.Exception("StorageId REQUIRES a valid order hash. Use one of the get order methods to get one");
 
-        private DateTime ExchangeInfoShorTermCacheTime;
-        private ApiExchangeInfoResult EchangeInfoShorTermCache;
+            (string, string)[] parameters = { ("accountId", accountId.ToString()), ("orderHash", orderHash) };
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            var apiresult = JsonConvert.DeserializeObject<ApiOrderGetResult>(
+                Utils.Http(_apiUrl + Constants.OrderUrl, parameters, headers));
+            return new OrderDetails(apiresult);
+        }
+
+        /// <summary>
+        /// Submit an order to exchange two currencies
+        /// </summary>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="accountId">Wallet Account Id</param>
+        /// <param name="sellToken">The token you are selling</param>
+        /// <param name="buyToken">The token you are buying</param>
+        /// <param name="allOrNone">Whether the order supports partial fills or not.Currently only supports false as a valid value</param>
+        /// <param name="fillAmountBOrS">Fill size by buy token or by sell token</param>
+        /// <param name="validUntil">Order expiration time, accuracy is in seconds</param>
+        /// <param name="maxFeeBips">Maximum order fee that the user can accept, value range (in ten thousandths) 1 ~ 63</param>
+        /// <param name="clientOrderId">An arbitrary, client-set unique order identifier, max length is 120 bytes</param>
+        /// <param name="orderType">Order types, can be AMM, LIMIT_ORDER, MAKER_ONLY, TAKER_ONLY</param>
+        /// <param name="tradeChannel">	Order channel, can be ORDER_BOOK, AMM_POOL, MIXED</param>
+        /// <param name="taker">Used by the P2P order which user specify the taker, so far its 0x0000000000000000000000000000000000000000</param>
+        /// <param name="poolAddress">The AMM pool address if order type is AMM</param>
+        /// <param name="affiliate">An accountID who will recieve a share of the fee of this order</param>
+        /// <returns>Returns OrderResult which basically contains the status of your transaction after it was succesfully requested</returns>
+        public OrderResult SubmitOrder(string l2Pk, string apiKey, int accountId, Token sellToken, Token buyToken, bool allOrNone, bool fillAmountBOrS, long validUntil, int maxFeeBips = 20, string clientOrderId = null, OrderType? orderType = null, TradeChannel? tradeChannel = null, string taker = null, string poolAddress = null, string affiliate = null)
+
+        {
+            var request = new ApiSubmitOrderRequest()
+            {
+                exchange = ExchangeInfo().exchangeAddress,
+                accountId = accountId,
+                storageId = (StorageId(apiKey, accountId, sellToken.tokenId)).orderId, // MAYBE? NOT SURE
+                sellToken = sellToken,
+                buyToken = buyToken,
+                allOrNone = allOrNone,
+                fillAmountBOrS = fillAmountBOrS,
+                validUntil = validUntil,
+                maxFeeBips = maxFeeBips,
+            };
+
+            if (!string.IsNullOrWhiteSpace(clientOrderId))
+                request.clientOrderId = clientOrderId;
+            if (orderType.HasValue)
+                request.orderType = orderType.Value.ToString();
+            if (tradeChannel.HasValue)
+                request.tradeChannel = tradeChannel.Value.ToString();
+            if (!string.IsNullOrWhiteSpace(taker))
+                request.taker = taker;
+            if (!string.IsNullOrWhiteSpace(poolAddress))
+                request.poolAddress = poolAddress;
+            if (!string.IsNullOrWhiteSpace(affiliate))
+                request.affiliate = affiliate;
+
+            int MAX_INPUT = 11;
+            var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
+
+
+
+            BigInteger[] inputs = {
+                Utils.ParseHexUnsigned(request.exchange),
+                request.storageId,
+                request.accountId,
+                request.sellToken.tokenId,
+                request.buyToken.tokenId,
+                BigInteger.Parse(request.sellToken.volume),
+                BigInteger.Parse(request.buyToken.volume),
+                request.validUntil,
+                request.maxFeeBips,
+                (fillAmountBOrS ? 1 : 0),
+                string.IsNullOrWhiteSpace(request.taker) ? 0 : Utils.ParseHexUnsigned(request.taker)
+            };
+
+            request.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            var apiresult = JsonConvert.DeserializeObject<ApiOrderSubmitResult>(
+                Utils.Http(_apiUrl + Constants.OrderUrl, null, headers, "post", JsonConvert.SerializeObject(request)));
+            return new OrderResult(apiresult);
+        }
+
+        /// <summary>
+        /// Submit an order to exchange two currencies, but with all the nonsense removed
+        /// </summary>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="accountId">Wallet Account Id</param>
+        /// <param name="orderHash">The hash of the order you wish to nuke.</param>
+        /// <param name="clientOrderId">The unique order ID of the client</param>
+        /// <returns>Returns OrderResult which basically contains the status of your transaction after the cancel was succesfully requested</returns>
+        public OrderResult CancelOrder(string l2Pk, string apiKey, int accountId, string orderHash, string clientOrderId)
+        {
+            var signedMessage = EDDSAHelper.EddsaSignUrl(
+                l2Pk,
+                HttpMethod.Delete,
+                new List<(string Key, string Value)>() { ("accountId", accountId.ToString()), ("clientOrderId", clientOrderId), ("orderHash", orderHash) },
+                null,
+                Constants.OrderUrl,
+                _apiUrl);
+
+            (string, string)[] parameters = { ("accountId", accountId.ToString()), ("clientOrderId", clientOrderId), ("orderHash", orderHash) };
+            (string, string)[] headers = { (Constants.HttpHeaderAPISigName, signedMessage), (Constants.HttpHeaderAPIKeyName, apiKey) };
+            var apiresult = JsonConvert.DeserializeObject<ApiOrderSubmitResult>(
+                Utils.Http(_apiUrl + Constants.OrderUrl, parameters, headers, "delete"));
+            return new OrderResult(apiresult);
+        }
+
+        /// <summary>
+        /// Get a list of orders satisfying certain criteria.
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="accountId">Loopring account identifier</param>
+        /// <param name="market">Trading pair (ex. Trading pair)</param>
+        /// <param name="start">Lower bound of order's creation timestamp in millisecond (ex. 1567053142000)</param>
+        /// <param name="end">Upper bound of order's creation timestamp in millisecond (ex. 1567053242000)</param>
+        /// <param name="side">"BUY" or "SELL"</param>
+        /// <param name="statuses">Order statuses to search by</param>
+        /// <param name="orderTypes">Order types to search by</param>
+        /// <param name="tradeChannels">Trade channels to search by</param>
+        /// <param name="limit">How many results per call? Default 50</param>
+        /// <param name="offset">How many results to skip? Default 0 </param>
+        /// <returns>List of OrderDetails objects containing the searched-for items</returns>
+        public List<OrderDetails> Orders(string apiKey, int accountId, int limit = 50, int offset = 0, string market = null, long start = 0, long end = 0, Side? side = 0, List<OrderStatus> statuses = null, List<OrderType> orderTypes = null, List<TradeChannel> tradeChannels = null)
+        {
+            List<(string, string)> parameters = new List<(string, string)>();
+            parameters.Add(("accountId", accountId.ToString()));
+            if (!string.IsNullOrWhiteSpace(market))
+                parameters.Add(("market", market));
+            if (start != 0)
+                parameters.Add(("start", start.ToString()));
+            if (end != 0)
+                parameters.Add(("end", end.ToString()));
+            if (side.HasValue)
+                parameters.Add(("side", side.ToString()));
+            if (statuses != null)
+                parameters.Add(("status", string.Join(",", statuses.Select(s => s.ToString()))));
+            if (limit != 50)
+                parameters.Add(("limit", limit.ToString()));
+            if (offset != 0)
+                parameters.Add(("offset", offset.ToString()));
+            if (orderTypes != null)
+                parameters.Add(("orderTypes", string.Join(",", orderTypes.Select(s => s.ToString()))));
+            if (tradeChannels != null)
+                parameters.Add(("tradeChannels", string.Join(",", tradeChannels.Select(s => s.ToString()))));
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            var apiresult = JsonConvert.DeserializeObject<ApiOrdersGetResult>(
+                Utils.Http(_apiUrl + Constants.OrdersUrl, parameters.ToArray(), headers));
+            if (apiresult != null && apiresult.totalNum != 0)
+            {
+                return apiresult.orders.Select(s => new OrderDetails(s)).ToList();
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Get a list of all the markets available on the exchange
+        /// </summary>
+        /// <returns>List of all the markets available on the exchange and their configurations</returns>
+        public List<Market> GetMarkets()
+        {
+            var apiresult = JsonConvert.DeserializeObject<ApiMarketsGetResult>(
+                Utils.Http(_apiUrl + Constants.MarketsUrl));
+            return apiresult.markets;
+        }
+
+        /// <summary>
+        /// Returns the configurations of all supported tokens, including Ether.
+        /// </summary>
+        /// <returns>List of all the supported tokens and their configurations</returns>
+        public List<TokenConfig> GetTokens()
+        {
+            return JsonConvert.DeserializeObject<List<TokenConfig>>(
+                Utils.Http(_apiUrl + Constants.TokensUrl));
+        }
+
         /// <summary>
         /// Return various configurations of Loopring.io
         /// </summary>
@@ -125,27 +331,6 @@ namespace LoopringSharp
                 updateFees = EchangeInfoShorTermCache.updateFees,
                 withdrawalFees = EchangeInfoShorTermCache.withdrawalFees
             };
-        }        
-
-        /// <summary>
-        /// Get a list of all the markets available on the exchange
-        /// </summary>
-        /// <returns>List of all the markets available on the exchange and their configurations</returns>
-        public List<Market> GetMarkets()
-        {
-            var apiresult = JsonConvert.DeserializeObject<ApiMarketsGetResult>(
-                Utils.Http(_apiUrl + Constants.MarketsUrl));
-            return apiresult.markets;
-        }
-
-        /// <summary>
-        /// Returns the configurations of all supported tokens, including Ether.
-        /// </summary>
-        /// <returns>List of all the supported tokens and their configurations</returns>
-        public List<TokenConfig> GetTokens()
-        {
-            return JsonConvert.DeserializeObject<List<TokenConfig>>(
-                Utils.Http(_apiUrl + Constants.TokensUrl));
         }
 
         /// <summary>
@@ -183,39 +368,36 @@ namespace LoopringSharp
         }
 
         /// <summary>
-        /// UNDOCUMENTED. Gets the Depth but for some reason does it better. No idea why
-        /// </summary>
-        /// <param name="market">The ID of a trading pair.</param>
-        /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
-        /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
-        /// <returns>Returns the order book of a given trading pair.</returns>
-        public Depth GetMixDepth(string market, int level = 2, int limit = 50)
+        /// Gets the current exchange prices between varius cryptos on the Loopring Protocol
+        /// </summary>        
+        /// <param name="pairs">The tickers to retreive. (Ex. LRC-USDT, LRC-ETH)</param>
+        /// <returns>Returns a list of all the ticker details for your requested tickers</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public List<Ticker> Ticker(params string[] pairs)
         {
-            (string, string)[] parameters = { ("market", market), ("level", level.ToString()), ("limit", limit.ToString()) };
-            var apiresult = JsonConvert.DeserializeObject<ApiDepthResult>(
-                Utils.Http(_apiUrl + Constants.DepthMixUrl, parameters));
-            return new Depth()
-            {
-                asks = apiresult.asks.Select(s => new Depth.Position()
-                {
-                    price = float.Parse(s[0]),
-                    size = decimal.Parse(s[1]) / 1000000000000000000m,
-                    volume = decimal.Parse(s[2]),
-                    numberOfOrdersAgregated = decimal.Parse((s[3]))
-                }).ToList(),
-                market = apiresult.market,
-                bids = apiresult.bids.Select(s => new Depth.Position()
-                {
-                    price = float.Parse(s[0]),
-                    size = decimal.Parse(s[1]) / 1000000000000000000m,
-                    volume = decimal.Parse(s[2]) / 1000000000000000000m,
-                    numberOfOrdersAgregated = decimal.Parse((s[3]))
-                }).ToList(),
-                timestamp = apiresult.timestamp,
-                version = apiresult.version
-            };
-        }
+            (string, string)[] parameters = { ("market", string.Join(",", pairs)) };
 
+            var apiTickersResult = JsonConvert.DeserializeObject<ApiTickersResult>(
+                Utils.Http(_apiUrl + Constants.TickerUrl, parameters, null));
+
+            return apiTickersResult.tickers.Select(s => new Ticker()
+            {
+                PairId = s[0],
+                TimeStamp = s[1],
+                BaseTokenVolume = s[2],
+                QuoteTokenVolume = s[3],
+                OpenPrice = s[4],
+                HeighestPrice = s[5],
+                LowestPrice = s[6],
+                ClosingPrice = s[7],
+                NumberOfTrades = s[8],
+                HighestBidPrice = float.Parse(s[9]),
+                LowestAskPrice = float.Parse(s[10]),
+                BaseFeeAmmount = s[11],
+                QuoteFeeAmount = s[12]
+
+            }).ToList();
+        }
 
         /// <summary>
         /// Return the candlestick data of a given trading pair.
@@ -292,296 +474,243 @@ namespace LoopringSharp
             }).ToList();
         }
 
-        #endregion
-        #region L2
-
         /// <summary>
-        /// Get the ApiKey associated with the user's account.
+        /// Send some tokens to anyone else on L2
         /// </summary>
-        /// <param name="l2Pk">Wallet Layer 2 Private Key</param>
-        /// <param name="accountId">The user's account Id</param>
-        /// <returns>The api key</returns>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="l1Pk">Ethereum Private Key</param>
+        /// <param name="request">The basic transaction details needed in order to actually do a transaction</param>
+        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
+        /// <param name="clientId">(Optional)A user-defined id. It's similar to the memo field? Again the original documentation is not very clear</param>
+        /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
+        /// <returns>An object containing the status of the transfer at the end of the request</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public string ApiKey(string l2Pk, int accountId)
+        public virtual OperationResult Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
         {
-            var signedMessage = EDDSAHelper.EddsaSignUrl(
-                l2Pk,
-                HttpMethod.Get,
-                new List<(string Key, string Value)>() { ("accountId", accountId.ToString()) },
-                null,
-                Constants.ApiKeyUrl,
-                _apiUrl);
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
+            if (string.IsNullOrWhiteSpace(l2Pk))
+                throw new System.Exception("Transfer REQUIRES a valid Loopring Wallet Layer 2 Private key");
 
-            (string, string)[] parameters = { ("accountId", accountId.ToString()) };
-            (string, string)[] headers = { (Constants.HttpHeaderAPISigName, signedMessage) };
-            var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(
-                Utils.Http(_apiUrl + Constants.ApiKeyUrl, parameters, headers));
-            return apiresult.apiKey;
-        }
-
-        #endregion
-        #region apiKeyL2
-
-        /// <summary>
-        /// Submit an order to exchange two currencies, but with all the nonsense removed
-        /// </summary>
-        /// <param name="l2Pk">Loopring Private Key</param>
-        /// <param name="apiKey">Current Loopring API Key</param>
-        /// <param name="accountId">Wallet Account Id</param>
-        /// <param name="orderHash">The hash of the order you wish to nuke.</param>
-        /// <param name="clientOrderId">The unique order ID of the client</param>
-        /// <returns>Returns OrderResult which basically contains the status of your transaction after the cancel was succesfully requested</returns>
-        public OrderResult DeleteOrder(string l2Pk, string apiKey, int accountId, string orderHash, string clientOrderId)
-        {
-            var signedMessage = EDDSAHelper.EddsaSignUrl(
-                l2Pk,
-                HttpMethod.Delete,
-                new List<(string Key, string Value)>() { ("accountId", accountId.ToString()), ("clientOrderId", clientOrderId), ("orderHash", orderHash) },
-                null,
-                Constants.OrderUrl,
-                _apiUrl);
-
-            (string, string)[] parameters = { ("accountId", accountId.ToString()), ("clientOrderId", clientOrderId), ("orderHash", orderHash) };
-            (string, string)[] headers = { (Constants.HttpHeaderAPISigName, signedMessage), (Constants.HttpHeaderAPIKeyName, apiKey) };
-            var apiresult = JsonConvert.DeserializeObject<ApiOrderSubmitResult>(
-                Utils.Http(_apiUrl + Constants.OrderUrl, parameters, headers, "delete"));
-            return new OrderResult(apiresult);
-        }
-
-
-        /// <summary>
-        /// Submit an order to exchange two currencies, but with all the nonsense removed
-        /// </summary>
-        /// <param name="l2Pk">Loopring Private Key</param>
-        /// <param name="apiKey">Current Loopring API Key</param>
-        /// <param name="accountId">Wallet Account Id</param>
-        /// <param name="sellCurrency">The name of the token you are selling (ETH, LRC, USDT, etc)</param>
-        /// <param name="sellAmmount">How much of that token you are selling</param>
-        /// <param name="buyCurrency">The name of the token you are buying (ETH, LRC, USDT, etc)</param>
-        /// <param name="buyAmmount">How much of that token you are buying</param>        
-        /// <param name="orderType">Order types, can be AMM, LIMIT_ORDER, MAKER_ONLY, TAKER_ONLY</param>
-        /// <param name="poolAddress">The AMM pool address if order type is AMM</param>
-        /// <returns>Returns OrderResult which basically contains the status of your transaction after it was succesfully requested</returns>
-        public OrderResult SubmitOrder(string l2Pk, string apiKey, int accountId,
-            string sellCurrency,
-            decimal sellAmmount,
-            string buyCurrency,
-            decimal buyAmmount,
-            OrderType orderType,
-            string poolAddress = null,
-            string clientId = null)
-        {
-            var tradeChannel = TradeChannel.MIXED;
-            if (orderType == OrderType.MAKER_ONLY)
-                tradeChannel = TradeChannel.ORDER_BOOK;
-
-            var tokens = GetTokens();
-            var sellTOkenDecimalCount = tokens.Where(w => w.symbol == sellCurrency).FirstOrDefault().decimals;
-            decimal sellTokenMultiplier = 10;
-            for (int i = 2; i <= sellTOkenDecimalCount; i++)
-                sellTokenMultiplier *= 10;
-
-            var buyTOkenDecimalCount = tokens.Where(w => w.symbol == buyCurrency).FirstOrDefault().decimals;
-            decimal buyTokenMultiplier = 10;
-            for (int i = 2; i <= buyTOkenDecimalCount; i++)
-                buyTokenMultiplier *= 10;
-
-            return SubmitOrder(l2Pk, apiKey, accountId,
-                new Token() { tokenId = GetTokenId(sellCurrency), volume = (sellAmmount * sellTokenMultiplier).ToString("0") },
-                new Token() { tokenId = GetTokenId(buyCurrency), volume = (buyAmmount * buyTokenMultiplier).ToString("0") },
-                false,
-                false,
-                Utils.GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds, // one year
-                63,
-                clientId,
-                orderType,
-                tradeChannel,
-                null,
-                poolAddress,
-                null);
-        }
-
-        /// <summary>
-        /// Submit an order to exchange two currencies
-        /// </summary>
-        /// <param name="l2Pk">Loopring Private Key</param>
-        /// <param name="apiKey">Current Loopring API Key</param>
-        /// <param name="accountId">Wallet Account Id</param>
-        /// <param name="sellToken">The token you are selling</param>
-        /// <param name="buyToken">The token you are buying</param>
-        /// <param name="allOrNone">Whether the order supports partial fills or not.Currently only supports false as a valid value</param>
-        /// <param name="fillAmountBOrS">Fill size by buy token or by sell token</param>
-        /// <param name="validUntil">Order expiration time, accuracy is in seconds</param>
-        /// <param name="maxFeeBips">Maximum order fee that the user can accept, value range (in ten thousandths) 1 ~ 63</param>
-        /// <param name="clientOrderId">An arbitrary, client-set unique order identifier, max length is 120 bytes</param>
-        /// <param name="orderType">Order types, can be AMM, LIMIT_ORDER, MAKER_ONLY, TAKER_ONLY</param>
-        /// <param name="tradeChannel">	Order channel, can be ORDER_BOOK, AMM_POOL, MIXED</param>
-        /// <param name="taker">Used by the P2P order which user specify the taker, so far its 0x0000000000000000000000000000000000000000</param>
-        /// <param name="poolAddress">The AMM pool address if order type is AMM</param>
-        /// <param name="affiliate">An accountID who will recieve a share of the fee of this order</param>
-        /// <returns>Returns OrderResult which basically contains the status of your transaction after it was succesfully requested</returns>
-        public OrderResult SubmitOrder(string l2Pk, string apiKey, int accountId,
-            Token sellToken,
-            Token buyToken,
-            bool allOrNone,
-            bool fillAmountBOrS,
-            long validUntil,
-            int maxFeeBips = 20,
-            string clientOrderId = null,
-            OrderType? orderType = null,
-            TradeChannel? tradeChannel = null,
-            string taker = null,
-            string poolAddress = null,
-            string affiliate = null)
-
-        {
-            var request = new ApiSubmitOrderRequest()
-            {
-                exchange = ExchangeInfo().exchangeAddress,
-                accountId = accountId,
-                storageId = (StorageId(apiKey, accountId, sellToken.tokenId)).orderId, // MAYBE? NOT SURE
-                sellToken = sellToken,
-                buyToken = buyToken,
-                allOrNone = allOrNone,
-                fillAmountBOrS = fillAmountBOrS,
-                validUntil = validUntil,
-                maxFeeBips = maxFeeBips,
-            };
-
-            if (!string.IsNullOrWhiteSpace(clientOrderId))
-                request.clientOrderId = clientOrderId;
-            if (orderType.HasValue)
-                request.orderType = orderType.Value.ToString();
-            if (tradeChannel.HasValue)
-                request.tradeChannel = tradeChannel.Value.ToString();
-            if (!string.IsNullOrWhiteSpace(taker))
-                request.taker = taker;
-            if (!string.IsNullOrWhiteSpace(poolAddress))
-                request.poolAddress = poolAddress;
-            if (!string.IsNullOrWhiteSpace(affiliate))
-                request.affiliate = affiliate;
-
-            int MAX_INPUT = 11;
-            var poseidonHasher = new Poseidon(MAX_INPUT + 1, 6, 53, "poseidon", 5, _securityTarget: 128);
-
-
+            var account = GetAccountInfo(request.payerAddr);
 
             BigInteger[] inputs = {
                 Utils.ParseHexUnsigned(request.exchange),
-                request.storageId,
-                request.accountId,
-                request.sellToken.tokenId,
-                request.buyToken.tokenId,
-                BigInteger.Parse(request.sellToken.volume),
-                BigInteger.Parse(request.buyToken.volume),
-                request.validUntil,
-                request.maxFeeBips,
-                (fillAmountBOrS ? 1 : 0),
-                string.IsNullOrWhiteSpace(request.taker) ? 0 : Utils.ParseHexUnsigned(request.taker)
+                (BigInteger)request.payerId,
+                (BigInteger)request.payeeId,
+                (BigInteger)request.token.tokenId,
+                BigInteger.Parse(request.token.volume),
+                (BigInteger)request.maxFee.tokenId,
+                BigInteger.Parse(request.maxFee.volume),
+                Utils.ParseHexUnsigned(request.payeeAddr),
+                0,
+                0,
+                (BigInteger)request.validUnitl,
+                (BigInteger)request.storageId
             };
+            var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
+            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
 
-            request.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
+            var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().chainId, apiRequest).Item1;
+            apiRequest.ecdsaSignature = ECDSAHelper.GenerateSignature(typedData, l1Pk);
 
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
-            var apiresult = JsonConvert.DeserializeObject<ApiOrderSubmitResult>(
-                Utils.Http(_apiUrl + Constants.OrderUrl, null, headers, "post", JsonConvert.SerializeObject(request)));
-            return new OrderResult(apiresult);
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey), (Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
+            var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
+                Utils.Http(_apiUrl + Constants.TransferUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
+            return new OperationResult(apiresult);
         }
 
         /// <summary>
-        /// Change the ApiKey associated with the user's account
+        /// Returns data associated with the user's exchange account.
         /// </summary>
-        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="address">Ethereum / Loopring public address</param>
+        /// <returns>A lot of data about the account</returns>
+        public Account GetAccountInfo(string address)
+        {
+            (string, string)[] parameters = { ("owner", address) };
+            var apiresult = JsonConvert.DeserializeObject<ApiAccountResult>(
+                Utils.Http(_apiUrl + Constants.AccountUrl, parameters));
+
+            return new Account()
+            {
+                accountId = apiresult.accountId,
+                frozen = apiresult.frozen,
+                keyNonce = apiresult.keyNonce,
+                keySeed = apiresult.keySeed,
+                nonce = apiresult.nonce,
+                owner = apiresult.owner,
+                publicKey = apiresult.publicKey,
+                tags = apiresult.tags
+            };
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="l1Pk">User's current eth private key</param>
+        /// <param name="l2Pk">User's current loopring private key</param>
+        /// <param name="req">A UpdateAccountRequest object containing all the needed information for this request</param>
+        /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
+        /// <returns></returns>
+        public virtual OperationResult UpdateAccount(string l2Pk, string l1Pk, UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
+        {
+            var apiRequest = req.GetUpdateEDDSARequest(counterFactualInfo);
+
+            BigInteger[] inputs = {
+                Utils.ParseHexUnsigned(apiRequest.exchange),
+                (BigInteger)apiRequest.accountId,
+                (BigInteger)apiRequest.maxFee.tokenId ,
+                BigInteger.Parse(apiRequest.maxFee.volume),
+                Utils.ParseHexUnsigned(apiRequest.publicKey.x),
+                Utils.ParseHexUnsigned(apiRequest.publicKey.y),
+                (BigInteger)apiRequest.validUntil,
+                (BigInteger)apiRequest.nonce
+            };
+
+            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
+
+            var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().chainId, apiRequest).Item1;
+            apiRequest.ecdsaSignature = ECDSAHelper.GenerateSignature(typedData, l1Pk);
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
+            var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
+                Utils.Http(_apiUrl + Constants.AccountUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
+            return new OperationResult(apiresult);
+        }
+
+        /// <summary>
+        /// Returns a list of Ethereum transactions from users for exchange account registration.
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="accountId">Loopring account identifier</param>
+        /// <param name="limit"></param>
+        /// <param name="offset"></param>
+        /// <param name="start">Lower bound of order's creation timestamp in millisecond (ex. 1567053142000)</param>
+        /// <param name="end">Upper bound of order's creation timestamp in millisecond (ex. 1567053242000)</param>
+        /// <param name="limit">How many results per call? Default 50</param>
+        /// <param name="offset">How many results to skip? Default 0 </param>
+        /// <param name="statuses">Statuses which you would like to filter by</param>
+        /// <returns>List of Ethereum transactions from users for exchange account registration.</returns>
+        public List<ApiTransaction> CreateInfo(string apiKey, int accountId, int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        {
+            List<(string, string)> parameters = new List<(string, string)>();
+            parameters.Add(("accountId", accountId.ToString()));
+            if (start != 0)
+                parameters.Add(("start", start.ToString()));
+            if (end != 0)
+                parameters.Add(("end", end.ToString()));
+            if (statuses != null)
+                parameters.Add(("status", string.Join(",", statuses.Select(s => s.ToString()))));
+            if (limit != 50)
+                parameters.Add(("limit", limit.ToString()));
+            if (offset != 0)
+                parameters.Add(("offset", offset.ToString()));
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            var apiresult = JsonConvert.DeserializeObject<ApiInfoGetResult>(
+                Utils.Http(_apiUrl + Constants.CreateInfoUrl, parameters.ToArray(), headers));
+            if (apiresult != null && apiresult.totalNum != 0)
+            {
+                return apiresult.transactions.ToList();
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Returns a list Ethereum transactions from users for resetting exchange passwords.
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="accountId">Loopring account identifier</param>
+        /// <param name="limit"></param>
+        /// <param name="offset"></param>
+        /// <param name="start">Lower bound of order's creation timestamp in millisecond (ex. 1567053142000)</param>
+        /// <param name="end">Upper bound of order's creation timestamp in millisecond (ex. 1567053242000)</param>
+        /// <param name="limit">How many results per call? Default 50</param>
+        /// <param name="offset">How many results to skip? Default 0 </param>
+        /// <param name="statuses">Statuses which you would like to filter by</param>
+        /// <returns>List of Ethereum transactions from users for resetting exchange passwords.</returns>
+        public List<ApiTransaction> UpdateInfo(string apiKey, int accountId, int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
+        {
+            List<(string, string)> parameters = new List<(string, string)>();
+            parameters.Add(("accountId", accountId.ToString()));
+            if (start != 0)
+                parameters.Add(("start", start.ToString()));
+            if (end != 0)
+                parameters.Add(("end", end.ToString()));
+            if (statuses != null)
+                parameters.Add(("status", string.Join(",", statuses.Select(s => s.ToString()))));
+            if (limit != 50)
+                parameters.Add(("limit", limit.ToString()));
+            if (offset != 0)
+                parameters.Add(("offset", offset.ToString()));
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            var apiresult = JsonConvert.DeserializeObject<ApiInfoGetResult>(
+                Utils.Http(_apiUrl + Constants.UpdateInfoUrl, parameters.ToArray(), headers));
+            if (apiresult != null && apiresult.totalNum != 0)
+            {
+                return apiresult.transactions.ToList();
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Get the details of an order based on order hash.
+        /// </summary>
         /// <param name="apiKey">Current Loopring API Key</param>
         /// <param name="accountId">Wallet Account Id</param>
-        /// <returns>The new apiKey as string</returns>
+        /// <param name="tokens">(Optional) list of the tokens which you want returned</param>
+        /// <returns>OrderDetails object filled with awesome order details</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public string UpdateApiKey(string l2Pk, string apiKey, int accountId)
+        public List<Balance> Ballances(string apiKey, int accountId, string tokens = null)
         {
-            string requestBody = "{\"accountId\":" + accountId + "}";
-            var signedMessage = EDDSAHelper.EddsaSignUrl(
-                l2Pk,
-                HttpMethod.Post,
-                null,
-                requestBody,
-                Constants.ApiKeyUrl,
-                _apiUrl);
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey), (Constants.HttpHeaderAPISigName, signedMessage) };
-            var apiresult = JsonConvert.DeserializeObject<ApiApiKeyResult>(
-                Utils.Http(_apiUrl + Constants.ApiKeyUrl, null, headers, "post", requestBody));
-            return apiresult.apiKey;
-        }
-        #endregion
-        #region apiKey
-        /// <summary>
-        /// Gets pending transactions to be packed into next block
-        /// </summary>   
-        /// <returns>Returns the pending transactions to be packed into next block</returns>
-        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public List<PendingRequest> GetPendingRequests(string apiKey)
-        {
-            (string, string)[] parameters = { };
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            string[] tokenSplit = new string[0];
+            if (tokens != null)
+                tokenSplit = tokens.Split(',');
+            int[] tokenIds = new int[0];
+            if (tokens != null && tokens.Length > 0)
+                tokenIds = tokenSplit.Select(s => GetTokenId(s)).ToArray();
 
-            var apiresult = JsonConvert.DeserializeObject<List<ApiPendingRequestsResult>>(
-                Utils.Http(_apiUrl + Constants.PendingRequestsUrl, parameters, headers));
-            var pendingRequests = new List<PendingRequest>();
-            foreach (var apiPendingRequest in apiresult)
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
+
+            if (tokenIds.Length == 0)
+                tokenIds = null;
+
+            List<(string, string)> parameters = new List<(string, string)>() { ("accountId", accountId.ToString()) };
+            if (tokenIds != null && tokenIds.Length > 0)
+                parameters.Add(("tokens", String.Join(",", tokenIds)));
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+            var apiresult = JsonConvert.DeserializeObject<List<ApiBalance>>(
+                Utils.Http(_apiUrl + Constants.BalancesUrl, parameters.ToArray(), headers));
+            var result = new List<Balance>();
+
+            var tokenConfigs = GetTokens();
+
+            foreach (var ballance in apiresult)
             {
-                PendingRequest pendingRequest = new PendingRequest()
+                var decimals = tokenConfigs.Where(w => w.tokenId == ballance.tokenId).FirstOrDefault().decimals;
+                decimal devideBy = 10;
+                for (int i = 2; i <= decimals; i++)
                 {
-                    txType = apiPendingRequest.txType,
-                    accountId = apiPendingRequest.accountId,
-                    owner = apiPendingRequest.owner,
-                    token = apiPendingRequest.token,
-                    toToken = apiPendingRequest.toToken,
-                    fee = apiPendingRequest.fee,
-                    validUntil = apiPendingRequest.validUntil,
-                    toAccountId = apiPendingRequest.toAccountId,
-                    toAccountAddress = apiPendingRequest.toAccountAddress,
-                    storageId = apiPendingRequest.storageId,
-                    orderA = apiPendingRequest.orderA,
-                    orderB = apiPendingRequest.orderB,
-                    valid = apiPendingRequest.valid,
-                    nonce = apiPendingRequest.nonce,
-                    minterAccountId = apiPendingRequest.minterAccountId,
-                    minter = apiPendingRequest.minter,
-                    nftToken = apiPendingRequest.nftToken,
-                    nftType = apiPendingRequest.nftType,
-                    fromAddress = apiPendingRequest.fromAddress,
-                    toAddress = apiPendingRequest.toAddress,
-                };
-                pendingRequests.Add(pendingRequest);
+                    devideBy *= 10;
+                }
+                result.Add(new Balance()
+                {
+                    token = GetTokenId(ballance.tokenId),
+                    locked = decimal.Parse(ballance.locked) / devideBy,
+                    pending = new Balance.BalancePending()
+                    {
+                        deposit = decimal.Parse(ballance.pending.deposit) / devideBy,
+                        widthdraw = decimal.Parse(ballance.pending.withdraw) / devideBy,
+                    },
+                    total = decimal.Parse(ballance.total) / devideBy,
+                }); ;
             }
-            return pendingRequests;
-        }
 
-
-        /// <summary>
-        /// Get L2 block info by block id
-        /// </summary>
-        /// <param name="apiKey">Current Loopring API Key</param>
-        /// <param name="id">L2 block id</param>
-        /// <returns>The L2 block info</returns>
-        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public L2BlockInfo GetL2BlockInfo(string apiKey, int id)
-        {
-            (string, string)[] parameters = { ("id", id.ToString()) };
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
-
-            var apiresult = JsonConvert.DeserializeObject<ApiL2BlockInfoResult>(
-                Utils.Http(_apiUrl + Constants.L2BlockInfoUrl, parameters, headers));
-
-            return new L2BlockInfo()
-            {
-                blockId = apiresult.blockId,
-                blockSize = apiresult.blockSize,
-                exchange = apiresult.exchange,
-                txHash = apiresult.txHash,
-                status = apiresult.status,
-                createdAt = apiresult.createdAt,
-                transactions = apiresult.transactions
-            };
+            return result;
         }
 
         /// <summary>
@@ -678,6 +807,11 @@ namespace LoopringSharp
             return null;
         }
 
+        public virtual OperationResult Withdraw()
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Get user transfer list.
         /// </summary>
@@ -727,30 +861,137 @@ namespace LoopringSharp
         }
 
 
+
+
+
+
+
         /// <summary>
-        /// Fetches the next order id for a given sold token
+        /// Get L2 block info by block id
         /// </summary>
-        /// <param name="apiKey">Your Loopring API Key</param>
-        /// <param name="accountId">Loopring account identifier</param>
-        /// <param name="sellTokenId">The unique identifier of the token which the user wants to sell in the next order.</param>
-        /// <param name="maxNext">Return the max of the next available storageId, so any storageId > returned value is avaliable, to help user manage storageId by themselves. for example, if [20, 60, 100] is avaliable, all other ids < 100 is used before, user gets 20 if flag is false (and 60 in next run), but gets 100 if flag is true, so he can use 102, 104 freely</param>
-        /// <returns>Returns an object instance of StorageId which contains the next offchainId and orderId</returns>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="id">L2 block id</param>
+        /// <returns>The L2 block info</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public StorageId StorageId(string apiKey, int accountId, int sellTokenId, int maxNext = 0)
+        public L2BlockInfo GetL2BlockInfo(string apiKey, int id)
         {
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
-
-
-            (string, string)[] parameters = { ("accountId", accountId.ToString()), ("sellTokenId", sellTokenId.ToString()), ("maxNext", maxNext.ToString()) };
+            (string, string)[] parameters = { ("id", id.ToString()) };
             (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
-            var apiresult = JsonConvert.DeserializeObject<ApiStorageIdResult>(
-                Utils.Http(_apiUrl + Constants.StorageIdUrl, parameters, headers));
-            return new StorageId()
+
+            var apiresult = JsonConvert.DeserializeObject<ApiL2BlockInfoResult>(
+                Utils.Http(_apiUrl + Constants.L2BlockInfoUrl, parameters, headers));
+
+            return new L2BlockInfo()
             {
-                offchainId = apiresult.offchainId,
-                orderId = apiresult.orderId
+                blockId = apiresult.blockId,
+                blockSize = apiresult.blockSize,
+                exchange = apiresult.exchange,
+                txHash = apiresult.txHash,
+                status = apiresult.status,
+                createdAt = apiresult.createdAt,
+                transactions = apiresult.transactions
             };
+        }
+
+        /// <summary>
+        /// Gets pending transactions to be packed into next block
+        /// </summary>   
+        /// <returns>Returns the pending transactions to be packed into next block</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public List<PendingRequest> GetPendingRequests(string apiKey)
+        {
+            (string, string)[] parameters = { };
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<List<ApiPendingRequestsResult>>(
+                Utils.Http(_apiUrl + Constants.PendingRequestsUrl, parameters, headers));
+            var pendingRequests = new List<PendingRequest>();
+            foreach (var apiPendingRequest in apiresult)
+            {
+                PendingRequest pendingRequest = new PendingRequest()
+                {
+                    txType = apiPendingRequest.txType,
+                    accountId = apiPendingRequest.accountId,
+                    owner = apiPendingRequest.owner,
+                    token = apiPendingRequest.token,
+                    toToken = apiPendingRequest.toToken,
+                    fee = apiPendingRequest.fee,
+                    validUntil = apiPendingRequest.validUntil,
+                    toAccountId = apiPendingRequest.toAccountId,
+                    toAccountAddress = apiPendingRequest.toAccountAddress,
+                    storageId = apiPendingRequest.storageId,
+                    orderA = apiPendingRequest.orderA,
+                    orderB = apiPendingRequest.orderB,
+                    valid = apiPendingRequest.valid,
+                    nonce = apiPendingRequest.nonce,
+                    minterAccountId = apiPendingRequest.minterAccountId,
+                    minter = apiPendingRequest.minter,
+                    nftToken = apiPendingRequest.nftToken,
+                    nftType = apiPendingRequest.nftType,
+                    fromAddress = apiPendingRequest.fromAddress,
+                    toAddress = apiPendingRequest.toAddress,
+                };
+                pendingRequests.Add(pendingRequest);
+            }
+            return pendingRequests;
+        }
+
+        
+
+
+        private DateTime ExchangeInfoShorTermCacheTime;
+        private ApiExchangeInfoResult EchangeInfoShorTermCache;
+    
+        /// <summary>
+        /// Submit an order to exchange two currencies, but with all the nonsense removed
+        /// </summary>
+        /// <param name="l2Pk">Loopring Private Key</param>
+        /// <param name="apiKey">Current Loopring API Key</param>
+        /// <param name="accountId">Wallet Account Id</param>
+        /// <param name="sellCurrency">The name of the token you are selling (ETH, LRC, USDT, etc)</param>
+        /// <param name="sellAmmount">How much of that token you are selling</param>
+        /// <param name="buyCurrency">The name of the token you are buying (ETH, LRC, USDT, etc)</param>
+        /// <param name="buyAmmount">How much of that token you are buying</param>        
+        /// <param name="orderType">Order types, can be AMM, LIMIT_ORDER, MAKER_ONLY, TAKER_ONLY</param>
+        /// <param name="poolAddress">The AMM pool address if order type is AMM</param>
+        /// <returns>Returns OrderResult which basically contains the status of your transaction after it was succesfully requested</returns>
+        public OrderResult SubmitOrder(string l2Pk, string apiKey, int accountId,
+            string sellCurrency,
+            decimal sellAmmount,
+            string buyCurrency,
+            decimal buyAmmount,
+            OrderType orderType,
+            string poolAddress = null,
+            string clientId = null)
+        {
+            var tradeChannel = TradeChannel.MIXED;
+            if (orderType == OrderType.MAKER_ONLY)
+                tradeChannel = TradeChannel.ORDER_BOOK;
+
+            var tokens = GetTokens();
+            var sellTOkenDecimalCount = tokens.Where(w => w.symbol == sellCurrency).FirstOrDefault().decimals;
+            decimal sellTokenMultiplier = 10;
+            for (int i = 2; i <= sellTOkenDecimalCount; i++)
+                sellTokenMultiplier *= 10;
+
+            var buyTOkenDecimalCount = tokens.Where(w => w.symbol == buyCurrency).FirstOrDefault().decimals;
+            decimal buyTokenMultiplier = 10;
+            for (int i = 2; i <= buyTOkenDecimalCount; i++)
+                buyTokenMultiplier *= 10;
+
+            return SubmitOrder(l2Pk, apiKey, accountId,
+                new Token() { tokenId = GetTokenId(sellCurrency), volume = (sellAmmount * sellTokenMultiplier).ToString("0") },
+                new Token() { tokenId = GetTokenId(buyCurrency), volume = (buyAmmount * buyTokenMultiplier).ToString("0") },
+                false,
+                false,
+                Utils.GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds, // one year
+                63,
+                clientId,
+                orderType,
+                tradeChannel,
+                null,
+                poolAddress,
+                null);
         }
 
         /// <summary>
@@ -778,265 +1019,6 @@ namespace LoopringSharp
                 gasPrice = apiresult.gasPrice
             };
 
-        }
-
-        /// <summary>
-        /// Get the details of an order based on order hash.
-        /// </summary>
-        /// <param name="apiKey">Current Loopring API Key</param>
-        /// <param name="accountId">Wallet Account Id</param>
-        /// <param name="orderHash">The hash of the worder for which you want details</param>
-        /// <returns>OrderDetails object filled with awesome order details</returns>
-        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public OrderDetails OrderDetails(string apiKey, int accountId, string orderHash)
-        {
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
-            if (string.IsNullOrWhiteSpace(orderHash))
-                throw new System.Exception("StorageId REQUIRES a valid order hash. Use one of the get order methods to get one");
-
-            (string, string)[] parameters = { ("accountId", accountId.ToString()), ("orderHash", orderHash) };
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
-            var apiresult = JsonConvert.DeserializeObject<ApiOrderGetResult>(
-                Utils.Http(_apiUrl + Constants.OrderUrl, parameters, headers));
-            return new OrderDetails(apiresult);
-        }
-
-        /// <summary>
-        /// Get the details of an order based on order hash.
-        /// </summary>
-        /// <param name="apiKey">Current Loopring API Key</param>
-        /// <param name="accountId">Wallet Account Id</param>
-        /// <param name="tokens">(Optional) list of the tokens which you want returned</param>
-        /// <returns>OrderDetails object filled with awesome order details</returns>
-        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public List<Balance> Ballances(string apiKey, int accountId, string tokens = null)
-        {
-            string[] tokenSplit = new string[0];
-            if (tokens != null)
-                tokenSplit = tokens.Split(',');
-            int[] tokenIds = new int[0];
-            if (tokens != null && tokens.Length > 0)
-                tokenIds = tokenSplit.Select(s => GetTokenId(s)).ToArray();
-
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new System.Exception("StorageId REQUIRES a valid Loopring wallet apiKey");
-
-            if (tokenIds.Length == 0)
-                tokenIds = null;
-
-            List<(string, string)> parameters = new List<(string, string)>() { ("accountId", accountId.ToString()) };
-            if (tokenIds != null && tokenIds.Length > 0)
-                parameters.Add(("tokens", String.Join(",", tokenIds)));
-
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
-            var apiresult = JsonConvert.DeserializeObject<List<ApiBalance>>(
-                Utils.Http(_apiUrl + Constants.BalancesUrl, parameters.ToArray(), headers));
-            var result = new List<Balance>();
-
-            var tokenConfigs = GetTokens();
-
-            foreach (var ballance in apiresult)
-            {
-                var decimals = tokenConfigs.Where(w => w.tokenId == ballance.tokenId).FirstOrDefault().decimals;
-                decimal devideBy = 10;
-                for (int i = 2; i <= decimals; i++)
-                {
-                    devideBy *= 10;
-                }
-                result.Add(new Balance()
-                {
-                    token = GetTokenId(ballance.tokenId),
-                    locked = decimal.Parse(ballance.locked) / devideBy,
-                    pending = new Balance.BalancePending()
-                    {
-                        deposit = decimal.Parse(ballance.pending.deposit) / devideBy,
-                        widthdraw = decimal.Parse(ballance.pending.withdraw) / devideBy,
-                    },
-                    total = decimal.Parse(ballance.total) / devideBy,
-                }); ;
-            }
-
-            return result;
-        }
-
-
-        /// <summary>
-        /// Get a list of orders satisfying certain criteria.
-        /// </summary>
-        /// <param name="apiKey">Your Loopring API Key</param>
-        /// <param name="accountId">Loopring account identifier</param>
-        /// <param name="market">Trading pair (ex. Trading pair)</param>
-        /// <param name="start">Lower bound of order's creation timestamp in millisecond (ex. 1567053142000)</param>
-        /// <param name="end">Upper bound of order's creation timestamp in millisecond (ex. 1567053242000)</param>
-        /// <param name="side">"BUY" or "SELL"</param>
-        /// <param name="statuses">Order statuses to search by</param>
-        /// <param name="orderTypes">Order types to search by</param>
-        /// <param name="tradeChannels">Trade channels to search by</param>
-        /// <param name="limit">How many results per call? Default 50</param>
-        /// <param name="offset">How many results to skip? Default 0 </param>
-        /// <returns>List of OrderDetails objects containing the searched-for items</returns>
-        public List<OrderDetails> OrdersDetails(string apiKey, int accountId, int limit = 50, int offset = 0, string market = null, long start = 0, long end = 0, Side? side = 0, List<OrderStatus> statuses = null, List<OrderType> orderTypes = null, List<TradeChannel> tradeChannels = null)
-        {
-            List<(string, string)> parameters = new List<(string, string)>();
-            parameters.Add(("accountId", accountId.ToString()));
-            if (!string.IsNullOrWhiteSpace(market))
-                parameters.Add(("market", market));
-            if (start != 0)
-                parameters.Add(("start", start.ToString()));
-            if (end != 0)
-                parameters.Add(("end", end.ToString()));
-            if (side.HasValue)
-                parameters.Add(("side", side.ToString()));
-            if (statuses != null)
-                parameters.Add(("status", string.Join(",", statuses.Select(s => s.ToString()))));
-            if (limit != 50)
-                parameters.Add(("limit", limit.ToString()));
-            if (offset != 0)
-                parameters.Add(("offset", offset.ToString()));
-            if (orderTypes != null)
-                parameters.Add(("orderTypes", string.Join(",", orderTypes.Select(s => s.ToString()))));
-            if (tradeChannels != null)
-                parameters.Add(("tradeChannels", string.Join(",", tradeChannels.Select(s => s.ToString()))));
-
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
-            var apiresult = JsonConvert.DeserializeObject<ApiOrdersGetResult>(
-                Utils.Http(_apiUrl + Constants.OrdersUrl, parameters.ToArray(), headers));
-            if (apiresult != null && apiresult.totalNum != 0)
-            {
-                return apiresult.orders.Select(s => new OrderDetails(s)).ToList();
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Returns a list of Ethereum transactions from users for exchange account registration.
-        /// </summary>
-        /// <param name="apiKey">Your Loopring API Key</param>
-        /// <param name="accountId">Loopring account identifier</param>
-        /// <param name="limit"></param>
-        /// <param name="offset"></param>
-        /// <param name="start">Lower bound of order's creation timestamp in millisecond (ex. 1567053142000)</param>
-        /// <param name="end">Upper bound of order's creation timestamp in millisecond (ex. 1567053242000)</param>
-        /// <param name="limit">How many results per call? Default 50</param>
-        /// <param name="offset">How many results to skip? Default 0 </param>
-        /// <param name="statuses">Statuses which you would like to filter by</param>
-        /// <returns>List of Ethereum transactions from users for exchange account registration.</returns>
-        public List<ApiTransaction> CreateInfo(string apiKey, int accountId, int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
-        {
-            List<(string, string)> parameters = new List<(string, string)>();
-            parameters.Add(("accountId", accountId.ToString()));
-            if (start != 0)
-                parameters.Add(("start", start.ToString()));
-            if (end != 0)
-                parameters.Add(("end", end.ToString()));
-            if (statuses != null)
-                parameters.Add(("status", string.Join(",", statuses.Select(s => s.ToString()))));
-            if (limit != 50)
-                parameters.Add(("limit", limit.ToString()));
-            if (offset != 0)
-                parameters.Add(("offset", offset.ToString()));
-
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
-            var apiresult = JsonConvert.DeserializeObject<ApiInfoGetResult>(
-                Utils.Http(_apiUrl + Constants.CreateInfoUrl, parameters.ToArray(), headers));
-            if (apiresult != null && apiresult.totalNum != 0)
-            {
-                return apiresult.transactions.ToList();
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Returns a list Ethereum transactions from users for resetting exchange passwords.
-        /// </summary>
-        /// <param name="apiKey">Your Loopring API Key</param>
-        /// <param name="accountId">Loopring account identifier</param>
-        /// <param name="limit"></param>
-        /// <param name="offset"></param>
-        /// <param name="start">Lower bound of order's creation timestamp in millisecond (ex. 1567053142000)</param>
-        /// <param name="end">Upper bound of order's creation timestamp in millisecond (ex. 1567053242000)</param>
-        /// <param name="limit">How many results per call? Default 50</param>
-        /// <param name="offset">How many results to skip? Default 0 </param>
-        /// <param name="statuses">Statuses which you would like to filter by</param>
-        /// <returns>List of Ethereum transactions from users for resetting exchange passwords.</returns>
-        public List<ApiTransaction> UpdateInfo(string apiKey, int accountId, int limit = 50, int offset = 0, long start = 0, long end = 0, List<Status> statuses = null)
-        {
-            List<(string, string)> parameters = new List<(string, string)>();
-            parameters.Add(("accountId", accountId.ToString()));
-            if (start != 0)
-                parameters.Add(("start", start.ToString()));
-            if (end != 0)
-                parameters.Add(("end", end.ToString()));
-            if (statuses != null)
-                parameters.Add(("status", string.Join(",", statuses.Select(s => s.ToString()))));
-            if (limit != 50)
-                parameters.Add(("limit", limit.ToString()));
-            if (offset != 0)
-                parameters.Add(("offset", offset.ToString()));
-
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
-            var apiresult = JsonConvert.DeserializeObject<ApiInfoGetResult>(
-                Utils.Http(_apiUrl + Constants.UpdateInfoUrl, parameters.ToArray(), headers));
-            if (apiresult != null && apiresult.totalNum != 0)
-            {
-                return apiresult.transactions.ToList();
-            }
-            return null;
-        }
-
-        #endregion
-        #region apiKeyL1L2
-        /// <summary>
-        /// Send some tokens to anyone else on L2
-        /// </summary>
-        /// <param name="apiKey">Your Loopring API Key</param>
-        /// <param name="l2Pk">Loopring Private Key</param>
-        /// <param name="l1Pk">Ethereum Private Key</param>
-        /// <param name="request">The basic transaction details needed in order to actually do a transaction</param>
-        /// <param name="memo">(Optional)And do you want the transaction to contain a reference. From loopring's perspective, this is just a text field</param>
-        /// <param name="clientId">(Optional)A user-defined id. It's similar to the memo field? Again the original documentation is not very clear</param>
-        /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
-        /// <returns>An object containing the status of the transfer at the end of the request</returns>
-        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
-        public virtual OperationResult Transfer(string apiKey, string l2Pk, string l1Pk, TransferRequest request, string memo, string clientId, CounterFactualInfo counterFactualInfo)
-        {
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
-            if (string.IsNullOrWhiteSpace(l2Pk))
-                throw new System.Exception("Transfer REQUIRES a valid Loopring Wallet Layer 2 Private key");
-
-            var account = GetAccountInfo(request.payerAddr);
-
-            BigInteger[] inputs = {
-                Utils.ParseHexUnsigned(request.exchange),
-                (BigInteger)request.payerId,
-                (BigInteger)request.payeeId,
-                (BigInteger)request.token.tokenId,
-                BigInteger.Parse(request.token.volume),
-                (BigInteger)request.maxFee.tokenId,
-                BigInteger.Parse(request.maxFee.volume),
-                Utils.ParseHexUnsigned(request.payeeAddr),
-                0,
-                0,
-                (BigInteger)request.validUnitl,
-                (BigInteger)request.storageId
-            };
-            var apiRequest = request.GetApiTransferRequest(memo, clientId, counterFactualInfo);
-            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
-
-            var typedData = ECDSAHelper.GenerateTransferTypedData(ExchangeInfo().chainId, apiRequest).Item1;
-            apiRequest.ecdsaSignature = ECDSAHelper.GenerateSignature(typedData, l1Pk);
-
-            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey), (Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
-            var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
-                Utils.Http(_apiUrl + Constants.TransferUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
-            return new OperationResult(apiresult);
-        }
-
-        public virtual OperationResult Withdraw()
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -1084,41 +1066,7 @@ namespace LoopringSharp
             };
             return Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null);
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="l1Pk">User's current eth private key</param>
-        /// <param name="l2Pk">User's current loopring private key</param>
-        /// <param name="req">A UpdateAccountRequest object containing all the needed information for this request</param>
-        /// <param name="counterFactualInfo">(Optional)Not entirely sure. Official documentation says: field.UpdateAccountRequestV3.counterFactualInfo</param>
-        /// <returns></returns>
-        public virtual OperationResult UpdateAccount(string l2Pk, string l1Pk, UpdateAccountRequest req, CounterFactualInfo counterFactualInfo)
-        {
-            var apiRequest = req.GetUpdateEDDSARequest(counterFactualInfo);
-
-            BigInteger[] inputs = {
-                Utils.ParseHexUnsigned(apiRequest.exchange),
-                (BigInteger)apiRequest.accountId,
-                (BigInteger)apiRequest.maxFee.tokenId ,
-                BigInteger.Parse(apiRequest.maxFee.volume),
-                Utils.ParseHexUnsigned(apiRequest.publicKey.x),
-                Utils.ParseHexUnsigned(apiRequest.publicKey.y),
-                (BigInteger)apiRequest.validUntil,
-                (BigInteger)apiRequest.nonce
-            };
-
-            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);          
-
-            var typedData = ECDSAHelper.GenerateAccountUpdateTypedData(ExchangeInfo().chainId, apiRequest).Item1;
-            apiRequest.ecdsaSignature = ECDSAHelper.GenerateSignature(typedData, l1Pk);
-
-            (string, string)[] headers = { (Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
-            var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
-                Utils.Http(_apiUrl + Constants.AccountUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
-            return new OperationResult(apiresult);
-        }
-
+        
         /// <summary>
         /// WARNING!!! This has a fee asociated with it. Make a OffchainFee request of type OffChainRequestType.UpdateAccount to see what the fee is.
         /// Updates the EDDSA key associated with the specified account, making the previous one invalid in the process.
@@ -1134,7 +1082,7 @@ namespace LoopringSharp
         public virtual OperationResult UpdateAccount(string apiKey, string l1Pk, string l2Pk, int accountId, string feeToken, string ethPublicAddress, string exchangeAddress)
         {
             var newNonce = (GetAccountInfo(ethPublicAddress)).nonce;
-            (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) keys;        
+            (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) keys;
 
             keys = EDDSAHelper.EDDSASignLocal(exchangeAddress, newNonce, l1Pk, ethPublicAddress);
 
@@ -1160,7 +1108,46 @@ namespace LoopringSharp
             return UpdateAccount(l2Pk, l1Pk, req, null);
         }
 
-        #endregion
+        /// <summary>
+        /// UNDOCUMENTED. Gets the Depth but for some reason does it better. No idea why
+        /// </summary>
+        /// <param name="market">The ID of a trading pair.</param>
+        /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
+        /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
+        /// <returns>Returns the order book of a given trading pair.</returns>
+        public Depth GetMixDepth(string market, int level = 2, int limit = 50)
+        {
+            (string, string)[] parameters = { ("market", market), ("level", level.ToString()), ("limit", limit.ToString()) };
+            var apiresult = JsonConvert.DeserializeObject<ApiDepthResult>(
+                Utils.Http(_apiUrl + Constants.DepthMixUrl, parameters));
+            return new Depth()
+            {
+                asks = apiresult.asks.Select(s => new Depth.Position()
+                {
+                    price = float.Parse(s[0]),
+                    size = decimal.Parse(s[1]) / 1000000000000000000m,
+                    volume = decimal.Parse(s[2]),
+                    numberOfOrdersAgregated = decimal.Parse((s[3]))
+                }).ToList(),
+                market = apiresult.market,
+                bids = apiresult.bids.Select(s => new Depth.Position()
+                {
+                    price = float.Parse(s[0]),
+                    size = decimal.Parse(s[1]) / 1000000000000000000m,
+                    volume = decimal.Parse(s[2]) / 1000000000000000000m,
+                    numberOfOrdersAgregated = decimal.Parse((s[3]))
+                }).ToList(),
+                timestamp = apiresult.timestamp,
+                version = apiresult.version
+            };
+        }
+
+        
+
+
+
+
+
 
         #region public methods
 
@@ -1187,27 +1174,6 @@ namespace LoopringSharp
 
         #endregion
 
-        public static ExchangeInfo ExchangeInfo(string apiUrl)
-        {
-
-            var EchangeInfoShorTermCache = JsonConvert.DeserializeObject<ApiExchangeInfoResult>(
-                 Utils.Http(apiUrl + Constants.InfoUrl));
-
-
-            return new ExchangeInfo()
-            {
-                ammExitFees = EchangeInfoShorTermCache.ammExitFees,
-                chainId = EchangeInfoShorTermCache.chainId,
-                depositAddress = EchangeInfoShorTermCache.depositAddress,
-                exchangeAddress = EchangeInfoShorTermCache.exchangeAddress,
-                fastWithdrawalFees = EchangeInfoShorTermCache.fastWithdrawalFees,
-                onchainFees = EchangeInfoShorTermCache.onchainFees,
-                openAccountFees = EchangeInfoShorTermCache.openAccountFees,
-                transferFees = EchangeInfoShorTermCache.transferFees,
-                updateFees = EchangeInfoShorTermCache.updateFees,
-                withdrawalFees = EchangeInfoShorTermCache.withdrawalFees
-            };
-        }
     }
 
 }

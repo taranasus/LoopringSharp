@@ -154,7 +154,7 @@ namespace LoopringSharp
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public string ApiKey()
         {
-            return _client.ApiKey(_loopringPrivateKey, _accountId);
+            return _client.GetApiKey(_loopringPrivateKey, _accountId);
         }
 
         /// <summary>
@@ -232,7 +232,7 @@ namespace LoopringSharp
         /// <returns>Returns OrderResult which basically contains the status of your transaction after the cancel was succesfully requested</returns>
         public OrderResult CancelOrder(string orderHash, string clientOrderId)
         {
-            return _client.DeleteOrder(_loopringPrivateKey, _apiKey, _accountId, orderHash, clientOrderId);
+            return _client.CancelOrder(_loopringPrivateKey, _apiKey, _accountId, orderHash, clientOrderId);
         }
 
         /// <summary>
@@ -387,7 +387,7 @@ namespace LoopringSharp
             List<OrderType> orderTypes = null,
             List<TradeChannel> tradeChannels = null)
         {
-            return _client.OrdersDetails(_apiKey, _accountId, limit, offset, market, start, end, side, statuses, orderTypes, tradeChannels);
+            return _client.Orders(_apiKey, _accountId, limit, offset, market, start, end, side, statuses, orderTypes, tradeChannels);
         }
 
         /// <summary>
