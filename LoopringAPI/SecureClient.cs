@@ -290,6 +290,27 @@ namespace LoopringSharp
             }).ToList();
         }
 
+        /// <summary>
+        /// Returns amm pool trade transactions
+        /// </summary>
+        /// <param name="ammPoolAddress">The address of the pool on which the swap was submitted</param>
+        /// <param name="limit">How many trades to return per call. Default 50</param>
+        /// <param name="offset">How many trades to skip. Default 0</param>
+        /// <returns>Returns the AMM pool trade transactions</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public AmmPoolTrades GetAmmPoolTrades(string ammPoolAddress, int limit, int offset)
+        {
+            (string, string)[] parameters = { ("ammPoolAddress", ammPoolAddress), ("limit", limit.ToString()), ("offset", offset.ToString()) };
+            var apiresult = JsonConvert.DeserializeObject<ApiAmmPoolTradesResult>(
+                Utils.Http(_apiUrl + Constants.AmmPoolTradesUrl, parameters));
+
+            return new AmmPoolTrades()
+            {
+                totalNum = apiresult.totalNum,
+                trades = apiresult.trades
+            };
+        }
+
         #endregion
         #region L2
 
