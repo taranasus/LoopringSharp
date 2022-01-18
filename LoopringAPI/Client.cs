@@ -74,6 +74,23 @@ namespace LoopringSharp
         }
 
         /// <summary>
+        /// Get user transfer list.
+        /// </summary>
+        /// <param name="limit">Number of records to return</param>
+        /// <param name="start">Start time in milliseconds - Default : 0L</param>
+        /// <param name="end">End time in milliseconds - Default : 0L</param>
+        /// <param name="statuses">Comma separated status values</param>
+        /// <param name="tokenSymbol">Token to filter. If you want to return deposit records for all tokens, omit this parameter</param>
+        /// <param name="offset">Number of records to skip - Default : 0L</param>
+        /// <param name="hashes">The hashes of the transactions, normally its L2 tx hash, except the deposit which uses L1 tx hash.</param>
+        /// <param name="transferTypes">The type of withdrawls you want returned</param>        
+        /// <returns></returns>
+        public List<ApiTransferData> GetTransfers(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, TransferTypes? transferTypes = null, string[] hashes = null)
+        {
+            return _client.GetTransfers(_apiKey,_accountId, limit, start, end, statuses, tokenSymbol , offset, transferTypes, hashes);
+        }
+
+        /// <summary>
         /// The Object you need in order to communicate with the Loopring API. Recommended to use as a signleton. Automatically gets the API Key using your Loopring Private Key
         /// </summary>        
         /// <param name="loopringPrivateKey">Your Layer 2 Private Key, needed for most api calls</param>
@@ -137,7 +154,7 @@ namespace LoopringSharp
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public string ApiKey()
         {
-            return _client.ApiKey(_loopringPrivateKey, _accountId);
+            return _client.GetApiKey(_loopringPrivateKey, _accountId);
         }
 
         /// <summary>
@@ -215,7 +232,7 @@ namespace LoopringSharp
         /// <returns>Returns OrderResult which basically contains the status of your transaction after the cancel was succesfully requested</returns>
         public OrderResult CancelOrder(string orderHash, string clientOrderId)
         {
-            return _client.DeleteOrder(_loopringPrivateKey, _apiKey, _accountId, orderHash, clientOrderId);
+            return _client.CancelOrder(_loopringPrivateKey, _apiKey, _accountId, orderHash, clientOrderId);
         }
 
         /// <summary>
@@ -370,7 +387,7 @@ namespace LoopringSharp
             List<OrderType> orderTypes = null,
             List<TradeChannel> tradeChannels = null)
         {
-            return _client.OrdersDetails(_apiKey, _accountId, limit, offset, market, start, end, side, statuses, orderTypes, tradeChannels);
+            return _client.Orders(_apiKey, _accountId, limit, offset, market, start, end, side, statuses, orderTypes, tradeChannels);
         }
 
         /// <summary>
