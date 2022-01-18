@@ -291,11 +291,11 @@ namespace LoopringSharp
         }
 
         /// <summary>
-        /// Returns data associated with the user's exchange account.
+        /// Returns amm pool trade transactions
         /// </summary>
         /// <param name="ammPoolAddress">The address of the pool on which the swap was submitted</param>
-        /// <param name="limit">Used to limit the number of returned records</param>
-        /// <param name="offset">Used to apply an offset when looking for valid records</param>
+        /// <param name="limit">How many to trades to return per call. Default 50</param>
+        /// <param name="offset">How many trades to skip. Default 0</param>
         /// <returns>Returns the AMM pool trade transactions</returns>
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public AmmPoolTrades GetAmmPoolTrades(string ammPoolAddress, int limit, int offset)

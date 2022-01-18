@@ -504,7 +504,7 @@ namespace LoopringSharp
         }
 
         /// <summary>
-        /// Returns data associated with the user's exchange account.
+        /// Returns amm pool trade transactions
         /// </summary>
         /// <param name="ammPoolAddress">The address of the pool on which the swap was submitted</param>
         /// <param name="limit">How many to trades to return per call. Default 50</param>
