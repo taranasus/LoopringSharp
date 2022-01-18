@@ -495,8 +495,8 @@ namespace LoopringSharp
             };
         }
 
-        #endregion
-        #region L2
+        
+        
 
         /// <summary>
         /// Send some tokens to anyone else on L2
