@@ -502,5 +502,17 @@ namespace LoopringSharp
         {
             return _client.GetPendingRequests(_apiKey);
         }
+
+        /// <summary>
+        /// Returns data associated with the user's exchange account.
+        /// </summary>
+        /// <param name="ammPoolAddress">The address of the pool on which the swap was submitted</param>
+        /// <param name="limit">How many to trades to return per call. Default 50</param>
+        /// <param name="offset">How many trades to skip. Default 0</param>
+        /// <returns>Returns the AMM pool trade transactions</returns>
+        public AmmPoolTrades GetAmmPoolTrades(string ammPoolAddress, int limit = 50, int offset = 0)
+        {
+            return _client.GetAmmPoolTrades(ammPoolAddress, limit, offset);
+        }
     }
 }

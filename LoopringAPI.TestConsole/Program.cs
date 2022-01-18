@@ -86,6 +86,22 @@ else
 }
 #endregion
 
+#region TestGetAmmPoolTrades
+Console.WriteLine("Do you want to see AMM pool trades for 0x194db39e4c99f6c8dd81b4647465f7599f3c215a? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING AMM POOL TRADES");
+    var ammPoolTradesResult = client.GetAmmPoolTrades("0x194db39e4c99f6c8dd81b4647465f7599f3c215a", 50, 0);
+    Console.WriteLine("AMM POOL TRADES RETRIEVED!");
+    Console.WriteLine(JsonConvert.SerializeObject(ammPoolTradesResult, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving AMM pool trades!");
+}
+#endregion
+
 #region TestTransfer
 Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 choice = Console.ReadLine();
