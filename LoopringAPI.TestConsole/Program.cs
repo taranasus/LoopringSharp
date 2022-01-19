@@ -102,6 +102,24 @@ else
 }
 #endregion
 
+#region TestGetAmmJoinExitTransactions
+Console.WriteLine("Do you want to see AMM pool join and exits for account id, 10083(*this only returns data in uat)? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING AMM POOL JOIN AND EXITS");
+    var ammJoinExitResult = client.GetAmmJoinExitTransactions(10083);
+    Console.WriteLine("AMM POOL JOIN AND EXITS RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(ammJoinExitResult, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving AMM pool join and exits!");
+}
+#endregion
+
+
+
 #region TestTransfer
 Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 choice = Console.ReadLine();
