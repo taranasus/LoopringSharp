@@ -531,5 +531,22 @@ namespace LoopringSharp
         {
             return _client.GetAmmPoolTrades(ammPoolAddress, limit, offset);
         }
+
+        /// <summary>
+        /// Returns the users AMM join exit transactions
+        /// </summary>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="start">Date time in milliseconds to start fetching AMM transactions. Default 0</param>
+        /// <param name="end">Date time in milliseconds to end fetching AMM transactions. Default 0</param>
+        /// <param name="limit">How many transactions to return per call. Default 50</param>
+        /// <param name="offset">How many transactions to skip. Default 0</param>
+        /// <param name="txTypes">Transaction type to filter on. Default null</param>
+        /// <param name="txStatus">Transaction status to filter on. Default null</param>
+        /// <param name="ammPoolAddress">The address of the AMM pool. Default null</param>
+        /// <returns>Returns the users AMM join exit transactions</returns>
+        public AmmJoinExitTransactions GetAmmJoinExitTransactions(int accountId, long start = 0, long end = 0, int limit = 50, int offset = 0, string txTypes = null, string txStatus = null, string ammPoolAddress = null)
+        {
+            return _client.GetAmmJoinExitTransactions(_apiKey, accountId, start, end, limit, offset, txTypes, txStatus, ammPoolAddress);
+        }
     }
 }

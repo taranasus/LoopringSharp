@@ -603,6 +603,8 @@ namespace LoopringSharp
             return new OperationResult(apiresult);
         }
 
+
+
         /// <summary>
         /// Returns a list of Ethereum transactions from users for exchange account registration.
         /// </summary>
@@ -1166,7 +1168,50 @@ namespace LoopringSharp
             };
         }
 
-        
+        /// <summary>
+        /// Returns the users AMM join exit transactions
+        /// </summary>
+        /// <param name="apiKey">User's current API key</param>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="start">Date time in milliseconds to start fetching AMM transactions. Default 0</param>
+        /// <param name="end">Date time in milliseconds to end fetching AMM transactions. Default 0</param>
+        /// <param name="limit">How many transactions to return per call. Default 50</param>
+        /// <param name="offset">How many transactions to skip. Default 0</param>
+        /// <param name="txTypes">Transactions type to filter on. Default null</param>
+        /// <param name="txStatus">Transaction status to filter on. Default null</param>
+        /// <param name="ammPoolAddress">The address of the AMM pool. Default null</param>
+        /// <returns>Returns the users AMM join exit transactions</returns>
+        public AmmJoinExitTransactions GetAmmJoinExitTransactions(string apiKey, int accountId, long start, long end, int limit, int offset, string txTypes, string txStatus, string ammPoolAddress)
+        {
+            List<(string, string)> parameters = new List<(string, string)>(){
+                ("accountId", accountId.ToString())
+            };
+            parameters.Add(("limit", limit.ToString()));
+            parameters.Add(("offset", offset.ToString()));
+            if (start != 0)
+                parameters.Add(("start", start.ToString()));
+            if (end != 0)
+                parameters.Add(("end", end.ToString()));
+            if (txTypes != null)
+                parameters.Add(("txTypes", txTypes));
+            if (txStatus != null)
+                parameters.Add(("txStatus", txStatus));
+            if (txStatus != null)
+                parameters.Add(("ammPoolAddress", ammPoolAddress));
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiAmmJoinExitTransactionsResult>(
+                Utils.Http(_apiUrl + Constants.AmmJoinExitTransactionsUrl, parameters.ToArray(), headers));
+
+            return new AmmJoinExitTransactions()
+            {
+                totalNum = apiresult.totalNum,
+                transactions = apiresult.transactions,
+            };
+        }
+
+
 
 
 
