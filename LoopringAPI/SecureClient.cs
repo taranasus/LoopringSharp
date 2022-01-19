@@ -1184,10 +1184,10 @@ namespace LoopringSharp
         public AmmJoinExitTransactions GetAmmJoinExitTransactions(string apiKey, int accountId, long start, long end, int limit, int offset, string txTypes, string txStatus, string ammPoolAddress)
         {
             List<(string, string)> parameters = new List<(string, string)>(){
-                ("accountId", accountId.ToString())
+                ("accountId", accountId.ToString()),
+                ("limit", limit.ToString()),
+                ("offset", offset.ToString())
             };
-            parameters.Add(("limit", limit.ToString()));
-            parameters.Add(("offset", offset.ToString()));
             if (start != 0)
                 parameters.Add(("start", start.ToString()));
             if (end != 0)
