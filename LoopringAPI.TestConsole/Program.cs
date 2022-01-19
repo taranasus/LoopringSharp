@@ -102,7 +102,7 @@ else
 }
 #endregion
 
-#region TestGetAmmPoolTrades
+#region TestGetAmmJoinExitTransactions
 Console.WriteLine("Do you want to see AMM pool join and exits for account id, 10083(*this only returns data in uat)? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 choice = Console.ReadLine();
 if (choice.ToLower().StartsWith("y"))
