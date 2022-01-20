@@ -44,7 +44,7 @@ In the future, I'll look into adding WalletConnect support as well
 Here's a list of all the Loopring API Endpoints and which ones have been implemented so far in LoopringSharp
 
 |Implemented?|API Call|Endpoint Path|Description|
-|-|-|-|-|-|
+|-|-|-|-|
 |X|Timestamp|/api/v3/timestamp|Returns the relayer's current time in millisecond|
 |X|ApiKey|/api/v3/apiKey|Get the ApiKey associated with the user's account|
 |X|UpdateApiKey|/api/v3/apiKey|Request a new ApiKey for this user account|
