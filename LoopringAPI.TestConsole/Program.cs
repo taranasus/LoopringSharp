@@ -119,6 +119,23 @@ else
 #endregion
 
 
+#region TestGetUserTradesHistory
+Console.WriteLine("Do you want to see trade history for account id, 12383(*this only returns data in production)? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING TRADE HISTORY");
+    var tradeHistory = client.GetTradeHistory(12383);
+    Console.WriteLine("TRADE HISTORY RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(tradeHistory, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving trade history!");
+}
+#endregion
+
+
 
 #region TestTransfer
 Console.WriteLine("Let's start with a TRANSFER TEST of 1 LRC. DO YOU WISH TO CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");

@@ -603,6 +603,51 @@ namespace LoopringSharp
             return new OperationResult(apiresult);
         }
 
+        /// <summary>
+        /// Returns the users trade history
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <param name="orderHash">The order Hash</param>
+        /// <param name="offset">How many transactions to skip</param>
+        /// <param name="limit">How many transactions to return</param>
+        /// <param name="fromId">The begin id of query</param>
+        /// <param name="fillTypes">Fill type. Can be dex or amm</param>
+        /// <returns>Returns the users trade history</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public TradeHistory GetTradeHistory(string apiKey, int accountId, string market, string orderHash, int offset, int limit, int fromId, FillTypes[] fillTypes)
+        {
+            List<(string, string)> parameters = new List<(string, string)>() 
+            { 
+                ("accountId", accountId.ToString()) ,
+                ("offset", offset.ToString()),
+                ("limit", limit.ToString())
+            };
+            
+            if (!string.IsNullOrEmpty(market))
+                parameters.Add(("market", market));
+            if (fillTypes != null && fillTypes.Length > 0)
+                parameters.Add(("fillTypes", string.Join(",", fillTypes.Select(s => s.ToString()))));
+            if (!string.IsNullOrEmpty(orderHash))
+                parameters.Add(("orderHash", orderHash));
+            if (fromId != 0)
+                parameters.Add(("fromId", fromId.ToString()));
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiTradeHistoryResult>(
+            Utils.Http(_apiUrl + Constants.TradeHistoryUrl, parameters.ToArray(), headers));
+
+            var result = new TradeHistory()
+            {
+                totalNum = apiresult.totalNum,
+                trades = apiresult.trades
+            };
+  
+            return result;
+        }
+
 
 
         /// <summary>

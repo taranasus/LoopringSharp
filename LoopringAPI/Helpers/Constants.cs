@@ -14,6 +14,7 @@ namespace LoopringSharp
         public static string DepositsUrl = "/api/v3/user/deposits";
         public static string WithdrawlsUrl = "/api/v3/user/withdrawals";
         public static string TransfersUrl = "/api/v3/user/transfers";
+        public static string TradeHistoryUrl = "api/v3/user/trades";
         public static string StorageIdUrl = "api/v3/storageId";
         public static string TickerUrl = "api/v3/ticker";
         public static string TimestampUrl = "api/v3/timestamp";

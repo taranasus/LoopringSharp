@@ -548,5 +548,21 @@ namespace LoopringSharp
         {
             return _client.GetAmmJoinExitTransactions(_apiKey, accountId, start, end, limit, offset, txTypes, txStatus, ammPoolAddress);
         }
+
+        /// <summary>
+        /// Returns the users trade history
+        /// </summary>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair. Default null</param>
+        /// <param name="orderHash">The order Hash. Default nul</param>
+        /// <param name="offset">How many transactions to skip. Default 0</param>
+        /// <param name="limit">How many transactions to return. Default 50</param>
+        /// <param name="fromId">The begin id of query. Default 0</param>
+        /// <param name="fillTypes">Fill type. Can be dex or amm. Default null</param>
+        /// <returns>Returns the users trade history</returns>
+        public TradeHistory GetTradeHistory(int accountId, string market = null, string orderHash = null, int offset = 0, int limit= 50, int fromId = 0, FillTypes[] fillTypes = null)
+        {
+            return _client.GetTradeHistory(_apiKey, accountId, market, orderHash, offset, limit, fromId, fillTypes);
+        }
     }
 }
