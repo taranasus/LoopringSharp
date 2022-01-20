@@ -41,38 +41,48 @@ var storageId = await client.StorageId(1);
 ```
 In the future, I'll look into adding WalletConnect support as well
 
-There are three keys that are needed to use the LoopringAPI endpoints. Some endpoints require none of those keys, some of them require all of them, so let me explain what they are.
+Here's a list of all the Loopring API Endpoints and which ones have been implemented so far in LoopringSharp
 
-- apiKey = Your Loopring Wallet API key. You can get this by exporting your loopring wallet info, it's the "ApiKey" field. You can also get it by using the ApiKey() method in the client
-- l2Pk = Your Loopring Wallet Private Key. You can get this by exportin your loopring wallet info, it's the "PrivateKey" field. If using MetaMask or WalletConnect, this is filled in automatically as needed.
-- l1Pk = This is your Etherium Private Key, the one tied to your Loopring wallet. It's not part of the export mentioned above, you'll need to figure out how to get it based on your needs. If using MetaMask or WalletConnect, this is filled in automatically as needed.
-
-As for which endpoint requires what, I'll atempt to make a table bellow with all the API calls supported in this package and which keys are needed for which call
-
-|API Call|ApiKey|l1Pk|l2Pk|Description
+|Implemented?|API Call|Endpoint Path|Description|
 |-|-|-|-|-|
-|Ticker|N|N|N|Gets the price information for any crypto pair available to trade on Loopring|
-|Timestamp|N|N|N|Returns the relayer's current time in millisecond
-|GetAccountInfo|N|N|N|Returns data associated with the user's exchange account
-|ExchangeInfo|N|N|N|Gets all sorts of properties about the exchange you're contacting
-|GetMarkets|N|N|N|Get a list of all the markets available on the exchange
-|GetTokens|N|N|N|Returns the configurations of all supported tokens, including Ether.
-|GetDepth|N|N|N|Returns the order book of a given trading pair.
-|GetCandlesticks|N|N|N|Return the candlestick data of a given trading pair.
-|GetPrice|N|N|N|Fetches, for all the tokens supported by Loopring, their fiat price.
-|GetTrades|N|N|N|Query latest trades with specified market
-|ApiKey|N|N|Y|Get the ApiKey associated with the user's account
-|DeleteOrder|Y|N|Y|Cancels a open exchange / swap order
-|SubmitOrder|Y|N|Y|Submits a new exchange / swap order
-|UpdateApiKey|Y|N|Y|Request a new ApiKey for this user account
-|StorageId|Y|N|N|Fetches the next order id for a given sold token
-|OffchainFee|Y|N|N|Get how much fee you need to pay right now to carry out a transaction of a specified type
-|OrderDetails|Y|N|N|Gets the details of one specific order using the hashId
-|OrdersDetails|Y|N|N|Gets a detailed list of multiple orders based on the filtering criteria
-|CreateInfo|Y|N|N|Returns a list of Ethereum transactions from users for exchange account registration.
-|UpdateInfo|Y|N|N|Returns a list Ethereum transactions from users for resetting exchange passwords.
-|Transfer|Y|Y|Y|Send some tokens to anyone else on L2
-|RequestNewL2PrivateKey|Y|Y|Y|Generates a new L2 private key for your account. Does not return they key
+|X|Timestamp|/api/v3/timestamp|Returns the relayer's current time in millisecond|
+|X|ApiKey|/api/v3/apiKey|Get the ApiKey associated with the user's account|
+|X|UpdateApiKey|/api/v3/apiKey|Request a new ApiKey for this user account|
+|X|StorageId|/api/v3/storageId|Fetches the next order id for a given sold token|
+|X|OrderDetails|/api/v3/order|Gets the details of one specific order using the hashId|
+|X|SubmitOrder|/api/v3/order|Submits a new exchange / swap order|
+|X|DeleteOrder|/api/v3/order|Cancels a open exchange / swap order|
+|X|OrdersDetails|/api/v3/orders|Gets a detailed list of multiple orders based on the filtering criteria|
+|X|GetMarkets|/api/v3/exchange/markets|Get a list of all the markets available on the exchange|
+|X|GetTokens|/api/v3/exchange/tokens|Returns the configurations of all supported tokens, including Ether.|
+|X|ExchangeInfo|/api/v3/exchange/info|Gets all sorts of properties about the exchange you're contacting|
+|X|GetDepth|/api/v3/depth|Returns the order book of a given trading pair.|
+|X|Ticker|/api/v3/ticker|Gets the price information for any crypto pair available to trade on Loopring|
+|X|GetCandlesticks|/api/v3/candlestick|Return the candlestick data of a given trading pair.|
+|X|GetPrice|/api/v3/price|Fetches, for all the tokens supported by Loopring, their fiat price.|
+|X|GetTrades|/api/v3/trade|Query latest trades with specified market|
+|X|Transfer|/api/v3/transfer|Send some tokens to anyone else on L2|
+|X|GetAccountInfo|/api/v3/account|Returns data associated with the user's exchange account|
+|X|RequestNewL2PrivateKey|/api/v3/account|Generates a new L2 private key for your account. Does not return they key|
+|X|CreateInfo|/api/v3/user/createInfo|Returns a list of Ethereum transactions from users for exchange account registration.|
+|X|UpdateInfo|/api/v3/user/updateInfo|Returns a list Ethereum transactions from users for resetting exchange passwords.|
+|X|Ballances|/api/v3/user/balances|Returns user's Ether and token balances on exchange.|
+|X|GetDeposits|/api/v3/user/deposits|Returns a list of deposit records for the given user.|
+|X|GetWithdrawls|/api/v3/user/withdrawals|Get user onchain withdrawal history.|
+||Withdraw|/api/v3/user/withdrawals|Submit offchain withdraw request|
+|X|GetTransfers|/api/v3/user/transfers|Get user transfer list.|
+||GetTradeHistory|/api/v3/user/trades|Get user trade history.|
+||OrderFee|/api/v3/user/orderFee|Returns the fee rate of users placing orders in specific markets|
+||OrderUserRateAmount|/api/v3/user/orderUserRateAmount|This API returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.|
+|X|OffchainFee|api/v3/user/offchainFee|Returns the fee amount|
+||GetAmmPools|/api/v3/amm/pools|Get AMM pool configurations|
+||GetAmmPoolBalance|/api/v3/amm/balance|Get AMM pool balance snapshot|
+||JoinAmmPool|/api/v3/amm/join|Join into AMM pool|
+||ExitAmmPool|/api/v3/amm/exit|Exit an AMM pool|
+|X|AmmTransactions|/api/v3/amm/user/transactions|Return the user's AMM join/exit transactions|
+|X|AmmTrades|/api/v3/amm/trades|get AMM pool trade transactions|
+|X|GetL2BlockInfo|/api/v3/block/getBlock|Get L2 block info by block id|
+|X|GetPendingRequests|/api/v3/block/getPendingRequests|Get pending txs to be packed into next block|
 
 ## LoopringAPI.TestConsole
 
