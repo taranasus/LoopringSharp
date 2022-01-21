@@ -649,6 +649,35 @@ namespace LoopringSharp
         }
 
         /// <summary>
+        /// Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.
+        /// </summary>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <returns>Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public OrderUserRateAmount OrderUserRateAmount(string apiKey, int accountId, string market)
+        {
+            List<(string, string)> parameters = new List<(string, string)>()
+            {
+                ("accountId", accountId.ToString()) ,
+                ("market", market)
+            };
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiOrderUserRateAmountResult>(
+            Utils.Http(_apiUrl + Constants.OrderUserRateAmountUrl, parameters.ToArray(), headers));
+
+            var result = new OrderUserRateAmount()
+            {
+                gasPrice = apiresult.gasPrice,
+                amounts = apiresult.amounts,
+                cacheOverdueAt = apiresult.cacheOverdueAt
+            };
+            return result;
+        }
+
+        /// <summary>
         /// Returns the fee rate of users placing orders in specific markets
         /// </summary>
         /// <param name="apiKey">Your Loopring API key</param>

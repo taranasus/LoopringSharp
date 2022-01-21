@@ -577,5 +577,16 @@ namespace LoopringSharp
         {
             return _client.OrderFee(_apiKey, accountId, market, tokenB, amountB);
         }
+
+        /// <summary>
+        /// Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.
+        /// </summary>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <returns>Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.</returns>
+        public OrderUserRateAmount OrderUserRateAmount(int accountId, string market)
+        {
+            return _client.OrderUserRateAmount(_apiKey, accountId, market);
+        }
     }
 }
