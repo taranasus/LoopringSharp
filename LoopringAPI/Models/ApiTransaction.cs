@@ -9,7 +9,7 @@ namespace LoopringSharp
         public string owner { get; set; }
         public string txHash { get; set; }
         public string feeTokenSymbol { get; set; }
-        public BigInteger feeAmount { get; set; } 
+        public string feeAmount { get; set; } 
         public string status { get; set; }  
         public string progress { get; set; }
         public long timestamp { get; set; }
