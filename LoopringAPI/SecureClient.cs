@@ -648,6 +648,39 @@ namespace LoopringSharp
             return result;
         }
 
+        /// <summary>
+        /// Returns the fee rate of users placing orders in specific markets
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API key</param>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <param name="tokenB">Token Id</param>
+        /// <param name="amountB">Amount to buy</param>
+        /// <returns>Returns the fee rate of users placing orders in specific markets</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public OrderFee OrderFee(string apiKey, int accountId, string market, string tokenB, string amountB)
+        {
+            List<(string, string)> parameters = new List<(string, string)>()
+            {
+                ("accountId", accountId.ToString()) ,
+                ("market", market),
+                ("tokenB", tokenB),
+                ("amountB", amountB)
+            };
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiOrderFeeResult>(
+            Utils.Http(_apiUrl + Constants.OrderFeeUrl, parameters.ToArray(), headers));
+
+            var result = new OrderFee()
+            {
+                feeRate = apiresult.feeRate,
+                gasPrice = apiresult.gasPrice,
+            };
+            return result;
+        }
+
 
 
         /// <summary>

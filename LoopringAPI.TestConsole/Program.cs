@@ -135,6 +135,22 @@ else
 }
 #endregion
 
+#region TestGetOrderFee
+Console.WriteLine("Do you want to see order fee for account id, 40490(*this only works with the matching api key in production)? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING ORDER FEE");
+    var orderFee = client.OrderFee(40940, "LRC-ETH", "0", "100000000000000000000000000000");
+    Console.WriteLine("ORDER FEE RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(orderFee, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping getting order fee");
+}
+#endregion
+
 
 
 #region TestTransfer

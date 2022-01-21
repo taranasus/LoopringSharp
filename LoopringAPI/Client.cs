@@ -564,5 +564,18 @@ namespace LoopringSharp
         {
             return _client.GetTradeHistory(_apiKey, accountId, market, orderHash, offset, limit, fromId, fillTypes);
         }
+
+        /// <summary>
+        /// Returns the fee rate of users placing orders in specific markets
+        /// </summary>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <param name="tokenB">Token Id</param>
+        /// <param name="amountB">Amount to buy</param>
+        /// <returns>Returns the fee rate of users placing orders in specific markets</returns>
+        public OrderFee OrderFee(int accountId, string market, string tokenB, string amountB)
+        {
+            return _client.OrderFee(_apiKey, accountId, market, tokenB, amountB);
+        }
     }
 }
