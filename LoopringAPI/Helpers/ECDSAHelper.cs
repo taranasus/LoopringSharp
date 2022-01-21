@@ -211,6 +211,112 @@ namespace LoopringSharp
             return (eip712TypedData, typedData);
         }
 
+        public static (TypedData, WithdrawTypedData) GenerateWithdrawTypedData(BigInteger chainId, ApiWithdrawRequest withdrawRequest)
+        {
+            string primaryTypeName = "Withdrawal";
+
+            TypedData eip712TypedData = new TypedData();
+            eip712TypedData.Domain = new Domain()
+            {
+                Name = Constants.EIP721DomainName,
+                Version = Constants.EIP721DomainVersion,
+                ChainId = chainId,
+                VerifyingContract = withdrawRequest.exchange,
+            };
+            eip712TypedData.PrimaryType = primaryTypeName;
+            eip712TypedData.Types = new Dictionary<string, MemberDescription[]>()
+            {
+                ["EIP712Domain"] = new[]
+                    {
+                        new MemberDescription {Name = "name", Type = "string"},
+                        new MemberDescription {Name = "version", Type = "string"},
+                        new MemberDescription {Name = "chainId", Type = "uint256"},
+                        new MemberDescription {Name = "verifyingContract", Type = "address"},
+                    },
+                [primaryTypeName] = new[]
+                    {
+                        new MemberDescription {Name = "owner", Type = "address"},            // owner
+                        new MemberDescription {Name = "accountID", Type = "uint32"},              // accountId
+                        new MemberDescription {Name = "tokenID", Type = "uint16"},          // token.tokenId 
+                        new MemberDescription {Name = "amount", Type = "uint96"},           // token.volume 
+                        new MemberDescription {Name = "feeTokenID", Type = "uint16"},       // maxFee.tokenId
+                        new MemberDescription {Name = "maxFee", Type = "uint96"},           // maxFee.volume
+                        new MemberDescription {Name = "to", Type = "address"},           // maxFee.volume
+                        new MemberDescription {Name = "extraData", Type = "bytes"},           // maxFee.volume
+                        new MemberDescription {Name = "minGas", Type = "uint"},           // maxFee.volume
+                        new MemberDescription {Name = "validUntil", Type = "uint32"},       // validUntill
+                        new MemberDescription {Name = "storageID", Type = "uint32"}         // storageId
+                    },
+
+            };
+            eip712TypedData.Message = new[]
+            {
+                new MemberValue {TypeName = "address", Value = withdrawRequest.owner},
+                new MemberValue {TypeName = "uint32", Value = withdrawRequest.accountId},
+                new MemberValue {TypeName = "uint16", Value = withdrawRequest.token.tokenId},
+                new MemberValue {TypeName = "uint96", Value = BigInteger.Parse(withdrawRequest.token.volume)},
+                new MemberValue {TypeName = "uint16", Value = withdrawRequest.maxFee.tokenId},
+                new MemberValue {TypeName = "uint96", Value = BigInteger.Parse(withdrawRequest.maxFee.volume)},
+                new MemberValue {TypeName = "address", Value = withdrawRequest.to},
+                new MemberValue {TypeName = "bytes", Value = withdrawRequest.extraData},
+                new MemberValue {TypeName = "uint", Value = withdrawRequest.minGas},
+                new MemberValue {TypeName = "uint32", Value = withdrawRequest.validUntil},
+                new MemberValue {TypeName = "uint32", Value = withdrawRequest.storageId},
+            };
+
+            WithdrawTypedData typedData = new WithdrawTypedData()
+            {
+                domain = new WithdrawTypedData.Domain()
+                {
+                    name = Constants.EIP721DomainName,
+                    version = Constants.EIP721DomainVersion,
+                    chainId = chainId,
+                    verifyingContract = withdrawRequest.exchange,
+                },
+                message = new WithdrawTypedData.Message()
+                {
+                    amount = withdrawRequest.token.volume,
+                    accountID = withdrawRequest.accountId,
+                    extraData = withdrawRequest.extraData,
+                    feeTokenID = withdrawRequest.maxFee.tokenId,
+                    maxFee = withdrawRequest.maxFee.volume,
+                    minGas = withdrawRequest.minGas,
+                    owner = withdrawRequest.owner,
+                    storageID = withdrawRequest.storageId,
+                    to = withdrawRequest.to,
+                    tokenID = withdrawRequest.token.tokenId,
+                    validUntil = withdrawRequest.validUntil,
+                },
+                primaryType = primaryTypeName,
+                types = new WithdrawTypedData.Types()
+                {
+                    EIP712Domain = new List<Type>()
+                    {
+                        new Type(){ name = "name", type = "string"},
+                        new Type(){ name="version", type = "string"},
+                        new Type(){ name="chainId", type = "uint256"},
+                        new Type(){ name="verifyingContract", type = "address"},
+                    },
+                    Transfer = new List<Type>()
+                    {
+                        new Type(){name = "owner", type = "address"},            // owner
+                        new Type(){name = "accountID", type = "uint32"},              // accountId
+                        new Type(){name = "tokenID", type = "uint16"},          // token.tokenId 
+                        new Type(){name = "amount", type = "uint96"},           // token.volume 
+                        new Type(){name = "feeTokenID", type = "uint16"},       // maxFee.tokenId
+                        new Type(){name = "maxFee", type = "uint96"},           // maxFee.volume
+                        new Type(){name = "to", type = "address"},           // maxFee.volume
+                        new Type(){name = "extraData", type = "bytes"},           // maxFee.volume
+                        new Type(){name = "minGas", type = "uint"},           // maxFee.volume
+                        new Type(){name = "validUntil", type = "uint32"},       // validUntill
+                        new Type(){name = "storageID", type = "uint32"}         // storageId
+                    }
+                }
+            };
+
+            return (eip712TypedData, typedData);
+        }
+
         public static string GenerateSignature(TypedData eip712TypedData, string ethPrivateKey)
         {
             Eip712TypedDataSigner singer = new Eip712TypedDataSigner();
@@ -220,7 +326,7 @@ namespace LoopringSharp
             var serializedECDRSASignature = EthECDSASignature.CreateStringSignature(ECDRSASignature);
 
             return serializedECDRSASignature + "0" + (int)EthSignType.EIP_712;
-        }       
+        }
 
         public static string GetPublicAddress(string privateKey)
         {

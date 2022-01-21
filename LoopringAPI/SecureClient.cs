@@ -833,9 +833,65 @@ namespace LoopringSharp
             return null;
         }
 
-        public virtual OperationResult Withdraw()
+        public virtual OperationResult Withdraw(string apiKey, string l2Pk, string l1Pk, int accountId, WithdrawRequest request, CounterFactualInfo counterFactualInfo)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new System.Exception("Transfer REQUIRES a valid Loopring wallet apiKey");
+            if (string.IsNullOrWhiteSpace(l2Pk))
+                throw new System.Exception("Transfer REQUIRES a valid Loopring Wallet Layer 2 Private key");
+
+            BigInteger[] inputs = {
+                Utils.ParseHexUnsigned(request.exchange),
+                (BigInteger)accountId,                
+                (BigInteger)request.token.tokenId,
+                BigInteger.Parse(request.token.volume),
+                (BigInteger)request.maxFee.tokenId,
+                BigInteger.Parse(request.maxFee.volume),
+                Utils.ParseHexUnsigned("0x0"), // TODO It says onChainDataHash, i haven't the foggiest what the fuck that is                
+                (BigInteger)request.validUnitl,
+                (BigInteger)request.storageId
+            };
+            var apiRequest = request.GetApiWithdrawRequest(accountId, counterFactualInfo);
+            apiRequest.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
+
+            var typedData = ECDSAHelper.GenerateWithdrawTypedData(ExchangeInfo().chainId, apiRequest).Item1;
+            apiRequest.ecdsaSignature = ECDSAHelper.GenerateSignature(typedData, l1Pk);
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey), (Constants.HttpHeaderAPISigName, apiRequest.ecdsaSignature) };
+            var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
+                Utils.Http(_apiUrl + Constants.WithdrawlsUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
+            return new OperationResult(apiresult);
+        }
+
+        public OperationResult Withdraw(string apiKey, string l2Pk, string l1Pk, int accountId, bool fastWithdrawlMode, string extraData, string feeToken, decimal value, string token, int minGas, string owner, string to)
+        {
+            var amount = (value * 1000000000000000000m).ToString("0");
+            var feeamountresult = OffchainFee(apiKey, accountId, OffChainRequestType.OffchainWithdrawl, feeToken, amount);
+            var feeamount = feeamountresult.fees.Where(w => w.token == feeToken).First().fee;
+
+            WithdrawRequest req = new WithdrawRequest()
+            {
+                exchange = (ExchangeInfo()).exchangeAddress,
+                extraData = extraData,
+                fastWithdrawlMode = fastWithdrawlMode,
+                maxFee = new Token()
+                {
+                    tokenId = GetTokenId(feeToken),
+                    volume = feeamount
+                },
+                token = new Token()
+                {
+                    tokenId = GetTokenId(token),
+                    volume = amount
+                },
+                minGas = minGas,
+                owner = owner,
+                storageId = (StorageId(apiKey, accountId, GetTokenId(token))).offchainId,
+                validUnitl = Utils.GetUnixTimestamp() + (int)TimeSpan.FromDays(365).TotalSeconds,
+                to = to
+            };            
+
+            return Withdraw(apiKey, l2Pk, l1Pk, accountId, req, null);
         }
 
         /// <summary>
@@ -1064,6 +1120,8 @@ namespace LoopringSharp
         public OperationResult Transfer(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress,
             string toAddress, string token, decimal value, string feeToken, string memo)
         {
+
+            // TODO: This needs to be changed so it gets the multiplication power of "token" as not all coins use 1000000000000000000m 
             var amount = (value * 1000000000000000000m).ToString("0");
             var feeamountresult = OffchainFee(apiKey, accountId, OffChainRequestType.Transfer, feeToken, amount);
             var feeamount = feeamountresult.fees.Where(w => w.token == feeToken).First().fee;
