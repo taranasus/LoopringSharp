@@ -11,7 +11,7 @@ namespace LoopringSharp
         public Token maxFee { get; set; }
         public int storageId { get; set; }
         public int validUnitl { get; set; }
-        public BigInteger minGas { get; set; }
+        public int minGas { get; set; }
         public string to { get; set; }
         public string extraData { get; set; }
         public bool fastWithdrawlMode { get; set; }

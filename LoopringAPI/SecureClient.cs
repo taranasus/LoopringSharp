@@ -847,7 +847,7 @@ namespace LoopringSharp
                 BigInteger.Parse(request.token.volume),
                 (BigInteger)request.maxFee.tokenId,
                 BigInteger.Parse(request.maxFee.volume),
-                Utils.ParseHexUnsigned("0x0"), // TODO It says onChainDataHash, i haven't the foggiest what the fuck that is                
+                Utils.ParseHexUnsigned(OnChainDataHash(request.minGas,request.to,Encoding.ASCII.GetBytes(request.extraData))), 
                 (BigInteger)request.validUnitl,
                 (BigInteger)request.storageId
             };
@@ -861,6 +861,11 @@ namespace LoopringSharp
             var apiresult = JsonConvert.DeserializeObject<ApiTransferResult>(
                 Utils.Http(_apiUrl + Constants.WithdrawlsUrl, null, headers, "post", JsonConvert.SerializeObject(apiRequest)));
             return new OperationResult(apiresult);
+        }
+
+        private string OnChainDataHash(int minGas, string to, byte[] extraData)
+        {
+            throw new NotImplementedException();
         }
 
         public OperationResult Withdraw(string apiKey, string l2Pk, string l1Pk, int accountId, bool fastWithdrawlMode, string extraData, string feeToken, decimal value, string token, int minGas, string owner, string to)
