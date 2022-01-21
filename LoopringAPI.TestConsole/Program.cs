@@ -86,6 +86,22 @@ else
 }
 #endregion
 
+#region TestGetAmmPools
+Console.WriteLine("Do you want to see the AMM pools CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING AMM POOLS");
+    var ammPools = client.GetAmmPools();
+    Console.WriteLine("AMM POOLS RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(ammPools, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving AMM pools");
+}
+#endregion
+
 #region TestGetAmmPoolTrades
 Console.WriteLine("Do you want to see AMM pool trades for 0x194db39e4c99f6c8dd81b4647465f7599f3c215a? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 choice = Console.ReadLine();

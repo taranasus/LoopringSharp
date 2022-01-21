@@ -40,6 +40,7 @@ namespace LoopringSharp
 
         public static string AmmPoolTradesUrl = "api/v3/amm/trades";
         public static string AmmJoinExitTransactionsUrl = "/api/v3/amm/user/transactions";
+        public static string AmmPoolConfigurationUrl = "api/v3/amm/pools";
 
         public static string EIP721DomainName = "Loopring Protocol";
         public static string EIP721DomainVersion = "3.6.0";

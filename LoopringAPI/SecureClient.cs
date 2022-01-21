@@ -649,6 +649,29 @@ namespace LoopringSharp
         }
 
         /// <summary>
+        /// Returns the configurations of all supported AMM pools
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <returns>Returns the configurations of all supported AMM pools</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public AmmPoolConfiguration GetAmmPools(string apiKey)
+        {
+            List<(string, string)> parameters = new List<(string, string)>();
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiAmmPoolConfigurationResult>(
+            Utils.Http(_apiUrl + Constants.AmmPoolConfigurationUrl, parameters.ToArray(), headers));
+
+            var result = new AmmPoolConfiguration
+            {
+                pools = apiresult.pools
+            };
+            return result;
+        }
+
+
+        /// <summary>
         /// Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.
         /// </summary>
         /// <param name="accountId">Loopring accountId</param>

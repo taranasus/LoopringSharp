@@ -588,5 +588,14 @@ namespace LoopringSharp
         {
             return _client.OrderUserRateAmount(_apiKey, accountId, market);
         }
+
+        /// <summary>
+        /// Returns the configurations of all supported AMM pools
+        /// </summary>
+        /// <returns>Returns the configurations of all supported AMM pools</returns>
+        public AmmPoolConfiguration GetAmmPools()
+        {
+            return _client.GetAmmPools(_apiKey);
+        }
     }
 }
