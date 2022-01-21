@@ -670,6 +670,36 @@ namespace LoopringSharp
             return result;
         }
 
+        /// <summary>
+        /// Returns the snapshot of specific AMM pool
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API key</param>
+        /// <param name="poolAddress">The AMM pool address</param>
+        /// <returns>Returns the snapshot of specific AMM pool</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public AmmPoolBalance GetAmmPoolBalance(string apiKey, string poolAddress)
+        {
+            List<(string, string)> parameters = new List<(string, string)>()
+            {
+                 ("poolAddress", poolAddress)
+            };
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiAmmPoolBalanceResult>(
+            Utils.Http(_apiUrl + Constants.AmmPoolBalanceUrl, parameters.ToArray(), headers));
+
+            var result = new AmmPoolBalance
+            {
+                poolName =  apiresult.poolName,
+                poolAddress = apiresult.poolAddress,
+                pooled = apiresult.pooled,
+                lp = apiresult.lp,
+                risky = apiresult.risky
+            };
+            return result;
+        }
+
 
         /// <summary>
         /// Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.

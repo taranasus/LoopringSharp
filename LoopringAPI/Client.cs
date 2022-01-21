@@ -597,5 +597,15 @@ namespace LoopringSharp
         {
             return _client.GetAmmPools(_apiKey);
         }
+
+        /// <summary>
+        /// Returns the snapshot of specific AMM pool
+        /// </summary>
+        /// <param name="poolAddress">The AMM pool address</param>
+        /// <returns>Returns the snapshot of specific AMM pool</returns>
+        public AmmPoolBalance GetAmmPoolBalance(string poolAddress)
+        {
+            return _client.GetAmmPoolBalance(_apiKey, poolAddress);
+        }
     }
 }

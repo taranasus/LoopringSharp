@@ -102,6 +102,22 @@ else
 }
 #endregion
 
+#region TestGetAmmPoolsBalance
+Console.WriteLine("Do you want to see the AMM pool balance for  0xf88de0ccd1e84898b4ea62c421009996bfb6156e(* this only works in prod) CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING AMM POOL BALANCE");
+    var ammPoolBalance = client.GetAmmPoolBalance("0xf88de0ccd1e84898b4ea62c421009996bfb6156e");
+    Console.WriteLine("AMM POOLS BALANCE RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(ammPoolBalance, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving AMM pool balance");
+}
+#endregion
+
 #region TestGetAmmPoolTrades
 Console.WriteLine("Do you want to see AMM pool trades for 0x194db39e4c99f6c8dd81b4647465f7599f3c215a? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 choice = Console.ReadLine();
