@@ -548,5 +548,64 @@ namespace LoopringSharp
         {
             return _client.GetAmmJoinExitTransactions(_apiKey, accountId, start, end, limit, offset, txTypes, txStatus, ammPoolAddress);
         }
+
+        /// <summary>
+        /// Returns the users trade history
+        /// </summary>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair. Default null</param>
+        /// <param name="orderHash">The order Hash. Default nul</param>
+        /// <param name="offset">How many transactions to skip. Default 0</param>
+        /// <param name="limit">How many transactions to return. Default 50</param>
+        /// <param name="fromId">The begin id of query. Default 0</param>
+        /// <param name="fillTypes">Fill type. Can be dex or amm. Default null</param>
+        /// <returns>Returns the users trade history</returns>
+        public TradeHistory GetTradeHistory(int accountId, string market = null, string orderHash = null, int offset = 0, int limit= 50, int fromId = 0, FillTypes[] fillTypes = null)
+        {
+            return _client.GetTradeHistory(_apiKey, accountId, market, orderHash, offset, limit, fromId, fillTypes);
+        }
+
+        /// <summary>
+        /// Returns the fee rate of users placing orders in specific markets
+        /// </summary>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <param name="tokenB">Token Id</param>
+        /// <param name="amountB">Amount to buy</param>
+        /// <returns>Returns the fee rate of users placing orders in specific markets</returns>
+        public OrderFee OrderFee(int accountId, string market, string tokenB, string amountB)
+        {
+            return _client.OrderFee(_apiKey, accountId, market, tokenB, amountB);
+        }
+
+        /// <summary>
+        /// Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.
+        /// </summary>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <returns>Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.</returns>
+        public OrderUserRateAmount OrderUserRateAmount(int accountId, string market)
+        {
+            return _client.OrderUserRateAmount(_apiKey, accountId, market);
+        }
+
+        /// <summary>
+        /// Returns the configurations of all supported AMM pools
+        /// </summary>
+        /// <returns>Returns the configurations of all supported AMM pools</returns>
+        public AmmPoolConfiguration GetAmmPools()
+        {
+            return _client.GetAmmPools(_apiKey);
+        }
+
+        /// <summary>
+        /// Returns the snapshot of specific AMM pool
+        /// </summary>
+        /// <param name="poolAddress">The AMM pool address</param>
+        /// <returns>Returns the snapshot of specific AMM pool</returns>
+        public AmmPoolBalance GetAmmPoolBalance(string poolAddress)
+        {
+            return _client.GetAmmPoolBalance(_apiKey, poolAddress);
+        }
     }
 }

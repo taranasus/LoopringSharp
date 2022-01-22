@@ -86,6 +86,38 @@ else
 }
 #endregion
 
+#region TestGetAmmPools
+Console.WriteLine("Do you want to see the AMM pools CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING AMM POOLS");
+    var ammPools = client.GetAmmPools();
+    Console.WriteLine("AMM POOLS RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(ammPools, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving AMM pools");
+}
+#endregion
+
+#region TestGetAmmPoolsBalance
+Console.WriteLine("Do you want to see the AMM pool balance for  0xf88de0ccd1e84898b4ea62c421009996bfb6156e(* this only works in prod) CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING AMM POOL BALANCE");
+    var ammPoolBalance = client.GetAmmPoolBalance("0xf88de0ccd1e84898b4ea62c421009996bfb6156e");
+    Console.WriteLine("AMM POOLS BALANCE RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(ammPoolBalance, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving AMM pool balance");
+}
+#endregion
+
 #region TestGetAmmPoolTrades
 Console.WriteLine("Do you want to see AMM pool trades for 0x194db39e4c99f6c8dd81b4647465f7599f3c215a? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
 choice = Console.ReadLine();
@@ -115,6 +147,56 @@ if (choice.ToLower().StartsWith("y"))
 else
 {
     Console.WriteLine("Skipping retrieving AMM pool join and exits!");
+}
+#endregion
+
+
+#region TestGetUserTradesHistory
+Console.WriteLine("Do you want to see trade history for account id, 12383(*this only returns data in production)? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING TRADE HISTORY");
+    var tradeHistory = client.GetTradeHistory(12383);
+    Console.WriteLine("TRADE HISTORY RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(tradeHistory, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping retrieving trade history!");
+}
+#endregion
+
+#region TestGetOrderFee
+Console.WriteLine($"Do you want to see order fee for your account id, {client._accountId}? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING ORDER FEE");
+    var orderFee = client.OrderFee(client._accountId, "LRC-ETH", "0", "100000000000000000000000000000");
+    Console.WriteLine("ORDER FEE RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(orderFee, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping getting order fee");
+}
+#endregion
+
+
+#region TestOrderUserRateAmount
+Console.WriteLine($"Do you want to see order user rate amount for your account id, {client._accountId}? CONTINUE? [Y]ONTINUE!!!!!! / [S]kip");
+choice = Console.ReadLine();
+if (choice.ToLower().StartsWith("y"))
+{
+    Console.WriteLine("GETTING ORDER USER RATE AMOUNT");
+    var orderUserRateAmount = client.OrderUserRateAmount(client._accountId, "LRC-ETH");
+    Console.WriteLine("ORDER USER RATE AMOUNT RETRIEVED");
+    Console.WriteLine(JsonConvert.SerializeObject(orderUserRateAmount, Formatting.Indented));
+}
+else
+{
+    Console.WriteLine("Skipping getting order user rate amount");
 }
 #endregion
 

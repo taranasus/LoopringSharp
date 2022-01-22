@@ -71,12 +71,12 @@ Here's a list of all the Loopring API Endpoints and which ones have been impleme
 |X|GetWithdrawls|/api/v3/user/withdrawals|Get user onchain withdrawal history.|
 ||Withdraw|/api/v3/user/withdrawals|Submit offchain withdraw request|
 |X|GetTransfers|/api/v3/user/transfers|Get user transfer list.|
-||GetTradeHistory|/api/v3/user/trades|Get user trade history.|
-||OrderFee|/api/v3/user/orderFee|Returns the fee rate of users placing orders in specific markets|
-||OrderUserRateAmount|/api/v3/user/orderUserRateAmount|This API returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.|
+|X|GetTradeHistory|/api/v3/user/trades|Get user trade history.|
+|X|OrderFee|/api/v3/user/orderFee|Returns the fee rate of users placing orders in specific markets|
+|X|OrderUserRateAmount|/api/v3/user/orderUserRateAmount|This API returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.|
 |X|OffchainFee|api/v3/user/offchainFee|Returns the fee amount|
-||GetAmmPools|/api/v3/amm/pools|Get AMM pool configurations|
-||GetAmmPoolBalance|/api/v3/amm/balance|Get AMM pool balance snapshot|
+|X|GetAmmPools|/api/v3/amm/pools|Get AMM pool configurations|
+|X|GetAmmPoolBalance|/api/v3/amm/balance|Get AMM pool balance snapshot|
 ||JoinAmmPool|/api/v3/amm/join|Join into AMM pool|
 ||ExitAmmPool|/api/v3/amm/exit|Exit an AMM pool|
 |X|AmmTransactions|/api/v3/amm/user/transactions|Return the user's AMM join/exit transactions|

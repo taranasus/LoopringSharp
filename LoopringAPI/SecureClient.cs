@@ -603,6 +603,166 @@ namespace LoopringSharp
             return new OperationResult(apiresult);
         }
 
+        /// <summary>
+        /// Returns the users trade history
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <param name="orderHash">The order Hash</param>
+        /// <param name="offset">How many transactions to skip</param>
+        /// <param name="limit">How many transactions to return</param>
+        /// <param name="fromId">The begin id of query</param>
+        /// <param name="fillTypes">Fill type. Can be dex or amm</param>
+        /// <returns>Returns the users trade history</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public TradeHistory GetTradeHistory(string apiKey, int accountId, string market, string orderHash, int offset, int limit, int fromId, FillTypes[] fillTypes)
+        {
+            List<(string, string)> parameters = new List<(string, string)>() 
+            { 
+                ("accountId", accountId.ToString()) ,
+                ("offset", offset.ToString()),
+                ("limit", limit.ToString())
+            };
+            
+            if (!string.IsNullOrEmpty(market))
+                parameters.Add(("market", market));
+            if (fillTypes != null && fillTypes.Length > 0)
+                parameters.Add(("fillTypes", string.Join(",", fillTypes.Select(s => s.ToString()))));
+            if (!string.IsNullOrEmpty(orderHash))
+                parameters.Add(("orderHash", orderHash));
+            if (fromId != 0)
+                parameters.Add(("fromId", fromId.ToString()));
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiTradeHistoryResult>(
+            Utils.Http(_apiUrl + Constants.TradeHistoryUrl, parameters.ToArray(), headers));
+
+            var result = new TradeHistory()
+            {
+                totalNum = apiresult.totalNum,
+                trades = apiresult.trades
+            };
+  
+            return result;
+        }
+
+        /// <summary>
+        /// Returns the configurations of all supported AMM pools
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API Key</param>
+        /// <returns>Returns the configurations of all supported AMM pools</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public AmmPoolConfiguration GetAmmPools(string apiKey)
+        {
+            List<(string, string)> parameters = new List<(string, string)>();
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiAmmPoolConfigurationResult>(
+            Utils.Http(_apiUrl + Constants.AmmPoolConfigurationUrl, parameters.ToArray(), headers));
+
+            var result = new AmmPoolConfiguration
+            {
+                pools = apiresult.pools
+            };
+            return result;
+        }
+
+        /// <summary>
+        /// Returns the snapshot of specific AMM pool
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API key</param>
+        /// <param name="poolAddress">The AMM pool address</param>
+        /// <returns>Returns the snapshot of specific AMM pool</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public AmmPoolBalance GetAmmPoolBalance(string apiKey, string poolAddress)
+        {
+            List<(string, string)> parameters = new List<(string, string)>()
+            {
+                 ("poolAddress", poolAddress)
+            };
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiAmmPoolBalanceResult>(
+            Utils.Http(_apiUrl + Constants.AmmPoolBalanceUrl, parameters.ToArray(), headers));
+
+            var result = new AmmPoolBalance
+            {
+                poolName =  apiresult.poolName,
+                poolAddress = apiresult.poolAddress,
+                pooled = apiresult.pooled,
+                lp = apiresult.lp,
+                risky = apiresult.risky
+            };
+            return result;
+        }
+
+
+        /// <summary>
+        /// Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.
+        /// </summary>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <returns>Returns 2 minimum amounts, one is based on users fee rate, the other is based on the maximum fee bips which is 0.6%. In other words, if user wants to keep fee rate, the minimum order is higher, otherwise he needs to pay more but can place less amount orders.</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public OrderUserRateAmount OrderUserRateAmount(string apiKey, int accountId, string market)
+        {
+            List<(string, string)> parameters = new List<(string, string)>()
+            {
+                ("accountId", accountId.ToString()) ,
+                ("market", market)
+            };
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiOrderUserRateAmountResult>(
+            Utils.Http(_apiUrl + Constants.OrderUserRateAmountUrl, parameters.ToArray(), headers));
+
+            var result = new OrderUserRateAmount()
+            {
+                gasPrice = apiresult.gasPrice,
+                amounts = apiresult.amounts,
+                cacheOverdueAt = apiresult.cacheOverdueAt
+            };
+            return result;
+        }
+
+        /// <summary>
+        /// Returns the fee rate of users placing orders in specific markets
+        /// </summary>
+        /// <param name="apiKey">Your Loopring API key</param>
+        /// <param name="accountId">Loopring accountId</param>
+        /// <param name="market" example="LRC-ETH">Trading pair</param>
+        /// <param name="tokenB">Token Id</param>
+        /// <param name="amountB">Amount to buy</param>
+        /// <returns>Returns the fee rate of users placing orders in specific markets</returns>
+        /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
+        public OrderFee OrderFee(string apiKey, int accountId, string market, string tokenB, string amountB)
+        {
+            List<(string, string)> parameters = new List<(string, string)>()
+            {
+                ("accountId", accountId.ToString()) ,
+                ("market", market),
+                ("tokenB", tokenB),
+                ("amountB", amountB)
+            };
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey) };
+
+            var apiresult = JsonConvert.DeserializeObject<ApiOrderFeeResult>(
+            Utils.Http(_apiUrl + Constants.OrderFeeUrl, parameters.ToArray(), headers));
+
+            var result = new OrderFee()
+            {
+                feeRate = apiresult.feeRate,
+                gasPrice = apiresult.gasPrice,
+            };
+            return result;
+        }
+
 
 
         /// <summary>

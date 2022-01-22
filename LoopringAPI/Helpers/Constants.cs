@@ -14,6 +14,9 @@ namespace LoopringSharp
         public static string DepositsUrl = "/api/v3/user/deposits";
         public static string WithdrawlsUrl = "/api/v3/user/withdrawals";
         public static string TransfersUrl = "/api/v3/user/transfers";
+        public static string TradeHistoryUrl = "api/v3/user/trades";
+        public static string OrderFeeUrl = "api/v3/user/orderFee";
+        public static string OrderUserRateAmountUrl = "api/v3/user/orderUserRateAmount";
         public static string StorageIdUrl = "api/v3/storageId";
         public static string TickerUrl = "api/v3/ticker";
         public static string TimestampUrl = "api/v3/timestamp";
@@ -37,6 +40,8 @@ namespace LoopringSharp
 
         public static string AmmPoolTradesUrl = "api/v3/amm/trades";
         public static string AmmJoinExitTransactionsUrl = "/api/v3/amm/user/transactions";
+        public static string AmmPoolConfigurationUrl = "api/v3/amm/pools";
+        public static string AmmPoolBalanceUrl = "api/v3/amm/balance";
 
         public static string EIP721DomainName = "Loopring Protocol";
         public static string EIP721DomainVersion = "3.6.0";
