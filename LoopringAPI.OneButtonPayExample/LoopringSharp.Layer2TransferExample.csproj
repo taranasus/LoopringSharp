@@ -9,7 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LoopringSharp.MetaMask\LoopringSharp.MetaMask.csproj" />
+    <ProjectReference Include="..\LoopringSharp.MetaMask\LoopringSharp.MetaMask.csproj">
+      <ReferenceSourceTarget></ReferenceSourceTarget>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

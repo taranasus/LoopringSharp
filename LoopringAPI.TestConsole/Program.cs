@@ -18,6 +18,8 @@ ApiKeys apiKeys = ReadConfigFile(false);
 
 //Environment.Exit(0);
 
+// NOTE: WALLETS CREATED THROUGH LOOPRING DO NOT EXPOSE THEIR L1 ADDRESS. YOU NEED TO USE A ALREADY EXISTING L1 WALLET!
+
 LoopringSharp.Client client = new LoopringSharp.Client(apiKeys.apiUrl, apiKeys.l1Pk);
 //LoopringSharp.Client client = new LoopringSharp.Client("https://uat2.loopring.io/", WalletService.WalletConnect);
 
@@ -54,7 +56,7 @@ if (choice.ToLower().StartsWith("y"))
     Console.WriteLine("GETTING L2 BLOCK INFO!");
     var l2BlockInfoResult = client.Get2BlockInfo(15623);
     Console.WriteLine("L2 BLOCK INFO RETRIEVED!");
-    Console.WriteLine(JsonConvert.SerializeObject(l2BlockInfoResult, Formatting.Indented, 
+    Console.WriteLine(JsonConvert.SerializeObject(l2BlockInfoResult, Formatting.Indented,
     new JsonSerializerSettings
     {
         NullValueHandling = NullValueHandling.Ignore

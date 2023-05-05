@@ -9,13 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LoopringAPI\LoopringSharp.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="apiKeys.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\LoopringAPI\LoopringSharp.csproj" />
+  </ItemGroup>
 </Project>

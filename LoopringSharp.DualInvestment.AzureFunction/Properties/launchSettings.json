@@ -1,0 +1,9 @@
+﻿{
+  "profiles": {
+    "LoopringSharp.DualInvestment.AzureFunction": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7189",
+      "launchBrowser": false
+    }
+  }
+}

@@ -5,7 +5,7 @@ namespace LoopringSharp
 {
     public static class Constants
     {
-        public static Dictionary<string, int> TokenIDMapper = new Dictionary<string, int>();        
+        public static Dictionary<string, int> TokenIDMapper = new Dictionary<string, int>();
 
         public static string OffchainFeeUrl = "api/v3/user/offchainFee";
         public static string CreateInfoUrl = "api/v3/user/createInfo";
@@ -22,7 +22,7 @@ namespace LoopringSharp
         public static string TimestampUrl = "api/v3/timestamp";
         public static string TransferUrl = "api/v3/transfer";
         public static string ApiKeyUrl = "api/v3/apiKey";
-        
+
         public static string OrderUrl = "api/v3/order";
         public static string OrdersUrl = "api/v3/orders";
         public static string AccountUrl = "api/v3/account";
@@ -49,7 +49,9 @@ namespace LoopringSharp
         public static string HttpHeaderAPIKeyName = "X-API-KEY";
         public static string HttpHeaderAPISigName = "X-API-SIG";
 
-       
+        public static string DualInvestmentInfoUrl = "api/v3/dual/infos";
+
+
 
         public static string WalletConnectHTML = @"<!DOCTYPE html>
             <html>

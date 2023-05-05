@@ -1,55 +1,49 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyVersion>0.3.4</AssemblyVersion>
-    <FileVersion>0.3.4</FileVersion>
-    <Version>0.3.4</Version>
-    <Authors>Taranasus</Authors>
-    <Company>Taranasus</Company>
-    <Description>A library to help you connect with the Loopring API https://docs.loopring.io/</Description>
-    <PackageProjectUrl>https://github.com/taranasus/LoopringSharp</PackageProjectUrl>
-    <PackageIcon>loopringsharp.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/taranasus/LoopringSharp</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>loopring;loopringsharp;csharp;c#;loopring c#;loopring#;loopringapi;loopring api;layer2;l2</PackageTags>
-    <PackageReleaseNotes>Removed the metamask and wallet connect stuff from the base package as it's not relevant here</PackageReleaseNotes>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="LICENSE.txt" Pack="true" PackagePath="" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="LICENSE.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Nethereum.Signer.EIP712" Version="4.1.1" />
-    <PackageReference Include="Nethereum.Web3" Version="4.1.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Portable.BouncyCastle" Version="1.8.10" />
-    <PackageReference Include="PoseidonSharp" Version="1.0.0" />    
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="loopringsharp.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<AssemblyVersion>0.3.4</AssemblyVersion>
+		<FileVersion>0.3.4</FileVersion>
+		<Version>0.3.4</Version>
+		<Authors>Taranasus</Authors>
+		<Company>Taranasus</Company>
+		<Description>A library to help you connect with the Loopring API https://docs.loopring.io/</Description>
+		<PackageProjectUrl>https://github.com/taranasus/LoopringSharp</PackageProjectUrl>
+		<PackageIcon>loopringsharp.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/taranasus/LoopringSharp</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>loopring;loopringsharp;csharp;c#;loopring c#;loopring#;loopringapi;loopring api;layer2;l2</PackageTags>
+		<PackageReleaseNotes>Removed the metamask and wallet connect stuff from the base package as it's not relevant here</PackageReleaseNotes>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="LICENSE.txt" Pack="true" PackagePath="" />
+	</ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="LICENSE.txt">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</EmbeddedResource>
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Nethereum.Signer.EIP712" Version="4.14.0" />
+		<PackageReference Include="Nethereum.Web3" Version="4.14.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
+		<PackageReference Include="PoseidonSharp" Version="1.0.1" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="loopringsharp.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 </Project>

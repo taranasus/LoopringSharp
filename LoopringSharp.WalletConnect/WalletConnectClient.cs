@@ -68,11 +68,12 @@ namespace LoopringSharp.WalletConnect
                 StartInfo = new System.Diagnostics.ProcessStartInfo(Directory.GetCurrentDirectory() + "/walletconnect.html") { UseShellExecute = true }
             };
             browser.Start();
-            
+
             File.Delete("walletconnect.html");
             browser.Kill();
 
-            return WalletConnectServer.GetEthAddress();            
+            return (null, null, null, null);
+            //return WalletConnectServer.GetEthAddress();            
         }
     }
 }

@@ -7,6 +7,7 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
 using Nethereum.Signer.Crypto;
 using Nethereum.Signer.EIP712;
+using Nethereum.ABI.EIP712;
 using Nethereum.Util;
 using Nethereum.Web3;
 
@@ -28,7 +29,7 @@ namespace LoopringSharp
             return result;
         }
 
-        public static (TypedData, AccountUpdateTypedData) GenerateAccountUpdateTypedData(BigInteger chainId, ApiUpdateEDDSARequest accountUpdateRequest)
+        public static (TypedData<Domain>, AccountUpdateTypedData) GenerateAccountUpdateTypedData(BigInteger chainId, ApiUpdateEDDSARequest accountUpdateRequest)
         {
             string primaryTypeName = "AccountUpdate";
             AccountUpdateTypedData typedData = new AccountUpdateTypedData()
@@ -72,8 +73,7 @@ namespace LoopringSharp
                     }
                 }
             };
-
-            TypedData eip712TypedData = new TypedData();
+            var eip712TypedData = new TypedData<Domain>();
             eip712TypedData.Domain = new Domain()
             {
                 Name = Constants.EIP721DomainName,
@@ -117,11 +117,11 @@ namespace LoopringSharp
             return (eip712TypedData, typedData);
         }
 
-        public static (TypedData, TransferTypedData) GenerateTransferTypedData(BigInteger chainId, ApiTransferRequest transferRequest)
+        public static (TypedData<Domain>, TransferTypedData) GenerateTransferTypedData(BigInteger chainId, ApiTransferRequest transferRequest)
         {
             string primaryTypeName = "Transfer";
 
-            TypedData eip712TypedData = new TypedData();
+            var eip712TypedData = new TypedData<Domain>();
             eip712TypedData.Domain = new Domain()
             {
                 Name = Constants.EIP721DomainName,
@@ -211,7 +211,7 @@ namespace LoopringSharp
             return (eip712TypedData, typedData);
         }
 
-        public static string GenerateSignature(TypedData eip712TypedData, string ethPrivateKey)
+        public static string GenerateSignature(TypedData<Domain> eip712TypedData, string ethPrivateKey)
         {
             Eip712TypedDataSigner singer = new Eip712TypedDataSigner();
             var ethECKey = new Nethereum.Signer.EthECKey(ethPrivateKey.Replace("0x", ""));
@@ -220,7 +220,7 @@ namespace LoopringSharp
             var serializedECDRSASignature = EthECDSASignature.CreateStringSignature(ECDRSASignature);
 
             return serializedECDRSASignature + "0" + (int)EthSignType.EIP_712;
-        }       
+        }
 
         public static string GetPublicAddress(string privateKey)
         {

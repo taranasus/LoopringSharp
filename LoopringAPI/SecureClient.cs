@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PoseidonSharp;
 using System;
 using System.Collections.Generic;
@@ -495,8 +496,8 @@ namespace LoopringSharp
             };
         }
 
-        
-        
+
+
 
         /// <summary>
         /// Send some tokens to anyone else on L2
@@ -618,13 +619,13 @@ namespace LoopringSharp
         /// <exception cref="System.Exception">Gets thrown when there's a problem getting info from the Loopring API endpoint</exception>
         public TradeHistory GetTradeHistory(string apiKey, int accountId, string market, string orderHash, int offset, int limit, int fromId, FillTypes[] fillTypes)
         {
-            List<(string, string)> parameters = new List<(string, string)>() 
-            { 
+            List<(string, string)> parameters = new List<(string, string)>()
+            {
                 ("accountId", accountId.ToString()) ,
                 ("offset", offset.ToString()),
                 ("limit", limit.ToString())
             };
-            
+
             if (!string.IsNullOrEmpty(market))
                 parameters.Add(("market", market));
             if (fillTypes != null && fillTypes.Length > 0)
@@ -644,7 +645,7 @@ namespace LoopringSharp
                 totalNum = apiresult.totalNum,
                 trades = apiresult.trades
             };
-  
+
             return result;
         }
 
@@ -691,7 +692,7 @@ namespace LoopringSharp
 
             var result = new AmmPoolBalance
             {
-                poolName =  apiresult.poolName,
+                poolName = apiresult.poolName,
                 poolAddress = apiresult.poolAddress,
                 pooled = apiresult.pooled,
                 lp = apiresult.lp,
@@ -839,6 +840,33 @@ namespace LoopringSharp
                 return apiresult.transactions.ToList();
             }
             return null;
+        }
+
+        /// <summary>
+        /// Get the details of a dualInvestmentMarket
+        /// </summary>
+        /// <param name="BaseSymbol">The Crypto you want to invest</param>
+        /// <param name="Currency">The Crypto you want to parity with</param>
+        /// <param name="DualType">DUAL_BASE if crypto, DUAL_CURRENCY if stablecoin</param>
+        /// <param name="Limit">How many results per request, default 20</param>
+        /// <param name="QuoteSymbol">Fiat currency to quote in</param>
+        /// <returns></returns>
+        public JObject GetDualInvestmetns(string BaseSymbol = "ETH", string Currency = "USDT", string DualType = "DUAL_BASE", int Limit = 20, string QuoteSymbol = "USD")
+        {
+            var startTIme = Timestamp();
+
+            List<(string, string)> parameters = new List<(string, string)>()
+                { ("baseSymbol",BaseSymbol),
+                  ("currency",Currency),
+                  ("dualType",DualType),
+                  ("limit",Limit.ToString()),
+                  ("quoteSymbol",QuoteSymbol),
+                  ("startTime",startTIme.ToString()),
+                  ("timeSpan", "777600000")};
+
+            var apiResponse = Utils.Http(_apiUrl + Constants.DualInvestmentInfoUrl, parameters.ToArray());
+
+            return JObject.Parse(apiResponse);
         }
 
         /// <summary>
@@ -1122,12 +1150,12 @@ namespace LoopringSharp
             return pendingRequests;
         }
 
-        
+
 
 
         private DateTime ExchangeInfoShorTermCacheTime;
         private ApiExchangeInfoResult EchangeInfoShorTermCache;
-    
+
         /// <summary>
         /// Submit an order to exchange two currencies, but with all the nonsense removed
         /// </summary>
@@ -1252,7 +1280,7 @@ namespace LoopringSharp
             };
             return Transfer(apiKey, l2Pk, l1Pk, req, memo, null, null);
         }
-        
+
         /// <summary>
         /// WARNING!!! This has a fee asociated with it. Make a OffchainFee request of type OffChainRequestType.UpdateAccount to see what the fee is.
         /// Updates the EDDSA key associated with the specified account, making the previous one invalid in the process.

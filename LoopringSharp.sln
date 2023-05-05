@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoopringSharp.MetaMask", "L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoopringSharp.WalletConnect", "LoopringSharp.WalletConnect\LoopringSharp.WalletConnect.csproj", "{BF3D356C-E986-4A1A-ADAD-15D3C36B6FAC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoopringSharp.DualInvestment.AzureFunction", "LoopringSharp.DualInvestment.AzureFunction\LoopringSharp.DualInvestment.AzureFunction.csproj", "{6AECD03B-1C79-4700-A574-93FEECF3D18E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{BF3D356C-E986-4A1A-ADAD-15D3C36B6FAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF3D356C-E986-4A1A-ADAD-15D3C36B6FAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BF3D356C-E986-4A1A-ADAD-15D3C36B6FAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AECD03B-1C79-4700-A574-93FEECF3D18E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AECD03B-1C79-4700-A574-93FEECF3D18E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AECD03B-1C79-4700-A574-93FEECF3D18E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AECD03B-1C79-4700-A574-93FEECF3D18E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

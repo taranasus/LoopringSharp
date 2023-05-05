@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Web;
+using Newtonsoft.Json.Linq;
 
 namespace LoopringSharp
 {
@@ -87,7 +88,7 @@ namespace LoopringSharp
         /// <returns></returns>
         public List<ApiTransferData> GetTransfers(int limit = 50, long start = 0, long end = 0, List<OrderStatus> statuses = null, string tokenSymbol = null, int offset = 0, TransferTypes? transferTypes = null, string[] hashes = null)
         {
-            return _client.GetTransfers(_apiKey,_accountId, limit, start, end, statuses, tokenSymbol , offset, transferTypes, hashes);
+            return _client.GetTransfers(_apiKey, _accountId, limit, start, end, statuses, tokenSymbol, offset, transferTypes, hashes);
         }
 
         /// <summary>
@@ -97,9 +98,9 @@ namespace LoopringSharp
         /// <param name="ethPrivateKey">Your Layer 1, Ethereum Private Key, needed for some very specific API calls</param>
         /// <param name="accountId">Your Loopring Account ID, used for a surprising amount of calls</param>
         public Client(string apiUrl, (string secretKey, string ethAddress, string publicKeyX, string publicKeyY) l2Auth)
-        {          
+        {
             _ethAddress = l2Auth.ethAddress;
-            _client = new SecureClient(apiUrl);            
+            _client = new SecureClient(apiUrl);
             _loopringPrivateKey = l2Auth.secretKey;
             _loopringPublicKeyX = l2Auth.publicKeyX;
             _loopringPublicKeyY = l2Auth.publicKeyY;
@@ -205,7 +206,7 @@ namespace LoopringSharp
         /// </summary>
         /// <param name="market">The ID of a trading pair.</param>
         /// <param name="level">Order book aggregation level, larger value means further price aggregation. Default: 2</param>
-        /// <param name="limit">Maximum numbers of bids/asks. Default : 50</param>
+        /// <param name="limit">Maximum numbers of bids/a sks. Default : 50</param>
         /// <returns>Returns the order book of a given trading pair.</returns>
         public Depth GetDepth(string market, int level = 2, int limit = 50)
         {
@@ -324,6 +325,20 @@ namespace LoopringSharp
         public OrderDetails OrderDetails(string orderHash)
         {
             return _client.OrderDetails(_apiKey, _accountId, orderHash);
+        }
+
+        /// <summary>
+        /// Get the details of a dualInvestmentMarket
+        /// </summary>
+        /// <param name="BaseSymbol">The Crypto you want to invest</param>
+        /// <param name="Currency">The Crypto you want to parity with</param>
+        /// <param name="DualType">DUAL_BASE if crypto, DUAL_CURRENCY if stablecoin</param>
+        /// <param name="Limit">How many results per request, default 20</param>
+        /// <param name="QuoteSymbol">Fiat currency to quote in</param>
+        /// <returns></returns>
+        public JObject GetDualInvestmetns(string BaseSymbol = "ETH", string Currency = "USDT", string DualType = "DUAL_BASE", int Limit = 20, string QuoteSymbol = "USD")
+        {
+            return _client.GetDualInvestmetns(BaseSymbol, Currency, DualType, Limit, QuoteSymbol);
         }
 
         /// <summary>
@@ -560,7 +575,7 @@ namespace LoopringSharp
         /// <param name="fromId">The begin id of query. Default 0</param>
         /// <param name="fillTypes">Fill type. Can be dex or amm. Default null</param>
         /// <returns>Returns the users trade history</returns>
-        public TradeHistory GetTradeHistory(int accountId, string market = null, string orderHash = null, int offset = 0, int limit= 50, int fromId = 0, FillTypes[] fillTypes = null)
+        public TradeHistory GetTradeHistory(int accountId, string market = null, string orderHash = null, int offset = 0, int limit = 50, int fromId = 0, FillTypes[] fillTypes = null)
         {
             return _client.GetTradeHistory(_apiKey, accountId, market, orderHash, offset, limit, fromId, fillTypes);
         }
