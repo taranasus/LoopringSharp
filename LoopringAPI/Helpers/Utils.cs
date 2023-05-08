@@ -16,7 +16,7 @@ using System.Web;
 namespace LoopringSharp
 {
     public static class Utils
-    {        
+    {
         public static string IntervalsEnumToString(Intervals interval)
         {
             var intervals = "";
@@ -49,7 +49,7 @@ namespace LoopringSharp
             var reg = new Regex(@"%[a-f0-9]{2}");
             stringToEncode = HttpUtility.UrlEncode(stringToEncode);
             return reg.Replace(stringToEncode, m => m.Value.ToUpperInvariant());
-        }       
+        }
 
         public static BigInteger CreateSha256Signature(HttpMethod method, List<(string Key, string Value)> queryParams, string postBody, string apiMethod, string apiUrl)
         {
@@ -101,6 +101,8 @@ namespace LoopringSharp
 
         public static int GetUnixTimestamp() => (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
 
+        public static int GetUnixTimestamp(int addDays) => (int)(DateTime.UtcNow.AddDays(addDays).Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+
         public static BigInteger ParseHexUnsigned(string toParse)
         {
             toParse = toParse.Replace("0x", "");
@@ -112,7 +114,7 @@ namespace LoopringSharp
 
         static ConcurrentQueue<CustomHttpRequest> httpRequests = new ConcurrentQueue<CustomHttpRequest>();
         static ConcurrentDictionary<Guid, string> httpResults = new ConcurrentDictionary<Guid, string>();
-      
+
         public static string Http(string url, (string, string)[] parameters = null, (string, string)[] headers = null, string method = "get", string body = null)
         {
             if (parameters != null && parameters.Length > 0)
@@ -159,7 +161,7 @@ namespace LoopringSharp
                     requestBody.Write(dataBytes, 0, dataBytes.Length);
                 }
             }
-           
+
 
             string result = null;
             try
@@ -176,12 +178,12 @@ namespace LoopringSharp
                 using (var stream = ex.Response.GetResponseStream())
                 using (var reader = new StreamReader(stream))
                 {
-                    throw new Exception("LOOPRING API ERROR: "+reader.ReadToEnd());
+                    throw new Exception("LOOPRING API ERROR: " + reader.ReadToEnd());
                 }
             }
 
             return result;
-        }       
+        }
     }
     public class CustomHttpRequest
     {

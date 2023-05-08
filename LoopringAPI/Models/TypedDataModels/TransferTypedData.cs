@@ -28,7 +28,7 @@ namespace LoopringSharp
             public string maxFee { get; set; }
             public int validUntil { get; set; }
             public int storageID { get; set; }
-        }       
+        }
 
         public class Types
         {

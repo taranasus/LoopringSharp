@@ -341,6 +341,11 @@ namespace LoopringSharp
             return _client.GetDualInvestmetns(BaseSymbol, Currency, DualType, Limit, QuoteSymbol);
         }
 
+        public string StartDualInvestment(DualBaseModel dualInvestment, decimal stableCoinProfit, string stableCoinTokenName, decimal cryptoPorfit, string CryptoTokenName)
+        {
+            return _client.StartDualInvestment(_apiKey, _loopringPrivateKey, _ethPrivateKey, _accountId, _ethAddress, dualInvestment, stableCoinProfit, stableCoinTokenName, cryptoPorfit, CryptoTokenName, false);
+        }
+
         /// <summary>
         /// Get the details of an order based on order hash.
         /// </summary>

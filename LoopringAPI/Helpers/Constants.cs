@@ -50,6 +50,7 @@ namespace LoopringSharp
         public static string HttpHeaderAPISigName = "X-API-SIG";
 
         public static string DualInvestmentInfoUrl = "api/v3/dual/infos";
+        public static string DualInvestmentOrder = "api/v3/dual/order";
 
 
 

@@ -17,19 +17,19 @@ namespace LoopringSharp
             return signer.Sign();
         }
 
-       
+
 
         public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) EDDSASignLocal(string exchangeAddress, int nonce, string l1Pk, string ethAddress, bool skipPublicKeyCalculation = false)
         {
-            string msg1 = "Sign this message to access Loopring Exchange: "+exchangeAddress+" with key nonce: "+(nonce);
+            string msg1 = "Sign this message to access Loopring Exchange: " + exchangeAddress + " with key nonce: " + (nonce);
             var signer1 = new EthereumMessageSigner();
             var rawKey = signer1.EncodeUTF8AndSign(msg1, new EthECKey(l1Pk));
             // Requesting metamask to sign our package so we can tare it apart and get our public and secret keys
 
-            return RipKeyAppart((rawKey,ethAddress), skipPublicKeyCalculation);
+            return RipKeyAppart((rawKey, ethAddress), skipPublicKeyCalculation);
         }
 
-        public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) RipKeyAppart((string eddsa,string ethAddress) rawKey, bool skipPublicKeyCalculation = false)
+        public static (string publicKeyX, string publicKeyY, string secretKey, string ethAddress) RipKeyAppart((string eddsa, string ethAddress) rawKey, bool skipPublicKeyCalculation = false)
         {
             BigInteger order = BigInteger.Parse("21888242871839275222246405745257275088614511777268538073601725287587578984328");
             BigInteger p = BigInteger.Parse("21888242871839275222246405745257275088548364400416034343698204186575808495617");
@@ -52,9 +52,9 @@ namespace LoopringSharp
             if (!skipPublicKeyCalculation)
                 publicKey = mulPointEscalar(Base8, secertKey, p);
 
-            return ("0x" + publicKey[0].ToString("x").PadLeft(64,'0'), "0x" + publicKey[1].ToString("x").PadLeft(64, '0'), "0x" + secertKey.ToString("x").PadLeft(64, '0'), rawKey.ethAddress);
+            return ("0x" + publicKey[0].ToString("x").PadLeft(64, '0'), "0x" + publicKey[1].ToString("x").PadLeft(64, '0'), "0x" + secertKey.ToString("x").PadLeft(64, '0'), rawKey.ethAddress);
         }
-        
+
         public static string EddsaSignUrl(string l2Pk, HttpMethod method, List<(string Key, string Value)> queryParams, string postBody, string apiMethod, string apiUrl)
         {
             var message = Utils.CreateSha256Signature(
@@ -63,6 +63,7 @@ namespace LoopringSharp
                 postBody,
                 apiMethod,
                 apiUrl);
+
 
             var signer = new Eddsa(message, l2Pk);
             return signer.Sign();
@@ -153,14 +154,14 @@ namespace LoopringSharp
         static BigInteger leBuff2Int(byte[] buff)
         {
             BigInteger res = 0;
-            for(int i=0;i<buff.Length;i++)
+            for (int i = 0; i < buff.Length; i++)
             {
                 var n = new BigInteger(buff[i]);
                 res = BigInteger.Add(res, n << (i * 8));
             }
 
             return res;
-        }        
+        }
 
         static BigInteger rsh(BigInteger original, int order)
         {

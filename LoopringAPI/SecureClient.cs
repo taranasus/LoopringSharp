@@ -1,8 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
+using Nethereum.Contracts.Standards.ERC20.TokenList;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1.Ocsp;
 using PoseidonSharp;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Net.Http;
 using System.Numerics;
@@ -867,6 +871,71 @@ namespace LoopringSharp
             var apiResponse = Utils.Http(_apiUrl + Constants.DualInvestmentInfoUrl, parameters.ToArray());
 
             return JObject.Parse(apiResponse);
+        }
+
+
+        public string StartDualInvestment(string apiKey, string l2Pk, string l1Pk, int accountId, string fromAddress, DualBaseModel dualinvestment, decimal stableCoinProfit, string stableCoinTokenName, decimal cryptoPorfit, string CryptoTokenName, bool fillAmountBOrS)
+        {
+            DualInvestmentModel pbody = new DualInvestmentModel();
+            pbody.accountId = accountId;
+            pbody.baseProfit = dualinvestment.Profit;
+
+            //"volume": "368780000"
+            //	volume	"365391510"	
+            //"volume": "3651584805"
+
+            pbody.buyToken = new Token()  // THE USD VALUE OF THIS PROPOSED TRANSACTION
+            {
+                tokenId = GetTokenId(stableCoinTokenName),
+                volume = (stableCoinProfit * 1000000).ToString().Split('.')[0]
+            };
+
+            //	volume	"186722997000000000"
+            // "volume":"186484200000000000"   
+
+            pbody.sellToken = new Token()
+            {
+                tokenId = GetTokenId(CryptoTokenName),
+                volume = (cryptoPorfit * 10000000 * 100000000000).ToString().Split('.')[0]
+            };
+            pbody.clientOrderId = "";
+            pbody.exchange = ExchangeInfo().exchangeAddress;
+            pbody.expireTime = dualinvestment.ExpireTime;
+            pbody.fee = "0";
+            pbody.fillAmountBOrS = false;
+            pbody.maxFeeBips = 5;
+            pbody.productId = dualinvestment.ProductId;
+            pbody.settleRatio = (double.Parse(dualinvestment.Profit) * dualinvestment.Ratio).ToString("0.000000");
+            pbody.storageId = (StorageId(apiKey, accountId, pbody.sellToken.tokenId)).orderId;
+            pbody.validUntil = (dualinvestment.ExpireTime / 1000); // No idea if this is correct
+            pbody.validUntil = Utils.GetUnixTimestamp(30);
+
+            var requestMessageSTring = JsonConvert.SerializeObject(pbody, Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+
+            // SIGNING THE PACKAGE IS FAILING, PROBABLY WRONG ADDSA ALGORITHM.
+
+            BigInteger[] inputs = {
+                Utils.ParseHexUnsigned(pbody.exchange),
+                pbody.storageId,
+                pbody.accountId,
+                pbody.sellToken.tokenId,
+                pbody.buyToken.tokenId,
+                BigInteger.Parse(pbody.sellToken.volume),
+                BigInteger.Parse(pbody.buyToken.volume),
+                pbody.validUntil,
+                pbody.maxFeeBips,
+                (fillAmountBOrS ? 1 : 0),
+                0
+            };
+
+            pbody.eddsaSignature = EDDSAHelper.EDDSASign(inputs, l2Pk);
+
+            (string, string)[] headers = { (Constants.HttpHeaderAPIKeyName, apiKey), (Constants.HttpHeaderAPISigName, pbody.eddsaSignature) };
+            var apiresult =
+                Utils.Http(_apiUrl + Constants.DualInvestmentOrder, null, headers, "post", JsonConvert.SerializeObject(pbody));
+            return apiresult;
+
         }
 
         /// <summary>

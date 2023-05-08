@@ -17,10 +17,10 @@
             {
                 exchange = exchange,
                 owner = owner,
-                accountId = accountId,                
+                accountId = accountId,
                 maxFee = maxFee,
                 validUntil = validUntil,
-                nonce = nonce,                
+                nonce = nonce,
                 counterFactualInfo = counterFactualInfo,
                 publicKey = new PublicKey()
                 {
