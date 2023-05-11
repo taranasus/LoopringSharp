@@ -33,7 +33,19 @@ namespace LoopringSharp.DualInvestment.AzureFunction
             var tokensToInvest = GetTokensOver300USD();
             var walletValue = GetWalletDollarValue();
 
-            _logger.LogInformation($"[DUAL INVESTMENT] [PING] Total: {walletValue.total} ||| Locked: {walletValue.locked}");
+            var StartDate = new DateTime(2023, 05, 08, 10, 11, 16);
+            var StartingValue = 1394.07;
+            //var StartingValue = 1428.12;
+            var CurrentValue = walletValue.TotalUSD;
+            var duration = DateTime.UtcNow.Subtract(StartDate);
+
+            var percent = (Math.Pow((CurrentValue / StartingValue), 1 / (duration.TotalDays / 365)) * 100);
+
+            var percentText = "NOT GOOD";
+            if (CurrentValue > StartingValue)
+                percentText = percent.ToString("0.00");
+
+            _logger.LogInformation($"[DUAL INVESTMENT] [PING] Total: {walletValue.total} ||| Locked: {walletValue.locked} ||| APR: {percentText}%");
 
 #if DEBUG
             //if (Debugger.IsAttached)
@@ -152,7 +164,7 @@ namespace LoopringSharp.DualInvestment.AzureFunction
                     var dInvestementResult = client.StartDualInvestment(dbm, sellingAmount, sellingToken, cryptoBuyingAmmount, cryptoBuyingAmmountToken);
 
                     _logger.LogInformation($"[DUAL INVESTMENT] INVESTING STABLECOIN: {dInvestementResult}");
-                    _logger.LogInformation($"[DUAL INVESTMENT] [CYCLE] Total Funds: {walletValue}");
+                    _logger.LogInformation($"[DUAL INVESTMENT] [CYCLE] Total Funds: {walletValue} ||| APR: {percentText}%");
 
                 }
                 else
@@ -179,7 +191,7 @@ namespace LoopringSharp.DualInvestment.AzureFunction
                     var dInvestementResult = client.StartDualInvestment(dbm, sellingAmount, sellingToken, cryptoBuyingAmmount, cryptoBuyingAmmountToken);
 
                     _logger.LogInformation($"[DUAL INVESTMENT] INVESTING CRYPTO: {dInvestementResult}");
-                    _logger.LogInformation($"[DUAL INVESTMENT] [CYCLE] Total Funds: {walletValue}");
+                    _logger.LogInformation($"[DUAL INVESTMENT] [CYCLE] Total Funds: {walletValue} ||| APR: {percentText}%");
                 }
             }
             else
@@ -214,20 +226,30 @@ namespace LoopringSharp.DualInvestment.AzureFunction
             return result;
         }
 
-        public (string total, string locked) GetWalletDollarValue()
+        public (string total, string locked, double TotalUSD) GetWalletDollarValue()
         {
             List<(string, decimal)> coins = new List<(string, decimal)>();
             List<(string, decimal)> locked = new List<(string, decimal)>();
+            double totalUSD = 0;
 
             var moneyWeHave = client.Ballances();
+            var usdPrices = client.GetPrice(LegalCurrencies.USD);
 
             foreach (var moneys in moneyWeHave)
             {
                 coins.Add((moneys.token, moneys.total));
                 locked.Add((moneys.token, moneys.locked));
+
+                var stuff4 = client.GetMixDepth(moneys.token + "-USDT", 0);
+
+                if (moneys.token == "USDT" || moneys.token == "USDC")
+                    totalUSD += (double)moneys.total;
+                else
+                    totalUSD += ((double)(stuff4.bids.First().price + stuff4.asks.First().price) / 2) * (double)moneys.total;
+
             }
 
-            return ($"{string.Join(" | ", coins.Select(s => s.Item1 + ": " + s.Item2).ToArray())}", $"{string.Join(" | ", locked.Select(s => s.Item1 + ": " + s.Item2).ToArray())}");
+            return ($"{string.Join(" | ", coins.Select(s => s.Item1 + ": " + s.Item2).ToArray())}", $"{string.Join(" | ", locked.Select(s => s.Item1 + ": " + s.Item2).ToArray())}", totalUSD);
         }
     }
 
