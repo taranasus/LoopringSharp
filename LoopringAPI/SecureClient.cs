@@ -891,12 +891,18 @@ namespace LoopringSharp
             };
 
             //	volume	"186722997000000000"
-            // "volume":"186484200000000000"   
+            // "volume":"186484200000000000"
+            //
+
+            string PrecisionLength = "1";
+            long tokenPrecision = GetTokenPrecision(CryptoTokenName);
+            for (long i = 0; i < tokenPrecision; i++)
+                PrecisionLength += "0";
 
             pbody.sellToken = new Token()
             {
                 tokenId = GetTokenId(CryptoTokenName),
-                volume = (cryptoPorfit * 10000000 * 100000000000).ToString().Split('.')[0]
+                volume = (cryptoPorfit * long.Parse(PrecisionLength) * 100000000000).ToString().Split('.')[0]
             };
             pbody.clientOrderId = "";
             pbody.exchange = ExchangeInfo().exchangeAddress;
@@ -1485,17 +1491,33 @@ namespace LoopringSharp
                 foreach (var rtoken in tokens)
                 {
                     if (!Constants.TokenIDMapper.ContainsKey(rtoken.symbol))
-                        Constants.TokenIDMapper.Add(rtoken.symbol, rtoken.tokenId);
+                        Constants.TokenIDMapper.Add(rtoken.symbol, (rtoken.tokenId, rtoken.precision));
                     else
-                        Constants.TokenIDMapper[rtoken.symbol] = rtoken.tokenId;
+                        Constants.TokenIDMapper[rtoken.symbol] = (rtoken.tokenId, rtoken.precision);
                 }
             }
-            return Constants.TokenIDMapper[token];
+            return Constants.TokenIDMapper[token].Item1;
         }
 
         public string GetTokenId(int token)
         {
-            return Constants.TokenIDMapper.Where(w => w.Value == token).FirstOrDefault().Key;
+            return Constants.TokenIDMapper.Where(w => w.Value.Item1 == token).FirstOrDefault().Key;
+        }
+
+        public long GetTokenPrecision(string token)
+        {
+            if (Constants.TokenIDMapper.Count == 0 || !Constants.TokenIDMapper.ContainsKey(token))
+            {
+                var tokens = GetTokens();
+                foreach (var rtoken in tokens)
+                {
+                    if (!Constants.TokenIDMapper.ContainsKey(rtoken.symbol))
+                        Constants.TokenIDMapper.Add(rtoken.symbol, (rtoken.tokenId, rtoken.precision));
+                    else
+                        Constants.TokenIDMapper[rtoken.symbol] = (rtoken.tokenId, rtoken.precision);
+                }
+            }
+            return Constants.TokenIDMapper[token].Item2;
         }
 
         #endregion

@@ -161,7 +161,7 @@ namespace LoopringSharp.DualInvestment.AzureFunction
                     string cryptoBuyingAmmountToken = cm_SelectedOportunity;
                     string sellingToken = cm_sellingToken;
 
-                    var dInvestementResult = client.StartDualInvestment(dbm, sellingAmount, sellingToken, cryptoBuyingAmmount, cryptoBuyingAmmountToken);
+                    var dInvestementResult = client.StartDualInvestment(dbm, cryptoBuyingAmmount, cryptoBuyingAmmountToken, sellingAmount, sellingToken);
 
                     _logger.LogInformation($"[DUAL INVESTMENT] INVESTING STABLECOIN: {dInvestementResult}");
                     _logger.LogInformation($"[DUAL INVESTMENT] [CYCLE] Total Funds: {walletValue} ||| APR: {percentText}%");

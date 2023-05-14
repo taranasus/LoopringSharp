@@ -5,7 +5,7 @@ namespace LoopringSharp
 {
     public static class Constants
     {
-        public static Dictionary<string, int> TokenIDMapper = new Dictionary<string, int>();
+        public static Dictionary<string, (int, long)> TokenIDMapper = new Dictionary<string, (int, long)>();
 
         public static string OffchainFeeUrl = "api/v3/user/offchainFee";
         public static string CreateInfoUrl = "api/v3/user/createInfo";
